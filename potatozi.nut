@@ -1,28 +1,28 @@
 /*
 	/ create team_round_timer
 	make sure there is only 1 red spawn and 1 blue spawn
-	
+
 	work on base logic
 		/ start waiting for players (30 s)
 		/ players can join red or blue
 		/ (make sure to set whatever convar controls autobalance and stuff)
-		
+
 		either teleport red when they spawn to the starting area,
 		or move the info_player_teamspawn to that position
 		suiciding as red does not put you on blue
-		
+
 		players who join blue will spawn
 		a short distance away from red and facing where reds were spawned
-		
+
 		red and blue players cannot damage each other during waiting for players
-		
+
 		after waiting for players, we have setup time of 30s.
 		teams are balanced if necessary
 		players cannot switch teams
 		everyone is respawned to where they spawned in waiting for players,
 		resource caches are highlighted and red gets some annotations explaining their use,
 		also annotations explaining to distance from large groups of players
-		
+
 		/ timer set to 15 minutes, when it ends red wins
 		dying on red will change your team to blue
 		zombie respawn time is based on timer value,
@@ -87,6 +87,9 @@ backup_fog.DispatchSpawn();
 // These can die at the end of the frame of HandleMapSpawn
 local MAPSPAWN_ENT_KILL_LIST = [
 	"tf_logic_*", "bot_hint_*", "func_nav_*", "func_tfbot_hint", "item_*", "env_sun",
+	"beam", "env_beam", "env_lightglow", "env_sprite", "env_soundscape*", "ambient_generic",
+	"func_capturezone", "func_dustmotes", "func_smokevolume", "func_regenerate",
+	"info_particle_system", "move_rope", "keyframe_rope", "func_respawnroom*",
 ];
 // These must die immediately (we need to create them)
 local MAPSPAWN_ENT_DESTROY_LIST = [
@@ -98,7 +101,7 @@ local function HandleMapSpawn()
 	TF_GAMERULES = FindByClassname(null, "tf_gamerules");
 	TCP_MASTER   = FindByClassname(null, "team_control_point_master");
 	SKY_CAMERA   = FindByClassname(null, "sky_camera");
-	
+
 	Convars.SetValue("mp_autoteambalance", 0);
 	Convars.SetValue("mp_scrambleteams_auto", 0);
 	Convars.SetValue("mp_teams_unbalance_limit", 0);
@@ -119,10 +122,26 @@ local function HandleMapSpawn()
 
 	// Open up the map
 	for (local ent = null; ent = FindByClassname(ent, "func_door*");)
+	{
 		ent.AcceptInput("Open", "", null, null);
+
+		// Stay open
+		ent.ValidateScriptScope();
+		local scope = ent.GetScriptScope();
+		scope.InputClose <- function() { return false; }
+		scope.Inputclose <- scope.InputClose;
+	}
 	for (local ent = null; ent = FindByClassname(ent, "func_areaportal*");)
+	{
 		ent.AcceptInput("Open", "", null, null);
-	
+
+		// Stay open
+		ent.ValidateScriptScope();
+		local scope = ent.GetScriptScope();
+		scope.InputClose <- function() { return false; }
+		scope.Inputclose <- scope.InputClose;
+	}
+
 	// Remove most huds
 	SetPropInt(TF_GAMERULES, "m_nHudType", 2); // Change to cp hud
 	if (TCP_MASTER)
@@ -133,9 +152,9 @@ local function HandleMapSpawn()
 	}
 	// Deleting these with a tcp_master present crashes the game
 	EntFire("team_control_point", "Disable");
-	
+
 	SetSkyboxTexture("sky_downpour_heavy_storm");
-	
+
 	// Fog
 	local old_fog = null;
 	for (local ent = null; ent = FindByClassname(ent, "env_fog_controller");)
@@ -172,7 +191,7 @@ local function HandleMapSpawn()
 	global_fog.KeyValueFromString("fogcolor", "77 82 71");
 	global_fog.KeyValueFromInt("fogblend", 0);
 	global_fog.DispatchSpawn();
-	
+
 	// Skybox fog
 	if (SKY_CAMERA)
 	{
@@ -183,23 +202,23 @@ local function HandleMapSpawn()
 		SKY_CAMERA.KeyValueFromString("fogcolor", "77 82 71");
 		SKY_CAMERA.KeyValueFromInt("fogblend", 0);
 	}
-	
+
 	foreach (player, info in player_info)
 	{
 		if (!player) continue;
 
 		player.ValidateScriptScope();
 		local scope = player.GetScriptScope();
-		
+
 		// Maps like to use this input and it fucks with our fog
 		scope.InputSetFogController <- function() {
 			if (caller != global_fog)
 				return false;
 		};
 		scope.Inputsetfogcontroller <- scope.InputSetFogController;
-		
+
 		player.AcceptInput("SetFogController", "__potatozi_fog", global_fog, global_fog);
-		
+
 		if (SKY_CAMERA)
 		{
 			SetPropFloat(player, "m_Local.m_skybox3d.fog.start", 0.0)
@@ -210,7 +229,7 @@ local function HandleMapSpawn()
 			SetPropBool(player, "m_Local.m_skybox3d.fog.blend", false)
 		}
 	}
-	
+
 	// Commit mass murder
 	// ..immediately
 	local del = [];
@@ -219,11 +238,11 @@ local function HandleMapSpawn()
 			del.append(ent);
 	foreach (ent in del)
 		ent.Destroy();
-	
+
 	// ..at the end of the frame
 	foreach (target in MAPSPAWN_ENT_KILL_LIST)
 		EntFire(target, "Kill");
-		
+
 	// Color correction
 	global_cc = SpawnEntityFromTable("color_correction", {
 		targetname = "__potatozi_cc",
@@ -231,7 +250,7 @@ local function HandleMapSpawn()
 		maxfalloff = -1,
 		filename   = "materials/correction/ravenous.raw",
 	});
-	
+
 	global_timer = SpawnEntityFromTable("team_round_timer", {
 		targetname   = "__potatozi_timer",
 		start_paused = 0,
@@ -243,7 +262,7 @@ local function HandleMapSpawn()
 	});
 	global_timer.AcceptInput("Resume", "", null, null);
 	EntityOutputs.AddOutput(global_timer, "OnFinished", "__potatozi_win_red", "RoundWin", "", 0, -1);
-	
+
 	global_win_red = SpawnEntityFromTable("game_round_win", {
 		targetname      = "__potatozi_win_red",
 		force_map_reset = 1,
@@ -257,7 +276,7 @@ local function HandleMapSpawn()
 	{
 		local player = GetPlayerFromUserID(params.userid);
 		if (!player || player.IsBotOfType(1337)) return;
-		
+
 		player_info[player] <- {};
 	},
 	function OnGameEvent_player_disconnect(params)
@@ -265,16 +284,16 @@ local function HandleMapSpawn()
 		if (params.bot) return;
 		local player = GetPlayerFromUserID(params.userid);
 		if (!player) return;
-		
+
 		if (player in player_info)
 			delete player_info[player];
 	},
-	
+
 	function OnGameEvent_post_inventory_application(params)
 	{
 		local player = GetPlayerFromUserID(params.userid);
 		if (!player || player.IsBotOfType(1337)) return;
-		
+
 		player.AcceptInput("SetFogController", "__potatozi_fog", global_fog, global_fog);
 	},
 
