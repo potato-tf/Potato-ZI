@@ -1,3 +1,56 @@
+/*
+	/ create team_round_timer
+	make sure there is only 1 red spawn and 1 blue spawn
+	
+	work on base logic
+		/ start waiting for players (30 s)
+		/ players can join red or blue
+		/ (make sure to set whatever convar controls autobalance and stuff)
+		
+		either teleport red when they spawn to the starting area,
+		or move the info_player_teamspawn to that position
+		suiciding as red does not put you on blue
+		
+		players who join blue will spawn
+		a short distance away from red and facing where reds were spawned
+		
+		red and blue players cannot damage each other during waiting for players
+		
+		after waiting for players, we have setup time of 30s.
+		teams are balanced if necessary
+		players cannot switch teams
+		everyone is respawned to where they spawned in waiting for players,
+		resource caches are highlighted and red gets some annotations explaining their use,
+		also annotations explaining to distance from large groups of players
+		
+		/ timer set to 15 minutes, when it ends red wins
+		dying on red will change your team to blue
+		zombie respawn time is based on timer value,
+			starting at 6 seconds, every 2.5 min reduce respawn time by 1 second,
+			to a minimum of 2 seconds at 5 minutes left
+		every 5 minutes swap areas
+		make sure round win for either team resets the match properly
+
+	make the sickness debuff system
+		it is not active during setup or waiting for players
+	generate areas and make resource caches functional
+	spawn sparse small ammo packs throughout the map
+	use the same system (with a rarer value) to spawn 1 time powerups
+	again the same system with rarer values for weapon pickups (the model can be
+	a pile of junk that gets highlighted when you get close or something)
+		when you interact with it, the pile is consumed and you get a random super
+		weapon for your class (play the voiceline), and you get highlighted with
+		orange to make the enemy team target you more often (blue will also
+		get an annotation when you pick it up telling to target this person)
+	make the zombie ghost system and controls
+		zombies spawn normally during waiting for players,
+			(no ground spawn, no ghost)
+		in setup they spawn in their ghost state but cannot rise as zombies yet
+		until round start
+	make the zombie ground spawn logic
+	copy over zombie abilities, etc from zi
+*/
+
 ::ROOT <- getroottable();
 if (!("ConstantNamingConvention" in ROOT))
 {
@@ -20,29 +73,39 @@ local TF_GAMERULES = FindByClassname(null, "tf_gamerules");
 local TCP_MASTER   = null;
 local SKY_CAMERA   = null;
 
-local player_info = {};
-local global_fog  = null;
-local global_cc   = null;
+local player_info    = {};
+local global_fog     = null;
+local global_cc      = null;
+local global_timer   = null;
+local global_win_red = null;
+local global_win_blu = null;
+
+// Creating this now instead of later allows it to override other non master controllers
+local backup_fog = CreateByClassname("env_fog_controller");
+backup_fog.DispatchSpawn();
 
 // These can die at the end of the frame of HandleMapSpawn
 local MAPSPAWN_ENT_KILL_LIST = [
-	"team_control_point*", "tf_logic_*", "bot_hint_*", "func_nav_*", "func_tfbot_hint", "item_*", "env_sun",
+	"tf_logic_*", "bot_hint_*", "func_nav_*", "func_tfbot_hint", "item_*", "env_sun",
 ];
 // These must die immediately (we need to create them)
 local MAPSPAWN_ENT_DESTROY_LIST = [
-	"color_correction", "team_round_timer",
+	"color_correction", "team_round_timer", "game_round_win",
 ];
 
 local function HandleMapSpawn()
 {
-	if (!TF_GAMERULES) TF_GAMERULES = FindByClassname(null, "tf_gamerules");
-	if (!TCP_MASTER)   TCP_MASTER   = FindByClassname(null, "team_control_point_master");
-	if (!SKY_CAMERA)   SKY_CAMERA   = FindByClassname(null, "sky_camera");
+	TF_GAMERULES = FindByClassname(null, "tf_gamerules");
+	TCP_MASTER   = FindByClassname(null, "team_control_point_master");
+	SKY_CAMERA   = FindByClassname(null, "sky_camera");
 	
+	Convars.SetValue("mp_autoteambalance", 0);
+	Convars.SetValue("mp_scrambleteams_auto", 0);
+	Convars.SetValue("mp_teams_unbalance_limit", 0);
+	//Convars.SetValue("mp_forceautoteam", 2);
+	//Convars.SetValue("mp_respawnwavetime", 6);
+	//mp_humans_must_join_team red (see if we're still able to force switch teams)
 	Convars.SetValue("mp_tournament", 0);
-	
-	SetPropBool(TF_GAMERULES, "m_bInWaitingForPlayers", false);
-	SetPropBool(TF_GAMERULES, "m_bInSetup", false);
 
 	local gmprops = [
 		"m_bIsInTraining", "m_bIsWaitingForTrainingContinue", "m_bIsTrainingHUDVisible",
@@ -68,6 +131,8 @@ local function HandleMapSpawn()
 		SetPropFloat(TCP_MASTER, "m_flCustomPositionX", 1.0);
 		EntFireByHandle(TCP_MASTER, "RoundSpawn", "", 0, null, null);
 	}
+	// Deleting these with a tcp_master present crashes the game
+	EntFire("team_control_point", "Disable");
 	
 	SetSkyboxTexture("sky_downpour_heavy_storm");
 	
@@ -75,7 +140,7 @@ local function HandleMapSpawn()
 	local old_fog = null;
 	for (local ent = null; ent = FindByClassname(ent, "env_fog_controller");)
 	{
-		// Note any previous fogs from manual script loading
+		// Note any previous fog from manual script loading
 		if (ent.GetName() == "__potatozi_fog")
 		{
 			old_fog = ent;
@@ -95,7 +160,7 @@ local function HandleMapSpawn()
 	if (old_fog && !global_fog)
 		global_fog = old_fog;
 	if (!global_fog)
-		global_fog = CreateByClassname("env_fog_controller");
+		global_fog = backup_fog;
 
 	global_fog.KeyValueFromString("targetname", "__potatozi_fog");
 	global_fog.KeyValueFromInt("spawnflags", 1);
@@ -161,9 +226,29 @@ local function HandleMapSpawn()
 		
 	// Color correction
 	global_cc = SpawnEntityFromTable("color_correction", {
+		targetname = "__potatozi_cc",
 		minfalloff = -1,
 		maxfalloff = -1,
-		filename = "materials/correction/ravenous.raw",
+		filename   = "materials/correction/ravenous.raw",
+	});
+	
+	global_timer = SpawnEntityFromTable("team_round_timer", {
+		targetname   = "__potatozi_timer",
+		start_paused = 0,
+		reset_time   = 1,
+		show_in_hud  = 1,
+		max_length   = 900,
+		timer_length = 900,
+		setup_length = 30,
+	});
+	global_timer.AcceptInput("Resume", "", null, null);
+	EntityOutputs.AddOutput(global_timer, "OnFinished", "__potatozi_win_red", "RoundWin", "", 0, -1);
+	
+	global_win_red = SpawnEntityFromTable("game_round_win", {
+		targetname      = "__potatozi_win_red",
+		force_map_reset = 1,
+		switch_teams    = false,
+		TeamNum         = 2,
 	});
 }
 
