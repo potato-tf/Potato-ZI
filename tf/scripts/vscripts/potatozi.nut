@@ -121,7 +121,7 @@ local MAPSPAWN_ENT_KILL_LIST = [
 	"beam", "env_beam", "env_lightglow", "env_sprite", "env_soundscape*", "ambient_generic",
 	"func_capturezone", "func_dustmotes", "func_smokevolume", "func_regenerate",
 	"info_particle_system", "move_rope", "keyframe_rope", "func_respawnroom*",
-	//"trigger_capture_area",
+	"trigger_capture_area",
 ];
 // These must die immediately (we need to create them)
 local MAPSPAWN_ENT_DESTROY_LIST = [
@@ -273,23 +273,43 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 			}
 		}
 
-		local redspawn  = null;
-		local bluespawn = null;
+		// Look for nav mesh islands
+		// (Disconnected pieces of the nav mesh, think of multi area maps like Thundermountain)
 		for (local ent = null; ent = FindByClassname(ent, "info_player_teamspawn");)
 		{
-			local disabled = GetPropBool(ent, "m_bDisabled");
-			if (disabled || (redspawn && bluespawn)) continue;
+			if (!PZI_NavMesh.ISLANDS_PARSED)
+			{
+				local area = NavMesh.GetNearestNavArea(ent.GetOrigin(), 128.0, false, true);
+				if (area)
+				{
+					// Is this area in another island?
+					local reached = false;
+					foreach (island in PZI_NavMesh.ISLANDS)
+					{
+						if (area in island)
+						{
+							reached = true;
+							break;
+						}
+					}
 
-			local team = ent.GetTeam();
-			if (!redspawn && team == 2)
-				redspawn = ent;
-			else if (!bluespawn && team == 3)
-				bluespawn = ent;
+					// Nope, create a new island
+					if (!reached)
+					{
+						local island = PZI_NavMesh.FloodSelect(area);
+
+						// 25 is a quick and dirty arbitrary number to filter out islands that aren't big enough for gameplay
+						// in an efficient manner. Typically map islands will be in the thousands in length
+						// and iterating that many times just to tally up size is wastefully expensive
+						if (island && island.len() > 25)
+							PZI_NavMesh.ISLANDS.append(island);
+					}
+				}
+			}
 		}
 
-		for (local ent = null; ent = FindByClassname(ent, "info_player_teamspawn");)
-			if (ent != redspawn && ent != bluespawn)
-				ent.AcceptInput("Kill", "", null, null);
+		PZI_NavMesh.ISLANDS_PARSED = true;
+		printl(PZI_NavMesh.ISLANDS.len());
 
 		// Commit mass murder
 		// ..immediately

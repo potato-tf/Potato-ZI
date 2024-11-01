@@ -1,6 +1,11 @@
 IncludeScript("potatozi/misc.nut")
 
 ::PZI_NavMesh <- {
+	ALL_AREAS = {},
+	ISLANDS   = [],
+	ISLANDS_PARSED = false,
+
+	// Simple Breadth First Search selecting all connected areas
 	function FloodSelect(area, max_iters=5000)
 	{
 		if (!(area instanceof CTFNavArea)) return;
@@ -38,6 +43,7 @@ IncludeScript("potatozi/misc.nut")
 		return reached;
 	},
 
+	// Simple Breadth First Search with multiple start points
 	function MultiFloodSelect(areas, max_iters=5000)
 	{
 		local data = {};
@@ -92,5 +98,8 @@ IncludeScript("potatozi/misc.nut")
 			reached[area] <- d.reached;
 
 		return reached;
-	}
+	},
 };
+__CollectGameEventCallbacks(PZI_NavMesh);
+
+NavMesh.GetAllAreas(PZI_NavMesh.ALL_AREAS);
