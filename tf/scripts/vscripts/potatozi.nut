@@ -1,30 +1,9 @@
 /*
-	/ create team_round_timer
 	generate areas and make resource caches functional
-		/ since we opened the map, we should recalculate blockers with tf_point_nav_interface
-		5. Divide each island into areas
-			Do this by making a multi flood select function that will BFS search from
-			multiple areas with respect to each frontier and cleared array
-
-			most maps are linear, so we can get a line along which to place points for areas
-			most maps also have spawnrooms for red and blue team
-				create a path from red to blue spawn, and pick areas along this path
-				red spawn point - area 1
-				blue spawnpoint - area 2
-				build path from one to other, pick area in middle for area 3
-			otherwise
-				pick n random nav areas
 		6. Generate spots for resource caches
 			pick n random nav areas, reroll m times if too close to another area,
 
-
-	/ make sure there is only 1 red spawn and 1 blue spawn
-
 	work on base logic
-		/ start waiting for players (30 s)
-		/ players can join red or blue
-		/ (make sure to set whatever convar controls autobalance and stuff)
-
 		either teleport red when they spawn to the starting area,
 		or move the info_player_teamspawn to that position
 		suiciding as red does not put you on blue
@@ -41,7 +20,6 @@
 		resource caches are highlighted and red gets some annotations explaining their use,
 		also annotations explaining to distance from large groups of players
 
-		/ timer set to 15 minutes, when it ends red wins
 		dying on red will change your team to blue
 		zombie respawn time is based on timer value,
 			starting at 6 seconds, every 2.5 min reduce respawn time by 1 second,
@@ -295,7 +273,7 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 				foreach (isl, spawns in island_spawnpoints)
 				{
 					if (island != isl) continue;
-
+					
 					PZI_NavMesh.ISLAND_AREAS[island] <- [];
 
 					// Grab a random spawn for each team
@@ -309,20 +287,20 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 						else
 							bluespawn = arr[i];
 					}
-
+					
 					// Get their areas
 					local redarea  = NavMesh.GetNearestNavArea(redspawn.GetOrigin(), 128.0, false, true);
 					local bluearea = NavMesh.GetNearestNavArea(bluespawn.GetOrigin(), 128.0, false, true);
-
+					
 					// Get an area somewhere inbetween
 					local vec  = bluearea.GetCenter() - redarea.GetCenter();
 					local dist = vec.Length() / 2; 
 					vec.Norm();
 					vec *= dist;
 					local pos = redarea.GetCenter() + vec;
-
+					
 					local middlearea = NavMesh.GetNearestNavArea(pos, 8192.0, false, true);
-
+					
 					// If the above failed then fallback to random nav areas in the island
 					local seedareas = [redarea, middlearea, bluearea];
 					foreach (i, area in seedareas)
@@ -336,8 +314,9 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 				}
 			}
 		}
-
+		
 		// debug view
+		/*
 		foreach (island, areas in PZI_NavMesh.ISLAND_AREAS)
 		{
 			foreach (area in areas)
@@ -347,42 +326,58 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 				local b = RandomInt(0, 255);
 				foreach (a, n in area)
 				{
-					a.DebugDrawFilled(r,g,b, 255, 10, true, 0);
+					a.DebugDrawFilled(r,g,b, 255, 30, false, 0);
 				}
 			}
 		}
-
+		*/
+		
 		// testing
-		local area = null;
 		if (PZI_NavMesh.ISLANDS.len())
 		{
+			// Generate resource caches
+			// remove old ones by name
+			// pick a random island to work in
+			// generate with random areas
 			local index = RandomInt(0, PZI_NavMesh.ISLANDS.len() - 1);
 			local island = PZI_NavMesh.ISLANDS[index];
-
-			area = PZI_NavMesh.GetRandomArea(island, true);
+			
+			for (local ent = null; ent = FindByName(ent, "__potatozi_resource_cache*");)
+				ent.AcceptInput("Kill", "", null, null);
+			
+			local count = ceil(island.len() / 100.0);
+			printl(count);
+			// todo need to store these to associate them with areas
+			for (local i = 0; i < count; ++i)
+			{
+				local area = PZI_NavMesh.GetRandomArea(island, true);
+				area.DebugDrawFilled(50, 200, 0, 255, 10, true, 0);
+				
+				SpawnEntityFromTable("prop_dynamic", {
+					targetname = format("__potatozi_resource_cache%d", i),
+					model = "models/props_spytech/radio_tower001.mdl",
+					modelscale = 0.1,
+					origin = area.GetCenter(),
+				});
+			}
 		}
 
 		foreach (player, info in player_info)
 		{
 			if (!player) continue;
-
+			
 			// testing
-			if (area)
-			{
-				/*
-				local center = area.GetCenter();
-				center.z += 24;
-				player.KeyValueFromVector("origin", center);
-
-				local ang = PZI_Misc.VectorAngles(PZI_Misc.GetWorldCenter() - player.EyePosition());
-				ang.x = 0;
-				player.SnapEyeAngles(ang);
-
-				player.SetAbsVelocity(Vector())
-				*/
-
-				area.DebugDrawFilled(50, 200, 0, 255, 20, true, 0);
-			}
+			/*
+			local center = area.GetCenter();
+			center.z += 24;
+			player.KeyValueFromVector("origin", center);
+			
+			local ang = PZI_Misc.VectorAngles(PZI_Misc.GetWorldCenter() - player.EyePosition());
+			ang.x = 0;
+			player.SnapEyeAngles(ang);
+			
+			player.SetAbsVelocity(Vector())
+			*/
 
 			player.ValidateScriptScope();
 			local scope = player.GetScriptScope();
@@ -491,7 +486,7 @@ if (TF_GAMERULES)
 	{
 		local player = PlayerInstanceFromIndex(i);
 		if (!player || player.IsBotOfType(1337)) continue;
-
+		
 		player_info[player] <- {};
 	}
 	PZI.HandleMapSpawn();
