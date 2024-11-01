@@ -295,9 +295,10 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 				foreach (isl, spawns in island_spawnpoints)
 				{
 					if (island != isl) continue;
-					
+
 					PZI_NavMesh.ISLAND_AREAS[island] <- [];
 
+					// Grab a random spawn for each team
 					local redspawn  = null;
 					local bluespawn = null;
 					foreach (team, arr in spawns)
@@ -308,30 +309,34 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 						else
 							bluespawn = arr[i];
 					}
-					
+
+					// Get their areas
 					local redarea  = NavMesh.GetNearestNavArea(redspawn.GetOrigin(), 128.0, false, true);
 					local bluearea = NavMesh.GetNearestNavArea(bluespawn.GetOrigin(), 128.0, false, true);
-					
+
+					// Get an area somewhere inbetween
 					local vec  = bluearea.GetCenter() - redarea.GetCenter();
 					local dist = vec.Length() / 2; 
 					vec.Norm();
 					vec *= dist;
 					local pos = redarea.GetCenter() + vec;
-					
+
 					local middlearea = NavMesh.GetNearestNavArea(pos, 8192.0, false, true);
-					
+
+					// If the above failed then fallback to random nav areas in the island
 					local seedareas = [redarea, middlearea, bluearea];
 					foreach (i, area in seedareas)
 						if (!area)
 							seedareas[i] = PZI_NavMesh.GetRandomArea(island);
 
+					// Store the areas
 					local reached = PZI_NavMesh.MultiFloodSelect(seedareas);
 					foreach (area in seedareas)
 						PZI_NavMesh.ISLAND_AREAS[island].append(reached[area]);
 				}
 			}
 		}
-		
+
 		// debug view
 		foreach (island, areas in PZI_NavMesh.ISLAND_AREAS)
 		{
@@ -346,32 +351,36 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 				}
 			}
 		}
-		
+
+		// testing
 		local area = null;
 		if (PZI_NavMesh.ISLANDS.len())
 		{
 			local index = RandomInt(0, PZI_NavMesh.ISLANDS.len() - 1);
 			local island = PZI_NavMesh.ISLANDS[index];
-			
+
 			area = PZI_NavMesh.GetRandomArea(island, true);
 		}
 
 		foreach (player, info in player_info)
 		{
 			if (!player) continue;
-			
+
+			// testing
 			if (area)
 			{
+				/*
 				local center = area.GetCenter();
 				center.z += 24;
-				//player.KeyValueFromVector("origin", center);
-				
+				player.KeyValueFromVector("origin", center);
+
 				local ang = PZI_Misc.VectorAngles(PZI_Misc.GetWorldCenter() - player.EyePosition());
 				ang.x = 0;
-				//player.SnapEyeAngles(ang);
-				
+				player.SnapEyeAngles(ang);
+
 				player.SetAbsVelocity(Vector())
-				
+				*/
+
 				area.DebugDrawFilled(50, 200, 0, 255, 20, true, 0);
 			}
 

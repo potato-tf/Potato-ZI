@@ -100,7 +100,7 @@ IncludeScript("potatozi/misc.nut")
 
 		return reached;
 	},
-	
+
 	function GetRandomArea(areas, spawnpoint=false)
 	{
 		local max_iters = 50;
