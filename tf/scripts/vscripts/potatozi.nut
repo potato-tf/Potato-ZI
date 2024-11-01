@@ -2,21 +2,6 @@
 	/ create team_round_timer
 	generate areas and make resource caches functional
 		/ since we opened the map, we should recalculate blockers with tf_point_nav_interface
-		1. GetAllAreas
-		2. Determine how many mesh islands there are in the nav mesh
-			Until all nav areas are accounted for:
-				Pick the first nav area in getallnavareas that is not within an island
-				(first iteration is just the first area)
-				Breadth First Search with this area start, the resulting stored areas are our island
-		3. Determine if each island is invalid:
-			Make a list of all respawn room nav areas (pick one inside a respawnroom)
-			Pick any nav area within the island
-				if the area has a spawnroom flag, check every area within the island
-				if they all have spawnroom flags, this island is unreachable
-			If the area we picked didnt have a spawnroom flag
-				Try to path to an area within every spawnroom
-				If no path can be made, this island is unreachable
-		4. Remove unreachable islands from our list
 		5. Divide each island into areas
 			Do this by making a multi flood select function that will BFS search from
 			multiple areas with respect to each frontier and cleared array
@@ -24,8 +9,11 @@
 			most maps are linear, so we can get a line along which to place points for areas
 			most maps also have spawnrooms for red and blue team
 				create a path from red to blue spawn, and pick areas along this path
+				red spawn point - area 1
+				blue spawnpoint - area 2
+				build path from one to other, pick area in middle for area 3
 			otherwise
-				pick n random nav areas, reroll m times if too close to another area,
+				pick n random nav areas
 		6. Generate spots for resource caches
 			pick n random nav areas, reroll m times if too close to another area,
 
@@ -120,7 +108,7 @@ local MAPSPAWN_ENT_KILL_LIST = [
 	"tf_logic_*", "bot_hint_*", "func_nav_*", "func_tfbot_hint", "item_*", "env_sun",
 	"beam", "env_beam", "env_lightglow", "env_sprite", "env_soundscape*", "ambient_generic",
 	"func_capturezone", "func_dustmotes", "func_smokevolume", "func_regenerate",
-	"info_particle_system", "move_rope", "keyframe_rope", "func_respawnroom*",
+	"info_particle_system", "move_rope", "keyframe_rope", "func_respawnroomvisualizer",
 	"trigger_capture_area",
 ];
 // These must die immediately (we need to create them)
@@ -183,6 +171,11 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 			scope.InputClose <- function() { return false; }
 			scope.Inputclose <- scope.InputClose;
 		}
+		for (local ent = null; ent = FindByClassname(ent, "func_respawnroom");)
+		{
+			ent.AcceptInput("Disable", "", null, null);
+			ent.AcceptInput("SetInactive", "", null, null);
+		}
 
 		// Remove most huds
 		SetPropInt(TF_GAMERULES, "m_nHudType", 2); // Change to cp hud
@@ -195,6 +188,7 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 		// Deleting these with a tcp_master present crashes the game
 		// todo disable again after setup?
 		EntFire("team_control_point", "Disable");
+		EntFire("team_control_point", "HideModel");
 
 		SetSkyboxTexture("sky_downpour_heavy_storm");
 
@@ -246,9 +240,140 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 			SKY_CAMERA.KeyValueFromInt("fogblend", 0);
 		}
 
+		// Look for nav mesh islands
+		// (Disconnected pieces of the nav mesh, think of multi area maps like Thundermountain)
+		if (!PZI_NavMesh.IslandsParsed && PZI_NavMesh.ALL_AREAS.len())
+		{
+			local island_spawnpoints = {};
+			for (local ent = null; ent = FindByClassname(ent, "info_player_teamspawn");)
+			{
+				// todo document which spawns belong to which islands in a table
+				local area = NavMesh.GetNearestNavArea(ent.GetOrigin(), 128.0, false, true);
+				if (area)
+				{
+					local island = null;
+
+					// Is this area in another island?
+					local reached = false;
+					foreach (isl in PZI_NavMesh.ISLANDS)
+					{
+						if (area in isl)
+						{
+							island = isl;
+							reached = true;
+							break;
+						}
+					}
+
+					// Nope, create a new island
+					if (!reached)
+					{
+						island = PZI_NavMesh.FloodSelect(area);
+
+						// 25 is a quick and dirty arbitrary number to filter out islands that aren't big enough for gameplay
+						// in an efficient manner. Typically map islands will be in the thousands in length
+						// and iterating that many times just to tally up size is wastefully expensive
+						if (island && island.len() > 25)
+							PZI_NavMesh.ISLANDS.append(island);
+					}
+					if (island)
+					{
+						if (!(island in island_spawnpoints))
+							island_spawnpoints[island] <- {[2]=[],[3]=[]};
+
+						local team = ent.GetTeam();
+						if (team == 2 || team == 3)
+							island_spawnpoints[island][team].append(ent);
+					}
+				}
+			}
+			PZI_NavMesh.IslandsParsed = true;
+
+			// Generate areas within islands
+			foreach (island in PZI_NavMesh.ISLANDS)
+			{
+				foreach (isl, spawns in island_spawnpoints)
+				{
+					if (island != isl) continue;
+					
+					PZI_NavMesh.ISLAND_AREAS[island] <- [];
+
+					local redspawn  = null;
+					local bluespawn = null;
+					foreach (team, arr in spawns)
+					{
+						local i = RandomInt(0, arr.len() - 1);
+						if (team == 2)
+							redspawn = arr[i];
+						else
+							bluespawn = arr[i];
+					}
+					
+					local redarea  = NavMesh.GetNearestNavArea(redspawn.GetOrigin(), 128.0, false, true);
+					local bluearea = NavMesh.GetNearestNavArea(bluespawn.GetOrigin(), 128.0, false, true);
+					
+					local vec  = bluearea.GetCenter() - redarea.GetCenter();
+					local dist = vec.Length() / 2; 
+					vec.Norm();
+					vec *= dist;
+					local pos = redarea.GetCenter() + vec;
+					
+					local middlearea = NavMesh.GetNearestNavArea(pos, 8192.0, false, true);
+					
+					local seedareas = [redarea, middlearea, bluearea];
+					foreach (i, area in seedareas)
+						if (!area)
+							seedareas[i] = PZI_NavMesh.GetRandomArea(island);
+
+					local reached = PZI_NavMesh.MultiFloodSelect(seedareas);
+					foreach (area in seedareas)
+						PZI_NavMesh.ISLAND_AREAS[island].append(reached[area]);
+				}
+			}
+		}
+		
+		// debug view
+		foreach (island, areas in PZI_NavMesh.ISLAND_AREAS)
+		{
+			foreach (area in areas)
+			{
+				local r = RandomInt(0, 255);
+				local g = RandomInt(0, 255);
+				local b = RandomInt(0, 255);
+				foreach (a, n in area)
+				{
+					a.DebugDrawFilled(r,g,b, 255, 10, true, 0);
+				}
+			}
+		}
+		
+		local area = null;
+		if (PZI_NavMesh.ISLANDS.len())
+		{
+			local index = RandomInt(0, PZI_NavMesh.ISLANDS.len() - 1);
+			local island = PZI_NavMesh.ISLANDS[index];
+			
+			area = PZI_NavMesh.GetRandomArea(island, true);
+		}
+
 		foreach (player, info in player_info)
 		{
 			if (!player) continue;
+			
+			if (area)
+			{
+				local center = area.GetCenter();
+				center.z += 24;
+				//player.KeyValueFromVector("origin", center);
+				
+				local ang = PZI_Misc.VectorAngles(PZI_Misc.GetWorldCenter() - player.EyePosition());
+				ang.x = 0;
+				//player.SnapEyeAngles(ang);
+				
+				player.SetAbsVelocity(Vector())
+				
+				area.DebugDrawFilled(50, 200, 0, 255, 20, true, 0);
+			}
 
 			player.ValidateScriptScope();
 			local scope = player.GetScriptScope();
@@ -272,44 +397,6 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 				SetPropBool(player, "m_Local.m_skybox3d.fog.blend", false)
 			}
 		}
-
-		// Look for nav mesh islands
-		// (Disconnected pieces of the nav mesh, think of multi area maps like Thundermountain)
-		for (local ent = null; ent = FindByClassname(ent, "info_player_teamspawn");)
-		{
-			if (!PZI_NavMesh.ISLANDS_PARSED)
-			{
-				local area = NavMesh.GetNearestNavArea(ent.GetOrigin(), 128.0, false, true);
-				if (area)
-				{
-					// Is this area in another island?
-					local reached = false;
-					foreach (island in PZI_NavMesh.ISLANDS)
-					{
-						if (area in island)
-						{
-							reached = true;
-							break;
-						}
-					}
-
-					// Nope, create a new island
-					if (!reached)
-					{
-						local island = PZI_NavMesh.FloodSelect(area);
-
-						// 25 is a quick and dirty arbitrary number to filter out islands that aren't big enough for gameplay
-						// in an efficient manner. Typically map islands will be in the thousands in length
-						// and iterating that many times just to tally up size is wastefully expensive
-						if (island && island.len() > 25)
-							PZI_NavMesh.ISLANDS.append(island);
-					}
-				}
-			}
-		}
-
-		PZI_NavMesh.ISLANDS_PARSED = true;
-		printl(PZI_NavMesh.ISLANDS.len());
 
 		// Commit mass murder
 		// ..immediately
@@ -390,4 +477,13 @@ if (!script_entity)
 
 // Late load
 if (TF_GAMERULES)
+{
+	for (local i = 1; i <= MAXPLAYERS; ++i)
+	{
+		local player = PlayerInstanceFromIndex(i);
+		if (!player || player.IsBotOfType(1337)) continue;
+
+		player_info[player] <- {};
+	}
 	PZI.HandleMapSpawn();
+}
