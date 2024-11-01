@@ -4,10 +4,10 @@ IncludeScript("potatozi/misc.nut")
 	function FloodSelect(area, max_iters=5000)
 	{
 		if (!(area instanceof CTFNavArea)) return;
-		
+
 		local frontier = Queue();
 		local reached  = {};
-		
+
 		frontier.add(area);
 		reached[area] <- null;
 
@@ -34,7 +34,7 @@ IncludeScript("potatozi/misc.nut")
 			}
 			++iter;
 		}
-		
+
 		return reached;
 	},
 
@@ -45,11 +45,11 @@ IncludeScript("potatozi/misc.nut")
 		{
 			if (!(area instanceof CTFNavArea)) return;
 			data[area] <- { frontier=Queue(), reached={} };
-			
+
 			data[area].frontier.add(area);
 			data[area].reached[area] <- null;
 		}
-		
+
 		for (local i = 0; i < max_iters; ++i)
 		{
 			local finished = true;
@@ -57,7 +57,7 @@ IncludeScript("potatozi/misc.nut")
 			{
 				if (d.frontier.isEmpty()) continue;
 				finished = false;
-				
+
 				local current = d.frontier.pop();
 				for (local i = 0; i < 4; ++i)
 				{
@@ -83,14 +83,14 @@ IncludeScript("potatozi/misc.nut")
 					}
 				}
 			}
-			
+
 			if (finished) break;
 		}
-		
+
 		local reached = {};
 		foreach (area, d in data)
 			reached[area] <- d.reached;
-		
+
 		return reached;
 	}
 };

@@ -1,7 +1,7 @@
 /*
 	/ create team_round_timer
 	generate areas and make resource caches functional
-		since we opened the map, we should recalculate blockers with tf_point_nav_interface
+		/ since we opened the map, we should recalculate blockers with tf_point_nav_interface
 		1. GetAllAreas
 		2. Determine how many mesh islands there are in the nav mesh
 			Until all nav areas are accounted for:
@@ -20,7 +20,7 @@
 		5. Divide each island into areas
 			Do this by making a multi flood select function that will BFS search from
 			multiple areas with respect to each frontier and cleared array
-			
+
 			most maps are linear, so we can get a line along which to place points for areas
 			most maps also have spawnrooms for red and blue team
 				create a path from red to blue spawn, and pick areas along this path
@@ -29,8 +29,8 @@
 		6. Generate spots for resource caches
 			pick n random nav areas, reroll m times if too close to another area,
 
-			
-	make sure there is only 1 red spawn and 1 blue spawn
+
+	/ make sure there is only 1 red spawn and 1 blue spawn
 
 	work on base logic
 		/ start waiting for players (30 s)
@@ -120,7 +120,8 @@ local MAPSPAWN_ENT_KILL_LIST = [
 	"tf_logic_*", "bot_hint_*", "func_nav_*", "func_tfbot_hint", "item_*", "env_sun",
 	"beam", "env_beam", "env_lightglow", "env_sprite", "env_soundscape*", "ambient_generic",
 	"func_capturezone", "func_dustmotes", "func_smokevolume", "func_regenerate",
-	"info_particle_system", "move_rope", "keyframe_rope", "eefunc_respawnroom*",
+	"info_particle_system", "move_rope", "keyframe_rope", "func_respawnroom*",
+	//"trigger_capture_area",
 ];
 // These must die immediately (we need to create them)
 local MAPSPAWN_ENT_DESTROY_LIST = [
@@ -192,6 +193,7 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 			EntFireByHandle(TCP_MASTER, "RoundSpawn", "", 0, null, null);
 		}
 		// Deleting these with a tcp_master present crashes the game
+		// todo disable again after setup?
 		EntFire("team_control_point", "Disable");
 
 		SetSkyboxTexture("sky_downpour_heavy_storm");
@@ -277,14 +279,14 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 		{
 			local disabled = GetPropBool(ent, "m_bDisabled");
 			if (disabled || (redspawn && bluespawn)) continue;
-			
+
 			local team = ent.GetTeam();
 			if (!redspawn && team == 2)
 				redspawn = ent;
 			else if (!bluespawn && team == 3)
 				bluespawn = ent;
 		}
-		
+
 		for (local ent = null; ent = FindByClassname(ent, "info_player_teamspawn");)
 			if (ent != redspawn && ent != bluespawn)
 				ent.AcceptInput("Kill", "", null, null);

@@ -4,50 +4,50 @@ class Queue
 	head  = null; // Index of the first element
 	tail  = null; // Index for the next element to be added
 
-    constructor()
+	constructor()
 	{
-        items = {};
-        head  = 0;
-        tail  = 0;
-    }
-	
-    // Check if the queue is empty
-    function isEmpty()
-        return head >= tail;
-		
-    // Get the size of the queue
-    function size()
-        return tail - head;
+		items = {};
+		head  = 0;
+		tail  = 0;
+	}
 
-    // Add an element to the end of the line
-    function add(value)
-	{
-        items[tail] <- value;
-        ++tail;
-    }
+	// Check if the queue is empty
+	function isEmpty()
+		return head >= tail;
 
-    // Remove and return the element first in line
-    function pop()
+	// Get the size of the queue
+	function size()
+		return tail - head;
+
+	// Add an element to the end of the line
+	function add(value)
 	{
-        if (isEmpty())
+		items[tail] <- value;
+		++tail;
+	}
+
+	// Remove and return the element first in line
+	function pop()
+	{
+		if (isEmpty())
 		{
 			items = {};
 			head  = 0;
 			tail  = 0;
-            return;
+			return;
 		}
 
-        local value = items[head];
-        delete items[head];
-        ++head; // Next in line
+		local value = items[head];
+		delete items[head];
+		++head; // Next in line
 
-        return value;
-    }
+		return value;
+	}
 
-    // Return the element first in line
-    function peek()
+	// Return the element first in line
+	function peek()
 	{
-        if (isEmpty()) return;
-        return items[head];
-    }
+		if (isEmpty()) return;
+		return items[head];
+	}
 }
