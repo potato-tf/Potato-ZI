@@ -5,9 +5,13 @@ IncludeScript("potatozi/misc.nut")
 	ISLANDS   = [],
 	ISLAND_AREAS = {},
 	IslandsParsed = false,
+	ActiveIsland = null,
+	ActiveArea = null,
+	AreaSpawnRed = null,
+	AreaSpawnBlue = null,
 
 	// Simple Breadth First Search selecting all connected areas
-	function FloodSelect(area, max_iters=5000)
+	function FloodSelect(area, max_iters=10000)
 	{
 		if (!(area instanceof CTFNavArea)) return;
 
@@ -45,7 +49,7 @@ IncludeScript("potatozi/misc.nut")
 	},
 
 	// Simple Breadth First Search with multiple start points
-	function MultiFloodSelect(areas, max_iters=5000)
+	function MultiFloodSelect(areas, max_iters=10000)
 	{
 		local data = {};
 		foreach (area in areas)
@@ -100,7 +104,7 @@ IncludeScript("potatozi/misc.nut")
 
 		return reached;
 	},
-
+	
 	function GetRandomArea(areas, spawnpoint=false)
 	{
 		local max_iters = 50;
@@ -121,15 +125,15 @@ IncludeScript("potatozi/misc.nut")
 				// Islands store areas as {area=null},
 				// but NavMesh methods store as {"area<num>"=area}
 				local a = (k instanceof CTFNavArea) ? k : v;
-
+				
 				if (!spawnpoint)
 					return a;
 				else
 				{
 					local center = a.GetCenter();
 					local trace = {
-						start   = center,
-						end     = center + Vector(0, 0, 128),
+						start   = center + Vector(0, 0, 24),
+						end     = center + Vector(0, 0, 106),
 						hullmin = Vector(-32, -32, 0),
 						hullmax = Vector(32, 32, 0),
 						mask    = 33636363 // MASK_PLAYERSOLID
@@ -142,8 +146,122 @@ IncludeScript("potatozi/misc.nut")
 				}
 			}
 		}
-	}
+	},
+	// Look for nav mesh islands and generate 3 areas within each
+	// VERY EXPENSIVE, use only on first teamplay_round_start
+	function GenerateIslandAreas()
+	{
+		if (!ALL_AREAS.len()) return;
+
+		// Keep track of these so we can use them for getting the areas later
+		// { island : {team : []} }
+		local island_spawnpoints = {};
+		for (local ent = null; ent = FindByClassname(ent, "info_player_teamspawn");)
+		{
+			local area = NavMesh.GetNearestNavArea(ent.GetOrigin(), 128.0, false, true);
+			if (!area) continue;
+
+			local island = null;
+
+			// Is this area in another island?
+			local reached = false;
+			foreach (isl in PZI_NavMesh.ISLANDS)
+			{
+				if (area in isl)
+				{
+					island = isl;
+					reached = true;
+					break;
+				}
+			}
+
+			// Nope, create a new island
+			if (!reached)
+			{
+				island = PZI_NavMesh.FloodSelect(area);
+
+				// 25 is a quick and dirty arbitrary number to filter out islands that aren't big enough for gameplay
+				// in an efficient manner. Typically map islands will be in the thousands in length
+				// and iterating that many times just to tally up size is wastefully expensive
+				if (island && island.len() > 25)
+					PZI_NavMesh.ISLANDS.append(island);
+			}
+			
+			// Keep track of this spawn point's island and team
+			if (island)
+			{
+				if (!(island in island_spawnpoints))
+					island_spawnpoints[island] <- {[2]=[],[3]=[]};
+
+				local team = ent.GetTeam();
+				if (team == 2 || team == 3)
+					island_spawnpoints[island][team].append(ent);
+			}
+		}
+
+		// Generate areas within islands
+		foreach (island in PZI_NavMesh.ISLANDS)
+		{
+			if (!(island in island_spawnpoints)) continue; // This shouldn't happen but just incase
+			local spawns = island_spawnpoints[island];
+
+			PZI_NavMesh.ISLAND_AREAS[island] <- [];
+
+			// Grab a random spawn from each team
+			local redspawn  = null;
+			local bluespawn = null;
+			foreach (team, arr in spawns)
+			{
+				local i = RandomInt(0, arr.len() - 1);
+				if (team == 2)
+					redspawn = arr[i];
+				else
+					bluespawn = arr[i];
+			}
+			
+			// Get their areas
+			local redarea  = NavMesh.GetNearestNavArea(redspawn.GetOrigin(), 128.0, false, true);
+			local bluearea = NavMesh.GetNearestNavArea(bluespawn.GetOrigin(), 128.0, false, true);
+			
+			// Get an area somewhere inbetween
+			local vec  = bluearea.GetCenter() - redarea.GetCenter();
+			local dist = vec.Length() / 2; 
+			vec.Norm();
+			vec *= dist;
+			local pos = redarea.GetCenter() + vec;
+			
+			local middlearea = NavMesh.GetNearestNavArea(pos, 8192.0, false, true);
+			
+			// If the above failed then fallback to random nav areas in the island
+			local seedareas = [redarea, middlearea, bluearea];
+			foreach (i, area in seedareas)
+				if (!area)
+					seedareas[i] = PZI_NavMesh.GetRandomArea(island);
+
+			// Store the areas
+			local reached = PZI_NavMesh.MultiFloodSelect(seedareas);
+			foreach (area in seedareas)
+				PZI_NavMesh.ISLAND_AREAS[island].append(reached[area]);
+		}
+		
+		// Delete extra spawnpoints
+		foreach (island, spawns in island_spawnpoints)
+		{
+			foreach (team, arr in spawns)
+			{
+				if (arr.len() < 2) continue;
+				foreach (index, spawn in arr)
+				{
+					// Keep one
+					if (!index) continue;
+					
+					EntFireByHandle(spawn, "Kill", "", 0, null, null);
+				}
+			}
+		}
+		
+		// Used elsewhere to check if this function should be ran
+		PZI_NavMesh.IslandsParsed = true;
+	},
 };
 __CollectGameEventCallbacks(PZI_NavMesh);
-
-NavMesh.GetAllAreas(PZI_NavMesh.ALL_AREAS);

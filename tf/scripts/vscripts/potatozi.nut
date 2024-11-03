@@ -4,22 +4,28 @@
 			pick n random nav areas, reroll m times if too close to another area,
 
 	work on base logic
-		either teleport red when they spawn to the starting area,
-		or move the info_player_teamspawn to that position
-		suiciding as red does not put you on blue
-
-		players who join blue will spawn
-		a short distance away from red and facing where reds were spawned
-
-		red and blue players cannot damage each other during waiting for players
-
 		after waiting for players, we have setup time of 30s.
 		teams are balanced if necessary
-		players cannot switch teams
-		everyone is respawned to where they spawned in waiting for players,
+			in player_team check ratio of red to blue, swap players as necessary
+			cannot swap teams once in setup, joiners from unassigned will be delegated
+			appropriately
+			
+			players can change teams freely in waiting for players
+			otherwise in setup, any player_team event will reject team changes,
+			if the from team is unassigned, find a spot for them and change to that team
+			reevaluate teams when a player leaves (again player_team with param disconnect)
+			while the round is active, we dont balance teams
+			if all of one team leaves then the other team wins
+			store the number of blue players when setup ends
+			if people leave on blue, give blue players buffs to compensate
+			if a person joins while the round is active, if blue is below the starting,
+			send them to blue, if not put them in spectator
+
 		resource caches are highlighted and red gets some annotations explaining their use,
 		also annotations explaining to distance from large groups of players
 
+		once setup ends
+		joining will put you in spectator
 		dying on red will change your team to blue
 		zombie respawn time is based on timer value,
 			starting at 6 seconds, every 2.5 min reduce respawn time by 1 second,
@@ -70,7 +76,6 @@ local TCP_MASTER    = null;
 local SKY_CAMERA    = null;
 local NAV_INTERFACE = null;
 
-local player_info    = {};
 local global_fog     = null;
 local global_cc      = null;
 local global_timer   = null;
@@ -95,6 +100,65 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 ];
 
 ::PZI <- {
+	Players = {},
+	InSetup   = true,
+	ZombieRatio = 0.2,
+	
+	// Balance teams with all players, or find a spot for player provided in args
+	// todo pick random players instead of based on index
+	function BalanceTeams(player=null)
+	{
+		// Sort into team tables
+		local red   = [];
+		local blue  = [];
+		foreach (p, n in Players)
+		{
+			if (!p) continue;
+			
+			local team = p.GetTeam();
+			if (team == 2)
+				red.append(p);
+			else if (team == 3)
+				blue.append(p);
+		}
+
+		local total = red.len() + blue.len();
+		if (total > 1)
+		{
+			local target_blue_count = ceil(total * ZombieRatio);
+			if (blue.len() != target_blue_count)
+			{
+				local iters = target_blue_count - blue.len();
+				local table = (iters > 0) ? red : blue;
+				iters = abs(iters);
+				
+				if (player)
+					player.ForceChangeTeam((table == red) ? 3 : 2, false);
+				else
+					for (local i = 0; i < iters; ++i)
+						table[i].ForceChangeTeam((table == red) ? 3 : 2, false);
+			}
+			
+			foreach (p, n in Players)
+			{
+				// Don't force unassigned to stay unassigned
+				if (!p.GetTeam()) continue;
+
+				p.ValidateScriptScope();
+				local scope = p.GetScriptScope();
+				scope.assigned_team <- p.GetTeam();
+			}
+		}
+		else if (player)
+		{
+			player.ForceChangeTeam(2, false);
+			
+			player.ValidateScriptScope();
+			local scope = player.GetScriptScope();
+			scope.assigned_team <- player.GetTeam();
+		}
+	},
+
 	function HandleMapSpawn()
 	{
 		TF_GAMERULES  = FindByClassname(null, "tf_gamerules");
@@ -114,9 +178,15 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 		Convars.SetValue("mp_scrambleteams_auto", 0);
 		Convars.SetValue("mp_teams_unbalance_limit", 0);
 		//Convars.SetValue("mp_forceautoteam", 2);
-		//Convars.SetValue("mp_respawnwavetime", 6);
 		//mp_humans_must_join_team red (see if we're still able to force switch teams)
 		Convars.SetValue("mp_tournament", 0);
+		
+		// Infinite respawn, we handle this manually
+		/*
+		Convars.SetValue("mp_respawnwavetime", 99999);
+		TF_GAMERULES.AcceptInput("SetRedTeamRespawnWaveTime", "99999", null, null);
+		TF_GAMERULES.AcceptInput("SetBlueTeamRespawnWaveTime", "99999", null, null);
+		*/
 
 		local gmprops = [
 			"m_bIsInTraining", "m_bIsWaitingForTrainingContinue", "m_bIsTrainingHUDVisible",
@@ -217,141 +287,69 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 			SKY_CAMERA.KeyValueFromString("fogcolor", "77 82 71");
 			SKY_CAMERA.KeyValueFromInt("fogblend", 0);
 		}
-
-		// Look for nav mesh islands
-		// (Disconnected pieces of the nav mesh, think of multi area maps like Thundermountain)
-		if (!PZI_NavMesh.IslandsParsed && PZI_NavMesh.ALL_AREAS.len())
-		{
-			local island_spawnpoints = {};
-			for (local ent = null; ent = FindByClassname(ent, "info_player_teamspawn");)
-			{
-				// todo document which spawns belong to which islands in a table
-				local area = NavMesh.GetNearestNavArea(ent.GetOrigin(), 128.0, false, true);
-				if (area)
-				{
-					local island = null;
-
-					// Is this area in another island?
-					local reached = false;
-					foreach (isl in PZI_NavMesh.ISLANDS)
-					{
-						if (area in isl)
-						{
-							island = isl;
-							reached = true;
-							break;
-						}
-					}
-
-					// Nope, create a new island
-					if (!reached)
-					{
-						island = PZI_NavMesh.FloodSelect(area);
-
-						// 25 is a quick and dirty arbitrary number to filter out islands that aren't big enough for gameplay
-						// in an efficient manner. Typically map islands will be in the thousands in length
-						// and iterating that many times just to tally up size is wastefully expensive
-						if (island && island.len() > 25)
-							PZI_NavMesh.ISLANDS.append(island);
-					}
-					if (island)
-					{
-						if (!(island in island_spawnpoints))
-							island_spawnpoints[island] <- {[2]=[],[3]=[]};
-
-						local team = ent.GetTeam();
-						if (team == 2 || team == 3)
-							island_spawnpoints[island][team].append(ent);
-					}
-				}
-			}
-			PZI_NavMesh.IslandsParsed = true;
-
-			// Generate areas within islands
-			foreach (island in PZI_NavMesh.ISLANDS)
-			{
-				foreach (isl, spawns in island_spawnpoints)
-				{
-					if (island != isl) continue;
-					
-					PZI_NavMesh.ISLAND_AREAS[island] <- [];
-
-					// Grab a random spawn for each team
-					local redspawn  = null;
-					local bluespawn = null;
-					foreach (team, arr in spawns)
-					{
-						local i = RandomInt(0, arr.len() - 1);
-						if (team == 2)
-							redspawn = arr[i];
-						else
-							bluespawn = arr[i];
-					}
-					
-					// Get their areas
-					local redarea  = NavMesh.GetNearestNavArea(redspawn.GetOrigin(), 128.0, false, true);
-					local bluearea = NavMesh.GetNearestNavArea(bluespawn.GetOrigin(), 128.0, false, true);
-					
-					// Get an area somewhere inbetween
-					local vec  = bluearea.GetCenter() - redarea.GetCenter();
-					local dist = vec.Length() / 2; 
-					vec.Norm();
-					vec *= dist;
-					local pos = redarea.GetCenter() + vec;
-					
-					local middlearea = NavMesh.GetNearestNavArea(pos, 8192.0, false, true);
-					
-					// If the above failed then fallback to random nav areas in the island
-					local seedareas = [redarea, middlearea, bluearea];
-					foreach (i, area in seedareas)
-						if (!area)
-							seedareas[i] = PZI_NavMesh.GetRandomArea(island);
-
-					// Store the areas
-					local reached = PZI_NavMesh.MultiFloodSelect(seedareas);
-					foreach (area in seedareas)
-						PZI_NavMesh.ISLAND_AREAS[island].append(reached[area]);
-				}
-			}
-		}
 		
-		// debug view
-		/*
-		foreach (island, areas in PZI_NavMesh.ISLAND_AREAS)
-		{
-			foreach (area in areas)
-			{
-				local r = RandomInt(0, 255);
-				local g = RandomInt(0, 255);
-				local b = RandomInt(0, 255);
-				foreach (a, n in area)
-				{
-					a.DebugDrawFilled(r,g,b, 255, 30, false, 0);
-				}
-			}
-		}
-		*/
+		// Grab nav mesh
+		if (!PZI_NavMesh.ALL_AREAS.len())
+			NavMesh.GetAllAreas(PZI_NavMesh.ALL_AREAS);
 		
-		// testing
+		// Generate nav islands and sub areas within
+		if (!PZI_NavMesh.IslandsParsed)
+			PZI_NavMesh.GenerateIslandAreas();
+		
+		// Pick a random island, area, and nav area to start with
 		if (PZI_NavMesh.ISLANDS.len())
 		{
-			// Generate resource caches
-			// remove old ones by name
-			// pick a random island to work in
-			// generate with random areas
+			// Island
 			local index = RandomInt(0, PZI_NavMesh.ISLANDS.len() - 1);
 			local island = PZI_NavMesh.ISLANDS[index];
+			PZI_NavMesh.ActiveIsland = island;
 			
+			// Area
+			index = RandomInt(0, PZI_NavMesh.ISLAND_AREAS[island].len() - 1);
+			local isl_area = PZI_NavMesh.ISLAND_AREAS[island][index];
+			PZI_NavMesh.ActiveArea = isl_area;
+			
+			// Nav area (RED spawn)
+			local area_red = PZI_NavMesh.GetRandomArea(isl_area, true);
+			PZI_NavMesh.AreaSpawnRed = area_red;
+			
+			// Nav area (BLU spawn)
+			local area_blue    = null;
+			local longest_dist = 0;
+			for (local i = 0; i < 20; ++i)
+			{
+				local a = PZI_NavMesh.GetRandomArea(isl_area, true);
+				local dist = (area_red.GetCenter() - a.GetCenter()).Length();
+				if (dist > longest_dist)
+				{
+					area_blue    = a;
+					longest_dist = dist;
+				}
+				
+				if (dist > 2048.0)
+					break;
+			}
+			PZI_NavMesh.AreaSpawnBlue = area_blue;
+
+			area_red.DebugDrawFilled(255, 50, 0, 255, 5, true, 0);
+			area_blue.DebugDrawFilled(50, 50, 200, 255, 5, true, 0);
+			
+			// Kill old resource caches
 			for (local ent = null; ent = FindByName(ent, "__potatozi_resource_cache*");)
 				ent.AcceptInput("Kill", "", null, null);
 			
+			// How many we create is based on the size of the island
 			local count = ceil(island.len() / 100.0);
-			printl(count);
+
 			// todo need to store these to associate them with areas
+			// todo check distance to make sure we arent spawning too close / on same area
+			// todo add size check if we might be blocking a doorway?
+			// todo also dont choose near spawn point
+			// Spawn resource caches across the island
 			for (local i = 0; i < count; ++i)
 			{
 				local area = PZI_NavMesh.GetRandomArea(island, true);
-				area.DebugDrawFilled(50, 200, 0, 255, 10, true, 0);
+				area.DebugDrawFilled(50, 200, 0, 255, 5, true, 0);
 				
 				SpawnEntityFromTable("prop_dynamic", {
 					targetname = format("__potatozi_resource_cache%d", i),
@@ -361,35 +359,26 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 				});
 			}
 		}
+		
+		BalanceTeams();
 
-		foreach (player, info in player_info)
+		foreach (player, n in Players)
 		{
 			if (!player) continue;
-			
-			// testing
-			/*
-			local center = area.GetCenter();
-			center.z += 24;
-			player.KeyValueFromVector("origin", center);
-			
-			local ang = PZI_Misc.VectorAngles(PZI_Misc.GetWorldCenter() - player.EyePosition());
-			ang.x = 0;
-			player.SnapEyeAngles(ang);
-			
-			player.SetAbsVelocity(Vector())
-			*/
 
 			player.ValidateScriptScope();
 			local scope = player.GetScriptScope();
 
+			scope.assigned_team <- null;
+
 			// Maps like to use this input and it fucks with our fog
+			// todo put this in a function since we need to also do it on player activate
+			// also put it at the bottom of the script for late load
 			scope.InputSetFogController <- function() {
 				if (caller != global_fog)
 					return false;
 			};
 			scope.Inputsetfogcontroller <- scope.InputSetFogController;
-
-			player.AcceptInput("SetFogController", "__potatozi_fog", global_fog, global_fog);
 
 			if (SKY_CAMERA)
 			{
@@ -400,6 +389,8 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 				SetPropInt(player, "m_Local.m_skybox3d.fog.colorPrimary", 5067335)
 				SetPropBool(player, "m_Local.m_skybox3d.fog.blend", false)
 			}
+			
+			player.ForceRespawn();
 		}
 
 		// Commit mass murder
@@ -441,43 +432,199 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 			switch_teams    = false,
 			TeamNum         = 2,
 		});
+		
+		global_win_blu = SpawnEntityFromTable("game_round_win", {
+			targetname      = "__potatozi_win_blu",
+			force_map_reset = 1,
+			switch_teams    = false,
+			TeamNum         = 3,
+		});
 	},
 
 	function OnGameEvent_player_activate(params)
 	{
 		local player = GetPlayerFromUserID(params.userid);
-		if (!player || player.IsBotOfType(1337)) return;
+		if (!player) return;
 
-		player_info[player] <- {};
+		Players[player] <- null;
 	},
 	function OnGameEvent_player_disconnect(params)
 	{
-		if (params.bot) return;
 		local player = GetPlayerFromUserID(params.userid);
 		if (!player) return;
 
-		if (player in player_info)
-			delete player_info[player];
+		if (player in Players)
+			delete Players[player];
+	},
+	
+	function OnGameEvent_player_team(params)
+	{
+		if (InSetup) return;
+		
+		// While round is active:
+		
+		local player = GetPlayerFromUserID(params.userid);
+		if (!player) return;
+
+		player.ValidateScriptScope();
+		local scope = player.GetScriptScope();
+		
+		// Unassigned gets sent to spectator
+		if (!params.oldteam)
+			scope.assigned_team <- 1;
+		// Red team can join spectator / blue mid round if they want
+		else if (params.oldteam == 2)
+			return;
+
+		if ("assigned_team" in scope)
+			if (scope.assigned_team != params.team)
+				EntFireByHandle(player, "RunScriptCode", "self.ForceChangeTeam(assigned_team, false); self.ForceRespawn()", 0.015, null, null);
+	},
+	
+	function OnGameEvent_player_spawn(params)
+	{
+		local player = GetPlayerFromUserID(params.userid);
+		if (!player) return;
+
+		// Teleport to spawn points
+		local area = null;
+		local team = player.GetTeam();
+		if (team == 2) area = PZI_NavMesh.AreaSpawnRed;
+		else if (team == 3) area = PZI_NavMesh.AreaSpawnBlue;
+		if (area)
+		{
+			local center = area.GetCenter();
+			center.z += 24;
+
+			player.KeyValueFromVector("origin", center);
+			player.SetAbsVelocity(Vector());
+			
+			// Face center of world
+			local ang = PZI_Misc.VectorAngles(PZI_Misc.GetWorldCenter() - player.EyePosition());
+			ang.x = 0;
+			player.SnapEyeAngles(ang);
+		}
 	},
 
 	function OnGameEvent_post_inventory_application(params)
 	{
 		local player = GetPlayerFromUserID(params.userid);
-		if (!player || player.IsBotOfType(1337)) return;
+		if (!player) return;
+		
+		player.ValidateScriptScope();
+		local scope = player.GetScriptScope();
 
 		player.AcceptInput("SetFogController", "__potatozi_fog", global_fog, global_fog);
+		
+		// todo after winning a round spawning as red from blue makes you not have your weapons
+		local team  = player.GetTeam();
+		local melee = null;
+		for (local child = player.FirstMoveChild(); child != null; child = child.NextMovePeer())
+		{
+			if (child instanceof CBaseCombatWeapon && child.GetSlot() == 2) melee = child;
+
+			if (!child || !child.IsValid()) continue;
+			if (child.GetClassname() == "tf_viewmodel") continue;
+			if (team == 2 && child instanceof CBaseCombatWeapon) continue;
+			if (team == 3 && child == melee) continue;
+			
+			EntFireByHandle(child, "Kill", "", 0, null, null);
+		}
+		
+		if (team == 3 && melee)
+			player.Weapon_Switch(melee);
+	},
+	
+	function OnGameEvent_player_death(params)
+	{
+		local player = GetPlayerFromUserID(params.userid);
+		if (!player) return;
+		
+		player.ValidateScriptScope();
+		local scope = player.GetScriptScope();
+		
+		local team = player.GetTeam();
+		if (!InSetup && team == 2)
+		{
+			scope.assigned_team <- 3;
+			EntFireByHandle(player, "RunScriptCode", "self.ForceChangeTeam(3, false);", 0.015, null, null);
+		}
+	},
+	
+	function OnGameEvent_teamplay_setup_finished(params)
+	{
+		InSetup = false;
+
+		BalanceTeams();
+		foreach (player, n in Players)
+			player.ForceRespawn();
 	},
 
 	function OnGameEvent_teamplay_round_start(params)
 	{
+		InSetup = true;
 		HandleMapSpawn();
+	},
+	
+	function OnScriptHook_OnTakeDamage(params)
+	{
+		if (InSetup)
+		{
+			params.damage = 0;
+			params.early_out = true;
+			return;
+		}
 	},
 };
 __CollectGameEventCallbacks(PZI);
 
 local script_entity = FindByName(null, "__potatozi_entity");
 if (!script_entity)
-	script_entity = SpawnEntityFromTable("info_teleport_destination", {targetname="__potatozi_entity"});
+	script_entity = SpawnEntityFromTable("move_rope", {targetname="__potatozi_entity"});
+
+script_entity.ValidateScriptScope();
+local script_entity_scope = script_entity.GetScriptScope();
+
+script_entity_scope.Think <- function() {
+	local tickcount = Time() / 0.015;
+	
+	// Pause the setup timer if there's only one person
+	if (PZI.InSetup)
+	{
+		if (global_timer)
+		{
+			local paused = GetPropBool(global_timer, "m_bTimerPaused");
+			if (PZI.Players.len() < 2 && !paused)
+				global_timer.AcceptInput("Pause", "", null, null);
+			else if (PZI.Players.len() > 1 && paused)
+				global_timer.AcceptInput("Resume", "", null, null);
+		}
+	}
+	else
+	{
+		if (tickcount % 11 == 0)
+		{
+			local reds_dead = true;
+			foreach (player, n in PZI.Players)
+			{
+				if (player.GetTeam() == 2)
+				{
+					reds_dead = false;
+					break;
+				}
+			}
+			
+			if (reds_dead)
+				global_win_blu.AcceptInput("RoundWin", "", null, null);
+		}
+	}
+
+	return -1;
+};
+AddThinkToEnt(script_entity, "Think");
+
+script_entity_scope.InputKill <- function() { if (caller != script_entity) return false };
+script_entity_scope.Inputkill <- script_entity_scope.InputKill;
 
 // Late load
 if (TF_GAMERULES)
@@ -485,9 +632,10 @@ if (TF_GAMERULES)
 	for (local i = 1; i <= MAXPLAYERS; ++i)
 	{
 		local player = PlayerInstanceFromIndex(i);
-		if (!player || player.IsBotOfType(1337)) continue;
+		if (!player) continue;
 		
-		player_info[player] <- {};
+		PZI.Players[player] <- {};
+		player.ValidateScriptScope();
 	}
 	PZI.HandleMapSpawn();
 }
