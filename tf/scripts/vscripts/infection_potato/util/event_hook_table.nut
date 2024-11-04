@@ -30,14 +30,14 @@
 
         foreach (event, event_table in ZI_EventHooks.Events)
         {
-            local call_order = array(event_table.len() - 1)
+            local call_order = array(event_table.len())
 
             foreach (index, func_table in event_table)
                 if (index != "unordered")
                     call_order[index] = func_table
 
             if ("unordered" in event_table)
-                call_order.append(event_table["unordered"])
+                call_order[call_order.len() - 1] = (event_table["unordered"])
 
             local event_string = event == "OnTakeDamage" ? "OnScriptHook_" : "OnGameEvent_"
 
@@ -53,22 +53,22 @@
     }
 }
 
-ZI_EventHooks.AddRemoveEventHook("player_death", "FuncNameHereA", function(params) {
-    printl(params.userid + " died")
-}, 0)
-ZI_EventHooks.AddRemoveEventHook("player_death", "FuncNameHereB", function(params) {
-    printl(params.userid + " died")
-}, 0)
-ZI_EventHooks.AddRemoveEventHook("player_death", "FuncNameHere1", function(params) {
-    printl(params.userid + " died2")
-}, 1)
-ZI_EventHooks.AddRemoveEventHook("player_death", "FuncNameHere2", function(params) {
-    printl(params.userid + " died3")
-}, 2)
-ZI_EventHooks.AddRemoveEventHook("player_death", "FuncNameHere3", function(params) {
-    printl(params.userid + " died4")
-}, 3)
-ZI_EventHooks.AddRemoveEventHook("player_death", "FuncNameHere4", function(params) {
-    printl(params.userid + " died5")
-})
+// ZI_EventHooks.AddRemoveEventHook("player_death", "FuncNameHereA", function(params) {
+//     printl(params.userid + " died")
+// }, 0)
+// ZI_EventHooks.AddRemoveEventHook("player_death", "FuncNameHereB", function(params) {
+//     printl(params.userid + " died")
+// }, 0)
+// ZI_EventHooks.AddRemoveEventHook("player_death", "FuncNameHere1", function(params) {
+//     printl(params.userid + " died2")
+// }, 1)
+// ZI_EventHooks.AddRemoveEventHook("player_death", "FuncNameHere2", function(params) {
+//     printl(params.userid + " died3")
+// }, 2)
+// ZI_EventHooks.AddRemoveEventHook("player_death", "FuncNameHere3", function(params) {
+//     printl(params.userid + " died4")
+// }, 3)
+// ZI_EventHooks.AddRemoveEventHook("player_death", "FuncNameHere4", function(params) {
+//     printl(params.userid + " died5")
+// })
 

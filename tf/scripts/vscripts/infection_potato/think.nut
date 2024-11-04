@@ -206,7 +206,7 @@
 
                 _hTooltip.KeyValueFromString( "message", _szAbilityTooltip );
 
-                EntFireByHandle     ( _hTooltip,  "Display", "", 0.0, self, self );
+                EntFireByHandle     ( _hTooltip,  "Display", "", -1, self, self );
                 EntFireByHandle     ( _hTooltip,  "Kill", "", 15.5, self, self );
 
                 // removed with new spawn mechanic
@@ -332,8 +332,8 @@
                     self.SetScriptOverlayMaterial( _szAbilityIconPath );
                     m_bZombieHUDInitialized  = self.InitializeZombieHUD();
 
-                    EntFireByHandle( m_hHUDText, "Display", "", 0.0, self, self );
-                    EntFireByHandle( m_hHUDTextAbilityName,  "Display", "", 0.0, self, self );
+                    EntFireByHandle( m_hHUDText, "Display", "", -1, self, self );
+                    EntFireByHandle( m_hHUDTextAbilityName,  "Display", "", -1, self, self );
                 };
 
                 if ( m_iCurrentAbilityType == ZABILITY_PASSIVE )
@@ -343,8 +343,8 @@
                         m_hHUDText.KeyValueFromString            ( "message", STRING_UI_PASSIVE );
                         m_hHUDTextAbilityName.KeyValueFromString ( "message", m_hZombieAbility.m_szAbilityName );
 
-                        EntFireByHandle      ( m_hHUDText, "Display", "", 0.0, self, self );
-                        EntFireByHandle      ( m_hHUDTextAbilityName, "Display", "", 0.0, self, self );
+                        EntFireByHandle      ( m_hHUDText, "Display", "", -1, self, self );
+                        EntFireByHandle      ( m_hHUDTextAbilityName, "Display", "", -1, self, self );
                         self.SetNextActTime  ( ZOMBIE_CAN_CLIENTPRINT, 1 );
 
                         m_hHUDText.KeyValueFromString            ( "x", ( ZHUD_X_POS + 0.015 ).tostring() );
@@ -370,7 +370,7 @@
                         self.SetScriptOverlayMaterial( _szAbilityIconPath );
                         m_bZombieHUDInitialized  = self.InitializeZombieHUD();
 
-                        EntFireByHandle( m_hHUDText, "Display", "", 0.0, self, self );
+                        EntFireByHandle( m_hHUDText, "Display", "", -1, self, self );
                     };
 
                     if ( !_bCanCast || _bCanCast && m_szCurrentHUDString != STRING_UI_READY )
@@ -391,16 +391,16 @@
                             m_hHUDTextAbilityName.KeyValueFromString ( "message", m_hZombieAbility.m_szAbilityName );
                             m_hHUDTextAbilityName.KeyValueFromString ( "x", ( ZHUD_X_POS + arrHUDTextClassXOffsets[ _iClassnum ] ).tostring() );
                             m_hHUDTextAbilityName.KeyValueFromString ( "y", ( ZHUD_Y_POS - arrHUDTextClassYOffsets[ _iClassnum ] ).tostring() );
-                            EntFireByHandle ( m_hHUDTextAbilityName, "Display", "", 0.0, self, self );
-                            EntFireByHandle ( m_hHUDText,  "Display", "", 0.0, self, self );
+                            EntFireByHandle ( m_hHUDTextAbilityName, "Display", "", -1, self, self );
+                            EntFireByHandle ( m_hHUDText,  "Display", "", -1, self, self );
                         }
                         else
                         {
                             m_hHUDTextAbilityName.KeyValueFromString ( "message", "" );
                             m_hHUDText.KeyValueFromString ( "x", ZHUD_X_POS.tostring() );
                             m_hHUDText.KeyValueFromString ( "y", ZHUD_Y_POS.tostring() );
-                            EntFireByHandle ( m_hHUDTextAbilityName, "Display", "", 0.0, self, self );
-                            EntFireByHandle ( m_hHUDText,  "Display", "", 0.0, self, self );
+                            EntFireByHandle ( m_hHUDTextAbilityName, "Display", "", -1, self, self );
+                            EntFireByHandle ( m_hHUDText,  "Display", "", -1, self, self );
                         };
                     };
                 };

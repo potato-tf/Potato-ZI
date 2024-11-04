@@ -38,9 +38,9 @@ foreach(k, v in ::NavMesh.getclass())
 	if (k != "IsValid" && !(k in ROOT))
 		ROOT[k] <- ::NavMesh[k].bindenv(::NavMesh)
 
-if ("SpawnAnywhere" in ROOT) delete ::SpawnAnywhere
+if ("ZI_SpawnAnywhere" in ROOT) delete ::ZI_SpawnAnywhere
 
-::SpawnAnywhere <- {
+::ZI_SpawnAnywhere <- {
 
     // Convert 3D world coordinates to 2D screen coordinates
     function worldToScreenCoords(objectPos, cameraPos, cameraForward, cameraRight, cameraUp, fovDegrees = 90.0) {
@@ -107,8 +107,6 @@ if ("SpawnAnywhere" in ROOT) delete ::SpawnAnywhere
         }
     }
     function SetGhostMode(player) {
-
-        if (player.GetTeam() != TF_TEAM_BLUE) return
 
         player.GiveZombieCosmetics()
 
@@ -253,202 +251,197 @@ if ("SpawnAnywhere" in ROOT) delete ::SpawnAnywhere
         SetPropInt(dummy_player, "m_fEffects", EF_BONEMERGE|EF_BONEMERGE_FASTCULL)
         dummy_player.DispatchSpawn()
     }
-
-    Events = {
-
-        function OnGameEvent_player_activate(params) { GetPlayerFromUserID(params.userid).ValidateScriptScope() }
-
-        function OnGameEvent_post_inventory_application(params) {
-
-            local player = GetPlayerFromUserID(params.userid)
-
-            if (player == null || !player.IsValid()) return
-
-            player.ValidateScriptScope() //temporary solo testing
-            local scope = player.GetScriptScope()
-
-            PlayerThink <- ::PlayerThink
-            PlayerThink <- PlayerThink.bindenv(scope)
-
-            local items = {
-                tracepos = Vector()
-
-                ThinkTable = {
-                    // "PlayerThink" : PlayerThink
-                }
-
-                spawn_nests = []
-
-                spawn_area = null
-            }
-
-            foreach(k, v in items)
-                scope[k] <- v
-
-            SetPropInt(player, "m_nRenderMode", kRenderNormal)
-            SetPropInt(player, "m_clrRender", 0xFFFFFFFF)
-
-            //GHOST MODE LOGIC BEYOND THIS POINT
-            if (player.GetTeam() != TF_TEAM_BLUE) return
-
-            SpawnAnywhere.SetGhostMode(player)
-
-            local hint_teleporter_name = format("spawn_hint_teleporter_%d", player.entindex())
-
-            //don't need this for now
-            // local spawn_hint_teleporter = CreateByClassname("obj_teleporter")
-            // spawn_hint_teleporter.KeyValueFromString("targetname", hint_teleporter_name)
-
-            // spawn_hint_teleporter.DispatchSpawn()
-            // spawn_hint_teleporter.AddEFlags(EFL_NO_THINK_FUNCTION)
-
-            // spawn_hint_teleporter.SetSolid(SOLID_NONE)
-            // spawn_hint_teleporter.SetSolidFlags(FSOLID_NOT_SOLID)
-            // spawn_hint_teleporter.DisableDraw()
-
-            // // spawn_hint_teleporter.SetModel("models/player/heavy.mdl")
-            // SetPropBool(spawn_hint_teleporter, "m_bPlacing", true)
-            // SetPropInt(spawn_hint_teleporter, "m_fObjectFlags", 2)
-            // SetPropEntity(spawn_hint_teleporter, "m_hBuilder", player)
-
-            // // SetPropString(spawn_hint_teleporter, "m_iClassname", "__no_distance_text_hack")
-            // spawn_hint_teleporter.KeyValueFromString("classname", "__no_distance_text_hack")
-
-            local spawn_hint_teleporter = CreateByClassname("move_rope")
-            spawn_hint_teleporter.KeyValueFromString("targetname", hint_teleporter_name)
-            spawn_hint_teleporter.DispatchSpawn()
-
-
-            spawn_hint_teleporter = FindByName(null, hint_teleporter_name)
-
-            local spawn_hint_text = CreateByClassname("point_worldtext")
-
-            // spawn_hint_text.KeyValueFromString("targetname", format("spawn_hint_text%d", player.entindex()))
-            // spawn_hint_text.KeyValueFromString("message", "Press[Attack] to spawn")
-            // spawn_hint_text.KeyValueFromString("color", "0 0 255 255")
-            // spawn_hint_text.KeyValueFromString("orientation", "1")
-            // spawn_hint_text.AcceptInput("SetParent", "!activator", spawn_hint_teleporter, spawn_hint_teleporter)
-            // spawn_hint_text.DispatchSpawn()
-
-            EntFireByHandle(spawn_hint_teleporter, "RunScriptCode", format(@"
-                SendGlobalGameEvent(`show_annotation`, {
-                    text = `Spawn Here!`
-                    lifetime = -1
-                    show_distance = true
-                    visibilityBitfield = 1 << %d
-                    follow_entindex = self.entindex()
-                    worldposX = self.GetOrigin().x
-                    worldposY = self.GetOrigin().y
-                    worldposZ = self.GetOrigin().z
-                    id = self.entindex()
-                })
-            ", player.entindex()), 0.5, null, null)
-
-            scope.ThinkTable.GetValidSpawnPoint <- function() {
-
-                local nav_trace = {
-
-                    start = player.EyePosition(),
-                    end = (player.EyeAngles().Forward() * 65536),
-                    mask = CONST.TRACEMASK,
-                    ignore = player
-                }
-
-                TraceLineEx(nav_trace)
-
-                if (!nav_trace.hit) return
-
-                scope.tracepos <- nav_trace.pos
-
-                local nav_area = GetNearestNavArea(scope.tracepos, NEAREST_NAV_RADIUS, false, true)
-
-                local hull_trace = {
-                    start = nav_trace.pos,
-                    end = nav_trace.pos,
-                    hullmin = Vector(-24, -24, 20),
-                    hullmax = Vector(24, 24, 84),
-                    mask = CONST.TRACEMASK,
-                    ignore = player
-                }
-
-                TraceHull(hull_trace)
-
-                // DebugDrawBox(hull_trace.pos, hull_trace.hullmin, hull_trace.hullmax, 0, 0, 255, 0, 0.1)
-
-                //smooth movement for the annotation instead of snapping
-                // spawn_hint_teleporter.KeyValueFromVector("origin", hull_trace.pos + Vector(0, 0, 20))
-
-                if (hull_trace.hit)
-                {
-                    scope.spawn_area <- null
-                    return
-                }
-                if (!nav_area || !nav_area.IsFlat()) return
-
-                scope.spawn_area <- nav_area
-
-                spawn_hint_teleporter.KeyValueFromVector("origin", nav_area.GetCenter() + Vector(0, 0, 20))
-
-                // scope.spawn_area.DebugDrawFilled(255, 0, 0, 100, 0.1, false, 0.1)
-            }
-
-            scope.ThinkTable.SummonZombie <- function() {
-
-                local buttons = GetPropInt(player, "m_nButtons")
-
-                //NORMAL GROUND SPAWN
-                //left or right clicking when no nests are active
-                //right clicking will force this behavior instead of spawning at a nest
-                local trace_dist = ((player.GetOrigin() - scope.tracepos).Length2DSqr()) * 0.01
-                // printl(trace_dist)
-                if (
-                    scope.spawn_area &&
-                    trace_dist <= MAX_SPAWN_DISTANCE &&
-
-                    //force normal spawn if we are right clicking
-                    ((buttons & IN_ATTACK && !scope.spawn_nests.len()) ||
-                    (scope.spawn_nests.len() && (buttons & IN_ATTACK2)))
-                )
-                {
-                    SpawnAnywhere.BeginSummonSequence(player, scope.tracepos)
-                }
-
-                //NEST SPAWN
-                else if (buttons & IN_ATTACK && scope.spawn_nests.len())
-                {
-                    foreach(nest in scope.spawn_nests)
-                    {
-                        //find closest nest to RED team
-                        if (nest.GetOrigin())
-                        {
-                            SpawnAnywhere.BeginSummonSequence(player, nest.GetCenter())
-                            break
-                        }
-                    }
-                }
-
-                // player.SetOrigin(scope.spawn_area.GetCenter())
-            }
-
-            //add ZI thinks last
-            scope.ThinkTable.PlayerThink <- PlayerThink
-
-            scope.Think <- function() {
-
-                foreach(name, func in scope.ThinkTable)
-                    func.call(scope)
-                return -1
-            }
-            AddThinkToEnt(player, "Think")
-        }
-
-        function OnGameEvent_player_death(params) {
-
-            local player = GetPlayerFromUserID(params.userid)
-            player.RemoveFlag(CONST.FL_GHOST)
-            player.TerminateScriptScope()
-        }
-    }
 }
 
-__CollectGameEventCallbacks(SpawnAnywhere.Events)
+ZI_EventHooks.AddRemoveEventHook("player_activate", "PlayerActivate", function(params) { GetPlayerFromUserID(params.userid).ValidateScriptScope() }),
+
+ZI_EventHooks.AddRemoveEventHook("post_inventory_application", "PostInventoryApplication", function(params) {
+
+    local player = GetPlayerFromUserID(params.userid)
+
+    if (player == null || !player.IsValid()) return
+
+    player.ValidateScriptScope() //temporary solo testing
+    local scope = player.GetScriptScope()
+
+    PlayerThink <- ::PlayerThink
+    PlayerThink <- PlayerThink.bindenv(scope)
+
+    local items = {
+        tracepos = Vector()
+
+        ThinkTable = {
+            // "PlayerThink" : PlayerThink
+        }
+
+        spawn_nests = []
+
+        spawn_area = null
+    }
+
+    foreach(k, v in items)
+        scope[k] <- v
+
+    SetPropInt(player, "m_nRenderMode", kRenderNormal)
+    SetPropInt(player, "m_clrRender", 0xFFFFFFFF)
+
+    //GHOST MODE LOGIC BEYOND THIS POINT
+    if (player.GetTeam() != TF_TEAM_BLUE || GetRoundState() != GR_STATE_RND_RUNNING) return
+
+    ZI_SpawnAnywhere.SetGhostMode(player)
+
+    local hint_teleporter_name = format("spawn_hint_teleporter_%d", player.entindex())
+
+    //don't need this for now
+    // local spawn_hint_teleporter = CreateByClassname("obj_teleporter")
+    // spawn_hint_teleporter.KeyValueFromString("targetname", hint_teleporter_name)
+
+    // spawn_hint_teleporter.DispatchSpawn()
+    // spawn_hint_teleporter.AddEFlags(EFL_NO_THINK_FUNCTION)
+
+    // spawn_hint_teleporter.SetSolid(SOLID_NONE)
+    // spawn_hint_teleporter.SetSolidFlags(FSOLID_NOT_SOLID)
+    // spawn_hint_teleporter.DisableDraw()
+
+    // // spawn_hint_teleporter.SetModel("models/player/heavy.mdl")
+    // SetPropBool(spawn_hint_teleporter, "m_bPlacing", true)
+    // SetPropInt(spawn_hint_teleporter, "m_fObjectFlags", 2)
+    // SetPropEntity(spawn_hint_teleporter, "m_hBuilder", player)
+
+    // // SetPropString(spawn_hint_teleporter, "m_iClassname", "__no_distance_text_hack")
+    // spawn_hint_teleporter.KeyValueFromString("classname", "__no_distance_text_hack")
+
+    local spawn_hint_teleporter = CreateByClassname("move_rope")
+    spawn_hint_teleporter.KeyValueFromString("targetname", hint_teleporter_name)
+    spawn_hint_teleporter.DispatchSpawn()
+
+
+    spawn_hint_teleporter = FindByName(null, hint_teleporter_name)
+
+    local spawn_hint_text = CreateByClassname("point_worldtext")
+
+    // spawn_hint_text.KeyValueFromString("targetname", format("spawn_hint_text%d", player.entindex()))
+    // spawn_hint_text.KeyValueFromString("message", "Press[Attack] to spawn")
+    // spawn_hint_text.KeyValueFromString("color", "0 0 255 255")
+    // spawn_hint_text.KeyValueFromString("orientation", "1")
+    // spawn_hint_text.AcceptInput("SetParent", "!activator", spawn_hint_teleporter, spawn_hint_teleporter)
+    // spawn_hint_text.DispatchSpawn()
+
+    EntFireByHandle(spawn_hint_teleporter, "RunScriptCode", format(@"
+        SendGlobalGameEvent(`show_annotation`, {
+            text = `Spawn Here!`
+            lifetime = -1
+            show_distance = true
+            visibilityBitfield = 1 << %d
+            follow_entindex = self.entindex()
+            worldposX = self.GetOrigin().x
+            worldposY = self.GetOrigin().y
+            worldposZ = self.GetOrigin().z
+            id = self.entindex()
+        })
+    ", player.entindex()), 0.5, null, null)
+
+    scope.ThinkTable.GetValidSpawnPoint <- function() {
+
+        local nav_trace = {
+
+            start = player.EyePosition(),
+            end = (player.EyeAngles().Forward() * 65536),
+            mask = CONST.TRACEMASK,
+            ignore = player
+        }
+
+        TraceLineEx(nav_trace)
+
+        if (!nav_trace.hit) return
+
+        scope.tracepos <- nav_trace.pos
+
+        local nav_area = GetNearestNavArea(scope.tracepos, NEAREST_NAV_RADIUS, false, true)
+
+        local hull_trace = {
+            start = nav_trace.pos,
+            end = nav_trace.pos,
+            hullmin = Vector(-24, -24, 20),
+            hullmax = Vector(24, 24, 84),
+            mask = CONST.TRACEMASK,
+            ignore = player
+        }
+
+        TraceHull(hull_trace)
+
+        // DebugDrawBox(hull_trace.pos, hull_trace.hullmin, hull_trace.hullmax, 0, 0, 255, 0, 0.1)
+
+        //smooth movement for the annotation instead of snapping
+        // spawn_hint_teleporter.KeyValueFromVector("origin", hull_trace.pos + Vector(0, 0, 20))
+
+        if (hull_trace.hit)
+        {
+            scope.spawn_area <- null
+            return
+        }
+        if (!nav_area || !nav_area.IsFlat()) return
+
+        scope.spawn_area <- nav_area
+
+        spawn_hint_teleporter.KeyValueFromVector("origin", nav_area.GetCenter() + Vector(0, 0, 20))
+
+        // scope.spawn_area.DebugDrawFilled(255, 0, 0, 100, 0.1, false, 0.1)
+    }
+
+    scope.ThinkTable.SummonZombie <- function() {
+
+        local buttons = GetPropInt(player, "m_nButtons")
+
+        //NORMAL GROUND SPAWN
+        //left or right clicking when no nests are active
+        //right clicking will force this behavior instead of spawning at a nest
+        local trace_dist = ((player.GetOrigin() - scope.tracepos).Length2DSqr()) * 0.01
+        // printl(trace_dist)
+        if (
+            scope.spawn_area &&
+            trace_dist <= MAX_SPAWN_DISTANCE &&
+
+            //force normal spawn if we are right clicking
+            ((buttons & IN_ATTACK && !scope.spawn_nests.len()) ||
+            (scope.spawn_nests.len() && (buttons & IN_ATTACK2)))
+        )
+        {
+            ZI_SpawnAnywhere.BeginSummonSequence(player, scope.tracepos)
+        }
+
+        //NEST SPAWN
+        else if (buttons & IN_ATTACK && scope.spawn_nests.len())
+        {
+            foreach(nest in scope.spawn_nests)
+            {
+                //find closest nest to RED team
+                if (nest.GetOrigin())
+                {
+                    ZI_SpawnAnywhere.BeginSummonSequence(player, nest.GetCenter())
+                    break
+                }
+            }
+        }
+
+        // player.SetOrigin(scope.spawn_area.GetCenter())
+    }
+
+    //add ZI thinks last
+    scope.ThinkTable.PlayerThink <- PlayerThink
+
+    scope.Think <- function() {
+
+        foreach(name, func in scope.ThinkTable)
+            func.call(scope)
+        return -1
+    }
+    AddThinkToEnt(player, "Think")
+})
+
+ZI_EventHooks.AddRemoveEventHook("player_death", "PlayerDeath", function(params) {
+
+    local player = GetPlayerFromUserID(params.userid)
+    player.RemoveFlag(CONST.FL_GHOST)
+    player.TerminateScriptScope()
+})

@@ -542,6 +542,8 @@ CTFPlayer_GiveZombieAbility <- function()
 {
     local _sc = this.GetScriptScope();
 
+	if (!_sc) return
+
     _sc.m_hZombieAbility <- null;
     _sc.m_fTimeNextCast  <- 0.0;
 
@@ -617,6 +619,8 @@ CTFPlayer_GiveZombieCosmetics <- function()
 
     // local _sc = this.GetScriptScope();
 
+	// if (!_sc) return
+
     // if ( "m_hZombieWearable" in _sc && _sc.m_hZombieWearable != null && _sc.m_hZombieWearable.IsValid() )
     // _sc.m_hZombieWearable.Destroy();
 
@@ -643,13 +647,15 @@ CTFPlayer_GiveZombieCosmetics <- function()
     // _zombieCosmetic.SetOwner( this );
 
     // SetPropInt      ( _zombieCosmetic, "m_fEffects", ( EF_BONEMERGE ) );
-    // EntFireByHandle ( _zombieCosmetic, "SetParent",  "!activator", 0.0, this, this );
+    // EntFireByHandle ( _zombieCosmetic, "SetParent",  "!activator", -1, this, this );
 }
 
 
 CTFPlayer_GiveZombieFXWearable <- function()
 {
   // local _sc = this.GetScriptScope();
+
+	// if (!_sc) return
 
   // if ( _sc.m_hZombieFXWearable != null && _sc.m_hZombieFXWearable.IsValid() )
   //     _sc.m_hZombieFXWearable.Destroy();
@@ -670,7 +676,7 @@ CTFPlayer_GiveZombieFXWearable <- function()
   // _zombieFXWearable.SetOwner( this );
 
   // SetPropInt      ( _zombieFXWearable, "m_fEffects", ( EF_BONEMERGE | EF_BONEMERGE_FASTCULL ) );
-  // EntFireByHandle ( _zombieFXWearable, "SetParent", "!activator", 0.0, this, this );
+  // EntFireByHandle ( _zombieFXWearable, "SetParent", "!activator", -1, this, this );
 
   // _sc.m_hZombieFXWearable  <-  _zombieFXWearable;
     return;
@@ -685,6 +691,8 @@ CTFPlayer_ApplyOutOfCombat <- function()
 
     local _sc = this.GetScriptScope();
 
+	if (!_sc) return
+
     _sc.m_iFlags <- ( _sc.m_iFlags | ZBIT_OUT_OF_COMBAT );
 
     if ( this.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS || this.GetPlayerClass() == TF_CLASS_SCOUT )
@@ -697,6 +705,8 @@ CTFPlayer_ApplyOutOfCombat <- function()
 CTFPlayer_RemoveOutOfCombat <- function( _bForceCooldown = false )
 {
     local _sc = this.GetScriptScope();
+
+	if (!_sc) return
 
     if ( _bForceCooldown )
     {
@@ -726,6 +736,8 @@ CTFPlayer_RemoveAmmo <- function()
 CTFPlayer_GiveZombieWeapon <- function()
 {
     local _sc = this.GetScriptScope();
+
+	if (!_sc) return
 
     if ( _sc.m_hZombieWep != null && _sc.m_hZombieWep.IsValid() )
         _sc.m_hZombieWep.Destroy();
@@ -875,6 +887,8 @@ CTFPlayer_AbilityStateToString <- function()
 {
     local _sc = this.GetScriptScope();
 
+	if (!_sc) return
+
     if ( !IsPlayerAlive( this ) || _sc.m_fTimeNextCast == ACT_LOCKED )
         return "off.vtf";
 
@@ -896,6 +910,8 @@ CTFPlayer_AbilityStateToString <- function()
 CTFPlayer_BuildZombieHUDString <- function()
 {
     local _sc = this.GetScriptScope();
+
+	if (!_sc) return
 
     if ( _sc.m_hZombieAbility == null )
     {
@@ -977,6 +993,8 @@ CTFPlayer_ZombieInitialTooltip <- function()
 CTFPlayer_InitializeZombieHUD <- function()
 {
     local _sc = this.GetScriptScope();
+
+	if (!_sc) return
 
     local _hAbilityHUDText = SpawnEntityFromTable( "game_text",
     {
@@ -1104,6 +1122,8 @@ CTFPlayer_ProcessEventQueue <- function(  )
 {
     local _sc = this.GetScriptScope();
 
+	if (!_sc) return
+
     if ( _sc.m_tblEventQueue.len() == 0 )
         return;
 
@@ -1225,6 +1245,8 @@ CTFPlayer_RemoveEventFomQueue <- function( _event )
 {
     local _sc = this.GetScriptScope();
 
+	if (!_sc) return
+
     if ( _event == -1 )
     {
         _removedCount = _sc.m_tblEventQueue.len();
@@ -1268,6 +1290,8 @@ CTFPlayer_ResetInfectionVars <- function()
     };
 
     local _sc = this.GetScriptScope();
+
+	if (!_sc) return
 
     if ( ( "m_iUserConfigFlags" in _sc ) )
     {
@@ -1378,6 +1402,8 @@ CTFPlayer_HowLongUntilAct <- function( _iAct )
 {
     local _sc = this.GetScriptScope();
 
+	if (!_sc) return
+
     switch ( _iAct )
     {
         case ZOMBIE_ABILITY_CAST:
@@ -1430,6 +1456,8 @@ CTFPlayer_ClearProblematicConds <- function()
 CTFPlayer_SetNextActTime <- function( _iAct, _fTime )
 {
     local _sc = this.GetScriptScope();
+
+	if (!_sc) return
     local _nextTime = ( _fTime == ACT_LOCKED ? ACT_LOCKED : ( Time() + _fTime ).tofloat() );
 
     switch ( _iAct )
@@ -1502,6 +1530,8 @@ CTFPlayer_ClearZombieEntities <- function()
 {
     local _sc = this.GetScriptScope();
 
+	if (!_sc) return
+
     if ( "m_hZombieWep" in _sc && _sc.m_hZombieWep != null && _sc.m_hZombieWep.IsValid() )
         _sc.m_hZombieWep.Destroy();
 
@@ -1521,6 +1551,8 @@ CTFPlayer_AlreadyInSpit <-  function()
 {
     local _sc = this.GetScriptScope();
 
+	if (!_sc) return
+
     return _sc.m_bStandingOnSpit;
 }
 
@@ -1528,6 +1560,8 @@ CTFPlayer_GetLinkedSpitPoolEnt <- function()
 {
    // printl("Getting linked spit pool entity from player...")
     local _sc = this.GetScriptScope();
+
+	if (!_sc) return
 
     if ( !_sc.m_bStandingOnSpit )
         return null;
@@ -1542,6 +1576,8 @@ CTFPlayer_SetLinkedSpitPoolEnt <- function( _hSpitPool )
 {
     local _sc = this.GetScriptScope();
 
+	if (!_sc) return
+
     if ( _hSpitPool == null || !_hSpitPool.IsValid() )
         return;
 
@@ -1555,6 +1591,8 @@ CTFPlayer_SetLinkedSpitPoolEnt <- function( _hSpitPool )
 CTFPlayer_ClearSpitStatus <- function()
 {
     local _sc = this.GetScriptScope();
+
+	if (!_sc) return
 
    // printl("Clearing spit status for player...")
 
