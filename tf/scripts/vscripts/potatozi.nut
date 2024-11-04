@@ -1,37 +1,12 @@
 /*
-	generate areas and make resource caches functional
-		6. Generate spots for resource caches
-			pick n random nav areas, reroll m times if too close to another area,
-
 	work on base logic
-		after waiting for players, we have setup time of 30s.
-		teams are balanced if necessary
-			in player_team check ratio of red to blue, swap players as necessary
-			cannot swap teams once in setup, joiners from unassigned will be delegated
-			appropriately
-			
-			players can change teams freely in waiting for players
-			otherwise in setup, any player_team event will reject team changes,
-			if the from team is unassigned, find a spot for them and change to that team
-			reevaluate teams when a player leaves (again player_team with param disconnect)
-			while the round is active, we dont balance teams
-			if all of one team leaves then the other team wins
-			store the number of blue players when setup ends
-			if people leave on blue, give blue players buffs to compensate
-			if a person joins while the round is active, if blue is below the starting,
-			send them to blue, if not put them in spectator
-
 		resource caches are highlighted and red gets some annotations explaining their use,
 		also annotations explaining to distance from large groups of players
 
-		once setup ends
-		joining will put you in spectator
-		dying on red will change your team to blue
 		zombie respawn time is based on timer value,
 			starting at 6 seconds, every 2.5 min reduce respawn time by 1 second,
 			to a minimum of 2 seconds at 5 minutes left
 		every 5 minutes swap areas
-		make sure round win for either team resets the match properly
 
 	make the sickness debuff system
 		it is not active during setup or waiting for players
@@ -177,16 +152,8 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 		Convars.SetValue("mp_autoteambalance", 0);
 		Convars.SetValue("mp_scrambleteams_auto", 0);
 		Convars.SetValue("mp_teams_unbalance_limit", 0);
-		//Convars.SetValue("mp_forceautoteam", 2);
-		//mp_humans_must_join_team red (see if we're still able to force switch teams)
 		Convars.SetValue("mp_tournament", 0);
-		
-		// Infinite respawn, we handle this manually
-		/*
-		Convars.SetValue("mp_respawnwavetime", 99999);
-		TF_GAMERULES.AcceptInput("SetRedTeamRespawnWaveTime", "99999", null, null);
-		TF_GAMERULES.AcceptInput("SetBlueTeamRespawnWaveTime", "99999", null, null);
-		*/
+		Convars.SetValue("mp_disable_respawn_times", 1);
 
 		local gmprops = [
 			"m_bIsInTraining", "m_bIsWaitingForTrainingContinue", "m_bIsTrainingHUDVisible",
@@ -361,6 +328,12 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 		}
 		
 		BalanceTeams();
+		
+		for (local ent = null; ent = FindByClassname(ent, "obj*");)
+		{
+			if (!GetPropEntity(ent, "m_hBuilder")) continue;
+			ent.AcceptInput("Kill", "", null, null);
+		}
 
 		foreach (player, n in Players)
 		{
@@ -604,18 +577,23 @@ script_entity_scope.Think <- function() {
 	{
 		if (tickcount % 11 == 0)
 		{
-			local reds_dead = true;
+			local reds_dead  = true;
+			local blue_empty = true;
 			foreach (player, n in PZI.Players)
 			{
 				if (player.GetTeam() == 2)
-				{
 					reds_dead = false;
+				else if (player.GetTeam() == 3)
+					blue_empty = false;
+				
+				if (!reds_dead && !blue_empty)
 					break;
-				}
 			}
 			
 			if (reds_dead)
 				global_win_blu.AcceptInput("RoundWin", "", null, null);
+			else if (blue_empty)
+				global_win_red.AcceptInput("RoundWin", "", null, null);
 		}
 	}
 
