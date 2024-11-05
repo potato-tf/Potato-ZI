@@ -6,18 +6,27 @@
 // ]
 // foreach (hook in hooks) IncludeScript(format("hooks/%s", hook), this)
 // foreach (fix in fixes) IncludeScript(format("fixes/%s", fix), this)
-IncludeScript("potatozi")
+local root = getroottable()
 
-IncludeScript("infection_potato/util/constants", getroottable())
-IncludeScript("infection_potato/util/itemdef_constants", getroottable())
-IncludeScript("infection_potato/util/item_map", getroottable())
+local include = [
 
-IncludeScript ("infection_potato/strings", getroottable())
-IncludeScript ("infection_potato/const", getroottable())
-IncludeScript("infection_potato/util/util", getroottable())
-IncludeScript("infection_potato/util/event_hook_table", getroottable())
+    "infection_potato/extensions/util/constants",
+    "infection_potato/extensions/util/itemdef_constants",
+    "infection_potato/extensions/util/item_map",
+    "infection_potato/extensions/util/util",
 
-IncludeScript("spawnanywhere")
+    "infection_potato/strings",
+    "infection_potato/const",
+
+    "infection_potato/extensions/potatozi/misc",
+    "infection_potato/extensions/potatozi/navmesh",
+    "infection_potato/extensions/potatozi",
+
+    "infection_potato/extensions/event_hook_table",
+    "infection_potato/extensions/spawnanywhere",
+]
+
+foreach (script in include) IncludeScript(script, root)
 
 IncludeScript("infection_potato/infection")
 

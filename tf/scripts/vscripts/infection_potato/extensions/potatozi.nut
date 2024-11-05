@@ -3,9 +3,6 @@
 		resource caches are highlighted and red gets some annotations explaining their use,
 		also annotations explaining to distance from large groups of players
 
-		zombie respawn time is based on timer value,
-			starting at 6 seconds, every 2.5 min reduce respawn time by 1 second,
-			to a minimum of 2 seconds at 5 minutes left
 		every 5 minutes swap areas
 
 	make the sickness debuff system
@@ -26,7 +23,6 @@
 	make the zombie ground spawn logic
 	copy over zombie abilities, etc from zi
 */
-IncludeScript("potatozi/navmesh.nut");
 
 ::ROOT <- getroottable();
 if (!("ConstantNamingConvention" in ROOT))
@@ -78,9 +74,8 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 	Players = {},
 	InSetup   = true,
 	ZombieRatio = 0.2,
-	
+
 	// Balance teams with all players, or find a spot for player provided in args
-	// todo pick random players instead of based on index
 	function BalanceTeams(player=null)
 	{
 		// Sort into team tables
@@ -89,7 +84,7 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 		foreach (p, n in Players)
 		{
 			if (!p) continue;
-			
+
 			local team = p.GetTeam();
 			if (team == 2)
 				red.append(p);
@@ -106,14 +101,17 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 				local iters = target_blue_count - blue.len();
 				local table = (iters > 0) ? red : blue;
 				iters = abs(iters);
-				
+
 				if (player)
 					player.ForceChangeTeam((table == red) ? 3 : 2, false);
 				else
-					for (local i = 0; i < iters; ++i)
+				{
+					local indexes = PZI_Misc.RandomUniqueInts(0, table.len() - 1, iters);
+					foreach (i in indexes)
 						table[i].ForceChangeTeam((table == red) ? 3 : 2, false);
+				}
 			}
-			
+
 			foreach (p, n in Players)
 			{
 				// Don't force unassigned to stay unassigned
@@ -127,7 +125,7 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 		else if (player)
 		{
 			player.ForceChangeTeam(2, false);
-			
+
 			player.ValidateScriptScope();
 			local scope = player.GetScriptScope();
 			scope.assigned_team <- player.GetTeam();
@@ -254,81 +252,83 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 			SKY_CAMERA.KeyValueFromString("fogcolor", "77 82 71");
 			SKY_CAMERA.KeyValueFromInt("fogblend", 0);
 		}
-		
+
 		// Grab nav mesh
 		if (!PZI_NavMesh.ALL_AREAS.len())
 			NavMesh.GetAllAreas(PZI_NavMesh.ALL_AREAS);
-		
+
 		// Generate nav islands and sub areas within
 		if (!PZI_NavMesh.IslandsParsed)
-			PZI_NavMesh.GenerateIslandAreas();
-		
-		// Pick a random island, area, and nav area to start with
-		if (PZI_NavMesh.ISLANDS.len())
 		{
-			// Island
-			local index = RandomInt(0, PZI_NavMesh.ISLANDS.len() - 1);
-			local island = PZI_NavMesh.ISLANDS[index];
-			PZI_NavMesh.ActiveIsland = island;
-			
-			// Area
-			index = RandomInt(0, PZI_NavMesh.ISLAND_AREAS[island].len() - 1);
-			local isl_area = PZI_NavMesh.ISLAND_AREAS[island][index];
-			PZI_NavMesh.ActiveArea = isl_area;
-			
-			// Nav area (RED spawn)
-			local area_red = PZI_NavMesh.GetRandomArea(isl_area, true);
-			PZI_NavMesh.AreaSpawnRed = area_red;
-			
-			// Nav area (BLU spawn)
-			local area_blue    = null;
-			local longest_dist = 0;
-			for (local i = 0; i < 20; ++i)
+			PZI_NavMesh.GenerateIslandAreas();
+
+			// Pick a random island, area, and nav area to start with
+			if (PZI_NavMesh.ISLANDS.len())
 			{
-				local a = PZI_NavMesh.GetRandomArea(isl_area, true);
-				local dist = (area_red.GetCenter() - a.GetCenter()).Length();
-				if (dist > longest_dist)
+				// Island
+				local index = RandomInt(0, PZI_NavMesh.ISLANDS.len() - 1);
+				local island = PZI_NavMesh.ISLANDS[index];
+				PZI_NavMesh.ActiveIsland = island;
+
+				// Area
+				index = RandomInt(0, PZI_NavMesh.ISLAND_AREAS[island].len() - 1);
+				local isl_area = PZI_NavMesh.ISLAND_AREAS[island][index];
+				PZI_NavMesh.ActiveArea = isl_area;
+
+				// Nav area (RED spawn)
+				local area_red = PZI_NavMesh.GetRandomArea(isl_area, true);
+				PZI_NavMesh.AreaSpawnRed = area_red;
+
+				// Nav area (BLU spawn)
+				local area_blue    = null;
+				local longest_dist = 0;
+				for (local i = 0; i < 20; ++i)
 				{
-					area_blue    = a;
-					longest_dist = dist;
+					local a = PZI_NavMesh.GetRandomArea(isl_area, true);
+					local dist = (area_red.GetCenter() - a.GetCenter()).Length();
+					if (dist > longest_dist)
+					{
+						area_blue    = a;
+						longest_dist = dist;
+					}
+
+					if (dist > 2048.0)
+						break;
 				}
-				
-				if (dist > 2048.0)
-					break;
-			}
-			PZI_NavMesh.AreaSpawnBlue = area_blue;
+				PZI_NavMesh.AreaSpawnBlue = area_blue;
 
-			area_red.DebugDrawFilled(255, 50, 0, 255, 5, true, 0);
-			area_blue.DebugDrawFilled(50, 50, 200, 255, 5, true, 0);
-			
-			// Kill old resource caches
-			for (local ent = null; ent = FindByName(ent, "__potatozi_resource_cache*");)
-				ent.AcceptInput("Kill", "", null, null);
-			
-			// How many we create is based on the size of the island
-			local count = ceil(island.len() / 100.0);
+				area_red.DebugDrawFilled(255, 50, 0, 255, 5, true, 0);
+				area_blue.DebugDrawFilled(50, 50, 200, 255, 5, true, 0);
 
-			// todo need to store these to associate them with areas
-			// todo check distance to make sure we arent spawning too close / on same area
-			// todo add size check if we might be blocking a doorway?
-			// todo also dont choose near spawn point
-			// Spawn resource caches across the island
-			for (local i = 0; i < count; ++i)
-			{
-				local area = PZI_NavMesh.GetRandomArea(island, true);
-				area.DebugDrawFilled(50, 200, 0, 255, 5, true, 0);
-				
-				SpawnEntityFromTable("prop_dynamic", {
-					targetname = format("__potatozi_resource_cache%d", i),
-					model = "models/props_spytech/radio_tower001.mdl",
-					modelscale = 0.1,
-					origin = area.GetCenter(),
-				});
+				// Kill old resource caches
+				for (local ent = null; ent = FindByName(ent, "__potatozi_resource_cache*");)
+					ent.AcceptInput("Kill", "", null, null);
+
+				// How many we create is based on the size of the island
+				local count = ceil(island.len() / 100.0);
+
+				// todo need to store these to associate them with areas
+				// todo check distance to make sure we arent spawning too close / on same area
+				// todo add size check if we might be blocking a doorway?
+				// todo also dont choose near spawn point
+				// Spawn resource caches across the island
+				for (local i = 0; i < count; ++i)
+				{
+					local area = PZI_NavMesh.GetRandomArea(island, true);
+					area.DebugDrawFilled(50, 200, 0, 255, 5, true, 0);
+
+					SpawnEntityFromTable("prop_dynamic", {
+						targetname = format("__potatozi_resource_cache%d", i),
+						model = "models/props_spytech/radio_tower001.mdl",
+						modelscale = 0.1,
+						origin = area.GetCenter(),
+					});
+				}
 			}
 		}
-		
-		BalanceTeams();
-		
+
+		//BalanceTeams();
+
 		for (local ent = null; ent = FindByClassname(ent, "obj*");)
 		{
 			if (!GetPropEntity(ent, "m_hBuilder")) continue;
@@ -362,7 +362,7 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 				SetPropInt(player, "m_Local.m_skybox3d.fog.colorPrimary", 5067335)
 				SetPropBool(player, "m_Local.m_skybox3d.fog.blend", false)
 			}
-			
+
 			player.ForceRespawn();
 		}
 
@@ -405,7 +405,7 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 			switch_teams    = false,
 			TeamNum         = 2,
 		});
-		
+
 		global_win_blu = SpawnEntityFromTable("game_round_win", {
 			targetname      = "__potatozi_win_blu",
 			force_map_reset = 1,
@@ -429,19 +429,20 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 		if (player in Players)
 			delete Players[player];
 	},
-	
+
 	function OnGameEvent_player_team(params)
 	{
+		/*
 		if (InSetup) return;
-		
+
 		// While round is active:
-		
+
 		local player = GetPlayerFromUserID(params.userid);
 		if (!player) return;
 
 		player.ValidateScriptScope();
 		local scope = player.GetScriptScope();
-		
+
 		// Unassigned gets sent to spectator
 		if (!params.oldteam)
 			scope.assigned_team <- 1;
@@ -452,8 +453,9 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 		if ("assigned_team" in scope)
 			if (scope.assigned_team != params.team)
 				EntFireByHandle(player, "RunScriptCode", "self.ForceChangeTeam(assigned_team, false); self.ForceRespawn()", 0.015, null, null);
+		*/
 	},
-	
+
 	function OnGameEvent_player_spawn(params)
 	{
 		local player = GetPlayerFromUserID(params.userid);
@@ -471,7 +473,7 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 
 			player.KeyValueFromVector("origin", center);
 			player.SetAbsVelocity(Vector());
-			
+
 			// Face center of world
 			local ang = PZI_Misc.VectorAngles(PZI_Misc.GetWorldCenter() - player.EyePosition());
 			ang.x = 0;
@@ -483,13 +485,14 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 	{
 		local player = GetPlayerFromUserID(params.userid);
 		if (!player) return;
-		
+
 		player.ValidateScriptScope();
 		local scope = player.GetScriptScope();
 
 		player.AcceptInput("SetFogController", "__potatozi_fog", global_fog, global_fog);
-		
+
 		// todo after winning a round spawning as red from blue makes you not have your weapons
+		/*
 		local team  = player.GetTeam();
 		local melee = null;
 		for (local child = player.FirstMoveChild(); child != null; child = child.NextMovePeer())
@@ -500,37 +503,42 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 			if (child.GetClassname() == "tf_viewmodel") continue;
 			if (team == 2 && child instanceof CBaseCombatWeapon) continue;
 			if (team == 3 && child == melee) continue;
-			
+
 			EntFireByHandle(child, "Kill", "", 0, null, null);
 		}
-		
+
 		if (team == 3 && melee)
 			player.Weapon_Switch(melee);
+		*/
 	},
-	
+
 	function OnGameEvent_player_death(params)
 	{
+		/*
 		local player = GetPlayerFromUserID(params.userid);
 		if (!player) return;
-		
+
 		player.ValidateScriptScope();
 		local scope = player.GetScriptScope();
-		
+
 		local team = player.GetTeam();
 		if (!InSetup && team == 2)
 		{
 			scope.assigned_team <- 3;
 			EntFireByHandle(player, "RunScriptCode", "self.ForceChangeTeam(3, false);", 0.015, null, null);
 		}
+		*/
 	},
-	
+
 	function OnGameEvent_teamplay_setup_finished(params)
 	{
 		InSetup = false;
 
-		BalanceTeams();
+		//BalanceTeams();
+		/*
 		foreach (player, n in Players)
 			player.ForceRespawn();
+		*/
 	},
 
 	function OnGameEvent_teamplay_round_start(params)
@@ -538,16 +546,16 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 		InSetup = true;
 		HandleMapSpawn();
 	},
-	
-	function OnScriptHook_OnTakeDamage(params)
-	{
-		if (InSetup)
-		{
-			params.damage = 0;
-			params.early_out = true;
-			return;
-		}
-	},
+
+	// function OnScriptHook_OnTakeDamage(params)
+	// {
+	// 	if (InSetup)
+	// 	{
+	// 		params.damage = 0;
+	// 		params.early_out = true;
+	// 		return;
+	// 	}
+	// },
 };
 __CollectGameEventCallbacks(PZI);
 
@@ -560,7 +568,7 @@ local script_entity_scope = script_entity.GetScriptScope();
 
 script_entity_scope.Think <- function() {
 	local tickcount = Time() / 0.015;
-	
+
 	// Pause the setup timer if there's only one person
 	if (PZI.InSetup)
 	{
@@ -585,11 +593,11 @@ script_entity_scope.Think <- function() {
 					reds_dead = false;
 				else if (player.GetTeam() == 3)
 					blue_empty = false;
-				
+
 				if (!reds_dead && !blue_empty)
 					break;
 			}
-			
+
 			if (reds_dead)
 				global_win_blu.AcceptInput("RoundWin", "", null, null);
 			else if (blue_empty)
@@ -611,7 +619,7 @@ if (TF_GAMERULES)
 	{
 		local player = PlayerInstanceFromIndex(i);
 		if (!player) continue;
-		
+
 		PZI.Players[player] <- {};
 		player.ValidateScriptScope();
 	}

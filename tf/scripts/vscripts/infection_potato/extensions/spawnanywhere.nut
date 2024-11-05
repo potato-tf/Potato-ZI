@@ -16,11 +16,13 @@ const NEAREST_NAV_RADIUS = 1024
 const MAX_SPAWN_DISTANCE = 16384 //NOT HAMMER UNITS, see trace_dist
 
 const SUMMON_ANIM_MULT = 0.7
+const SUMMON_HEAL_DELAY = 1.5
+const SUMMON_MAX_OVERHEAL_MULT = 1
+
 const PLAYER_HULL_HEIGHT = 82
 
 CONST.HIDEHUD_GHOST <- (HIDEHUD_CROSSHAIR|HIDEHUD_HEALTH|HIDEHUD_WEAPONSELECTION|HIDEHUD_METAL|HIDEHUD_BUILDING_STATUS|HIDEHUD_CLOAK_AND_FEIGN|HIDEHUD_PIPES_AND_CHARGE)
 CONST.TRACEMASK <- (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_PLAYERCLIP|CONTENTS_WINDOW|CONTENTS_MONSTER|CONTENTS_GRATE)
-CONST.FL_GHOST <- (FL_DONTTOUCH|FL_NOTARGET)
 
 foreach(k, v in ::NetProps.getclass())
 	if (k != "IsValid" && !(k in ROOT))
@@ -110,11 +112,19 @@ if ("ZI_SpawnAnywhere" in ROOT) delete ::ZI_SpawnAnywhere
 
         player.GiveZombieCosmetics()
 
+        local scope = player.GetScriptScope()
+
         SetPropInt(player, "m_nRenderMode", kRenderTransColor)
         SetPropInt(player, "m_clrRender", 0)
 
-        player.GetScriptScope().playerclass <- player.GetPlayerClass()
-        player.GetScriptScope().playermodel <- player.GetModelName()
+        SetPropInt(player, "m_afButtonDisabled", IN_ATTACK2)
+        // SetPropFloat(player.GetActiveWeapon(), "m_flNextSecondaryAttack", INT_MAX)
+
+        if (player.GetPlayerClass() == TF_CLASS_PYRO)
+            scope.m_iFlags <- ZBIT_PYRO_DONT_EXPLODE
+
+        // scope.playerclass <- player.GetPlayerClass()
+        scope.playermodel <- player.GetModelName()
 
         // player.SetPlayerClass(TF_CLASS_SCOUT)
         // SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", TF_CLASS_SCOUT)
@@ -138,7 +148,7 @@ if ("ZI_SpawnAnywhere" in ROOT) delete ::ZI_SpawnAnywhere
         EntFireByHandle(player, "RunScriptCode", "self.AddCustomAttribute(`major increased jump height`, 3, -1)", -1, null, null)
         EntFireByHandle(player, "RunScriptCode", "self.AddCustomAttribute(`voice pitch scale`, 0, -1)", -1, null, null)
         // EntFireByHandle(player, "RunScriptCode", "self.AddCustomAttribute(`air dash count`, 10, -1)", -1, null, null) //doesn't work, active weapon only
-        player.AddFlag(CONST.FL_GHOST)
+        player.AddFlag(FL_DONTTOUCH|FL_NOTARGET)
     }
 
     function BeginSummonSequence(player, origin) {
@@ -162,10 +172,6 @@ if ("ZI_SpawnAnywhere" in ROOT) delete ::ZI_SpawnAnywhere
         player.AcceptInput("SetForcedTauntCam", "1", null, null)
         player.AddCustomAttribute("no_jump", 1, -1)
 
-        local spawn_seq = RandomInt(3, 4)
-
-        local spawn_seq_name = format("spawn0%d", spawn_seq)
-
         local dummy_skeleton = CreateByClassname("funCBaseFlex")
 
         dummy_skeleton.SetModel("models/bots/skeleton_sniper/skeleton_sniper.mdl")
@@ -175,11 +181,45 @@ if ("ZI_SpawnAnywhere" in ROOT) delete ::ZI_SpawnAnywhere
         dummy_skeleton.DispatchSpawn()
         dummy_skeleton.ValidateScriptScope()
 
+        SetPropInt(dummy_skeleton, "m_nRenderMode", kRenderTransColor)
+        SetPropInt(dummy_skeleton, "m_clrRender", 0)
 
+        // dummy_skeleton.ResetSequence(dummy_skeleton.LookupSequence(format("spawn0%d", RandomInt(2, 7)))) //spawn01 is cursed
+        // dummy_skeleton.ResetSequence(dummy_skeleton.LookupSequence("spawn04"))
+
+        local spawn_seq = RandomInt(3, 4)
+        local spawn_seq_name = format("spawn0%d", spawn_seq)
+
+        dummy_skeleton.ResetSequence(dummy_skeleton.LookupSequence(spawn_seq_name))
+        dummy_skeleton.SetPlaybackRate(SUMMON_ANIM_MULT)
+
+        local dummy_player = CreateByClassname("funCBaseFlex")
+
+        dummy_player.SetModel(scope.playermodel)
+        dummy_player.SetOrigin(origin)
+        dummy_player.SetSkin(player.GetSkin())
+        dummy_player.AcceptInput("SetParent", "!activator", dummy_skeleton, dummy_skeleton)
+        SetPropInt(dummy_player, "m_fEffects", EF_BONEMERGE|EF_BONEMERGE_FASTCULL)
+        dummy_player.DispatchSpawn()
         player.RemoveCustomAttribute("dmg taken increased")
         player.SetHealth(1)
-        player.AddCond(TF_COND_HALLOWEEN_QUICK_HEAL)
         player.RemoveHudHideFlags(CONST.HIDEHUD_GHOST)
+        player.RemoveFlag(FL_NOTARGET)
+        EntFireByHandle(player, "RunScriptCode", "self.AddCond(TF_COND_HALLOWEEN_QUICK_HEAL)", SUMMON_HEAL_DELAY, null, null)
+
+        scope.ThinkTable.SpawnHealEffect <- function() {
+            if (player.GetHealth() >= player.GetMaxHealth() * SUMMON_MAX_OVERHEAL_MULT)
+            {
+                player.RemoveCond(TF_COND_HALLOWEEN_QUICK_HEAL)
+                delete scope.ThinkTable.SpawnHealEffect
+            }
+        }
+
+        //max health attrib is always last
+        local attrib = ZOMBIE_PLAYER_ATTRIBS[player.GetPlayerClass()]
+        local lastattrib = attrib[attrib.len() - 1]
+
+        player.AddCustomAttribute(lastattrib[0], lastattrib[1], lastattrib[2])
 
         dummy_skeleton.GetScriptScope().SpawnPlayer <- function() {
 
@@ -208,54 +248,41 @@ if ("ZI_SpawnAnywhere" in ROOT) delete ::ZI_SpawnAnywhere
                 player.RemoveCustomAttribute("move speed bonus")
                 player.RemoveCustomAttribute("major increased jump height")
                 player.RemoveCustomAttribute("voice pitch scale")
-                EntFireByHandle(player, "RunScriptCode", "self.RemoveCond(TF_COND_HALLOWEEN_QUICK_HEAL)", 2, null, null)
-                // player.SetPlayerClass(player.GetScriptScope().playerclass)
 
                 player.GiveZombieCosmetics()
 
                 for (local child = player.FirstMoveChild(); child != null; child = child.NextMovePeer())
                     child.EnableDraw()
 
-                // player.RemoveEFlags(EFL_GHOST)
+                if (player.GetPlayerClass() == TF_CLASS_PYRO)
+                    scope.m_iFlags = scope.m_iFlags & ~ZBIT_PYRO_DONT_EXPLODE
 
-                // delete player.GetScriptScope().playerclass
+                SetPropInt(player, "m_afButtonDisabled", 0)
                 self.Kill()
+                return
             }
 
-            if (self.IsValid()) self.StudioFrameAdvance()
+            self.StudioFrameAdvance()
             return -1
         }
+
         AddThinkToEnt(dummy_skeleton, "SpawnPlayer")
-
-        ZI_EventHooks.AddRemoveEventHook("player_hurt", "RemoveQuickHeal", function(params) {
-            if (player.InCond(TF_COND_HALLOWEEN_QUICK_HEAL))
-            {
-                player.RemoveCond(TF_COND_HALLOWEEN_QUICK_HEAL)
-                ZI_EventHooks.AddRemoveEventHook("player_hurt", "RemoveQuickHeal")
-            }
-        })
-
-        SetPropInt(dummy_skeleton, "m_nRenderMode", kRenderTransColor)
-        SetPropInt(dummy_skeleton, "m_clrRender", 0)
-        // dummy_skeleton.ResetSequence(dummy_skeleton.LookupSequence(format("spawn0%d", RandomInt(2, 7)))) //spawn01 is cursed
-        // dummy_skeleton.ResetSequence(dummy_skeleton.LookupSequence("spawn04"))
-        dummy_skeleton.ResetSequence(dummy_skeleton.LookupSequence(spawn_seq_name))
-        dummy_skeleton.SetPlaybackRate(SUMMON_ANIM_MULT)
-
-        local dummy_player = CreateByClassname("funCBaseFlex")
-
-        dummy_player.SetModel(scope.playermodel)
-        dummy_player.SetOrigin(origin)
-        dummy_player.SetSkin(player.GetSkin())
-        dummy_player.AcceptInput("SetParent", "!activator", dummy_skeleton, dummy_skeleton)
-        SetPropInt(dummy_player, "m_fEffects", EF_BONEMERGE|EF_BONEMERGE_FASTCULL)
-        dummy_player.DispatchSpawn()
     }
 }
 
-ZI_EventHooks.AddRemoveEventHook("player_activate", "PlayerActivate", function(params) { GetPlayerFromUserID(params.userid).ValidateScriptScope() }),
 
-ZI_EventHooks.AddRemoveEventHook("post_inventory_application", "PostInventoryApplication", function(params) {
+ZI_EventHooks.AddRemoveEventHook("player_hurt", "SpawnAnywhere_RemoveQuickHeal", function(params) {
+
+    local player = GetPlayerFromUserID(params.userid)
+
+    if (player.InCond(TF_COND_HALLOWEEN_QUICK_HEAL))
+        player.RemoveCond(TF_COND_HALLOWEEN_QUICK_HEAL)
+
+})
+
+ZI_EventHooks.AddRemoveEventHook("player_activate", "SpawnAnywhere_PlayerActivate", function(params) { GetPlayerFromUserID(params.userid).ValidateScriptScope() }),
+
+ZI_EventHooks.AddRemoveEventHook("post_inventory_application", "SpawnAnywhere_PostInventoryApplication", function(params) {
 
     local player = GetPlayerFromUserID(params.userid)
 
@@ -439,7 +466,7 @@ ZI_EventHooks.AddRemoveEventHook("post_inventory_application", "PostInventoryApp
     AddThinkToEnt(player, "Think")
 })
 
-ZI_EventHooks.AddRemoveEventHook("player_death", "PlayerDeath", function(params) {
+ZI_EventHooks.AddRemoveEventHook("player_death", "SpawnAnywhere_PlayerDeath", function(params) {
 
     local player = GetPlayerFromUserID(params.userid)
     player.RemoveFlag(CONST.FL_GHOST)

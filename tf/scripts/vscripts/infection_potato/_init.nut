@@ -24,6 +24,7 @@ if ( "InfectionLoaded" in getroottable() )
 
 ::bNewFirstWaveBehaviour <- false;
 ::bNoPyroExplosionMod    <- false;
+::bDontSwitchInPlace     <- true;
 
 const GAMEMODE_NAME =  "Zombie Infection";
 const VERSION       =  "v3.0.4 - 24/10/2024";

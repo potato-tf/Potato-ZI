@@ -1268,6 +1268,8 @@ CTFPlayer_AddEventToQueue <- function( _event, _delay )
     local _sc        =  this.GetScriptScope();
     local _fireTime  =  ( Time() + _delay );
 
+    if (!_sc) return
+
     if ( _sc.m_tblEventQueue.rawin( _event ) )
     {
         _sc.m_tblEventQueue[ _event ] = _fireTime;

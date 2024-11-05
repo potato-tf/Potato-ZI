@@ -1,5 +1,3 @@
-IncludeScript("potatozi/misc.nut")
-
 ::PZI_NavMesh <- {
 	ALL_AREAS = {},
 	ISLANDS   = [],
@@ -104,7 +102,7 @@ IncludeScript("potatozi/misc.nut")
 
 		return reached;
 	},
-	
+
 	function GetRandomArea(areas, spawnpoint=false)
 	{
 		local max_iters = 50;
@@ -125,7 +123,7 @@ IncludeScript("potatozi/misc.nut")
 				// Islands store areas as {area=null},
 				// but NavMesh methods store as {"area<num>"=area}
 				local a = (k instanceof CTFNavArea) ? k : v;
-				
+
 				if (!spawnpoint)
 					return a;
 				else
@@ -186,7 +184,7 @@ IncludeScript("potatozi/misc.nut")
 				if (island && island.len() > 25)
 					PZI_NavMesh.ISLANDS.append(island);
 			}
-			
+
 			// Keep track of this spawn point's island and team
 			if (island)
 			{
@@ -218,20 +216,20 @@ IncludeScript("potatozi/misc.nut")
 				else
 					bluespawn = arr[i];
 			}
-			
+
 			// Get their areas
 			local redarea  = NavMesh.GetNearestNavArea(redspawn.GetOrigin(), 128.0, false, true);
 			local bluearea = NavMesh.GetNearestNavArea(bluespawn.GetOrigin(), 128.0, false, true);
-			
+
 			// Get an area somewhere inbetween
 			local vec  = bluearea.GetCenter() - redarea.GetCenter();
-			local dist = vec.Length() / 2; 
+			local dist = vec.Length() / 2;
 			vec.Norm();
 			vec *= dist;
 			local pos = redarea.GetCenter() + vec;
-			
+
 			local middlearea = NavMesh.GetNearestNavArea(pos, 8192.0, false, true);
-			
+
 			// If the above failed then fallback to random nav areas in the island
 			local seedareas = [redarea, middlearea, bluearea];
 			foreach (i, area in seedareas)
@@ -243,7 +241,7 @@ IncludeScript("potatozi/misc.nut")
 			foreach (area in seedareas)
 				PZI_NavMesh.ISLAND_AREAS[island].append(reached[area]);
 		}
-		
+
 		// Delete extra spawnpoints
 		foreach (island, spawns in island_spawnpoints)
 		{
@@ -254,12 +252,12 @@ IncludeScript("potatozi/misc.nut")
 				{
 					// Keep one
 					if (!index) continue;
-					
+
 					EntFireByHandle(spawn, "Kill", "", 0, null, null);
 				}
 			}
 		}
-		
+
 		// Used elsewhere to check if this function should be ran
 		PZI_NavMesh.IslandsParsed = true;
 	},

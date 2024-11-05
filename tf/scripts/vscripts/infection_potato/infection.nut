@@ -179,7 +179,7 @@ function OnPostSpawn()
 }
 
 
-ZI_EventHooks.AddRemoveEventHook("player_spawn", "PlayerSpawn", function(params) {
+ZI_EventHooks.AddRemoveEventHook("player_spawn", "Infection_PlayerSpawn", function(params) {
     local _hPlayer     = GetPlayerFromUserID( params.userid );
     local _iRoundState = GetPropInt( GameRules, "m_iRoundState" );
 
@@ -189,6 +189,8 @@ ZI_EventHooks.AddRemoveEventHook("player_spawn", "PlayerSpawn", function(params)
         return;
 
     local _sc = _hPlayer.GetScriptScope();
+
+    if (!_sc) return
 
     // we use the script overlay material for zombie ability hud
     // so let's make sure it's cleared whenever a player has respawned
@@ -275,11 +277,17 @@ ZI_EventHooks.AddRemoveEventHook("player_spawn", "PlayerSpawn", function(params)
     return;
 }, 0);
 
-ZI_EventHooks.AddRemoveEventHook("teamplay_setup_finished", "SetupFinished", function(params) {
+ZI_EventHooks.AddRemoveEventHook("teamplay_setup_finished", "Infection_SetupFinished", function(params) {
     ::bGameStarted <- true;
 
     local _iPlayerCountRed    = PlayerCount( TF_TEAM_RED );
     local _numStartingZombies = -1;
+
+    // ------------------ //
+    // enable glow on RED//
+    // ------------------//
+
+    EntFire("player", "RunScriptCode", "if (self.GetTeam() == TF_TEAM_RED) SetPropBool(self, `m_bGlowEnabled`, true)");
 
     // -------------------------------------------------- //
     // select players to become zombies                   //
@@ -349,6 +357,8 @@ ZI_EventHooks.AddRemoveEventHook("teamplay_setup_finished", "SetupFinished", fun
 
             local _sc = _nextPlayer.GetScriptScope();
 
+            if (!_sc) return
+
             // ------------------------------------------- //
             // make sure heavy doesn't get stuck in t-pose //
             // ------------------------------------------- //
@@ -369,7 +379,14 @@ ZI_EventHooks.AddRemoveEventHook("teamplay_setup_finished", "SetupFinished", fun
             _nextPlayer.ResetInfectionVars();
 
             ChangeTeamSafe( _nextPlayer, TF_TEAM_BLUE, false );
-            _nextPlayer.TakeDamage( 9999999, DMG_GENERIC, null );
+
+            if (bDontSwitchInPlace)
+            {
+                if (_nextPlayer.GetPlayerClass() == TF_CLASS_PYRO)
+                    _sc.m_iFlags = _sc.m_iFlags | ZBIT_PYRO_DONT_EXPLODE;
+
+                _nextPlayer.TakeDamage(INT_MAX, DMG_GENERIC, null );
+            }
 
             // remove all of the player's existing items
             _nextPlayer.RemovePlayerWearables();
@@ -444,11 +461,11 @@ ZI_EventHooks.AddRemoveEventHook("teamplay_setup_finished", "SetupFinished", fun
     }
 }, 0);
 
-ZI_EventHooks.AddRemoveEventHook("teamplay_broadcast_audio", "BroadcastAudio", function(params) {
+ZI_EventHooks.AddRemoveEventHook("teamplay_broadcast_audio", "Infection_BroadcastAudio", function(params) {
     return;
 }, 0);
 
-ZI_EventHooks.AddRemoveEventHook("teamplay_restart_round", "RestartRound", function(params) {
+ZI_EventHooks.AddRemoveEventHook("teamplay_restart_round", "Infection_RestartRound", function(params) {
     ::bGameStarted <- false;
 
     local _hNextPlayer = null;
@@ -480,7 +497,7 @@ ZI_EventHooks.AddRemoveEventHook("teamplay_restart_round", "RestartRound", funct
     return;
 }, 0);
 
-ZI_EventHooks.AddRemoveEventHook("player_death", "PlayerDeath", function(params) {
+ZI_EventHooks.AddRemoveEventHook("player_death", "Infection_PlayerDeath", function(params) {
 
     local _hPlayer      =  GetPlayerFromUserID ( params.userid );
     local _hKiller      =  GetPlayerFromUserID ( params.attacker );
@@ -491,6 +508,8 @@ ZI_EventHooks.AddRemoveEventHook("player_death", "PlayerDeath", function(params)
         return;
 
     local _sc                  =  _hPlayer.GetScriptScope();
+
+    if (!_sc) return
     local _iClassNum           =  _hPlayer.GetPlayerClass();
     local _hPlayerTeam         =  _hPlayer.GetTeam();
     local _bIsEngineerWithEMP  =  ( _hPlayer.GetPlayerClass() == TF_CLASS_ENGINEER && _hPlayer.CanDoAct( ZOMBIE_ABILITY_CAST ) );
@@ -533,7 +552,7 @@ ZI_EventHooks.AddRemoveEventHook("player_death", "PlayerDeath", function(params)
 
             CreateMediumHealthKit( _hPlayer.GetOrigin() );
 
-            if ( !::bNoPyroExplosionMod )
+            if (!::bNoPyroExplosionMod && !(_sc.m_iFlags & ZBIT_PYRO_DONT_EXPLODE))
             {
                 while ( _hNextPlayer = Entities.FindByClassnameWithin( _hNextPlayer, "player", _hPlayer.GetOrigin(), 125 ) )
                 {
@@ -701,7 +720,7 @@ ZI_EventHooks.AddRemoveEventHook("player_death", "PlayerDeath", function(params)
     }
 }, 0);
 
-ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "OnTakeDamage", function(params)
+ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "Infection_OnTakeDamage", function(params)
 {
     if ( params.const_entity == null || params.inflictor == null || params.attacker == null )
         return;
@@ -710,6 +729,7 @@ ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "OnTakeDamage", function(params
     local _hAttacker      =   params.attacker;
     local _hInflictor     =   params.inflictor;
     local _sc             =   _hVictim.GetScriptScope();
+    if (!_sc) return
     local _iWeaponIDX     =   0;
     local _szWeaponName   =   "none";
     local _iForceGibDmg   =   ( _hVictim.GetMaxHealth() + 20 );
@@ -902,6 +922,8 @@ ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "OnTakeDamage", function(params
 
         local _sc = _hAttacker.GetScriptScope();
 
+        if (!_sc) return
+
         // ----------------------------------------------------------- //
         // zombie heavy knock up effect                                //
         // ----------------------------------------------------------- //
@@ -1010,11 +1032,13 @@ ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "OnTakeDamage", function(params
     }
 }, 0);
 
-ZI_EventHooks.AddRemoveEventHook("player_hurt", "PlayerHurt", function(params)
+ZI_EventHooks.AddRemoveEventHook("player_hurt", "Infection_PlayerHurt", function(params)
 {
     local _hPlayer   = GetPlayerFromUserID ( params.userid );
     local _hAttacker = GetPlayerFromUserID ( params.attacker );
     local _sc        = _hPlayer.GetScriptScope();
+
+    if (!_sc) return
 
     local _iTeamNum  = _hPlayer.GetTeam();
 
