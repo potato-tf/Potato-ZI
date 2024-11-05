@@ -65,8 +65,11 @@ MEDIC_HEAL_RATE                  <- 0.5;   // time in sec between each heal tick
 /////////////////////////////////////////////////////////////////////////////////////////////
 // ZombieDemo Charge Ability |------------------------------------------------------------ //
 /////////////////////////////////////////////////////////////////////////////////////////////
-DEMOMAN_CHARGE_DAMAGE            <- 275;   //                                              //
-DEMOMAN_CHARGE_RADIUS            <- 150;   //                                              //
+// DEMOMAN_CHARGE_DAMAGE              <- 275;   //                                         //
+DEMOMAN_CHARGE_BASE_DAMAGE            <- 100;   //                                         //
+DEMOMAN_CHARGE_DAMAGE_PER_PLAYER_MULT <- 1.35;  //                                         //
+DEMOMAN_CHARGE_RADIUS                 <- 150;   //                                         //
+DEMOMAN_CHARGE_INVULN_TIME            <- 1.4;   //                                         //
 /////////////////////////////////////////////////////////////////////////////////////////////
 // generic zombie stuff      |------------------------------------------------------------ //
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -570,9 +573,12 @@ class CEngineerSapperNade extends CZombieAbility
     };
 };
 
-// --------------------------------- //
-//           DEMO ABILITY            //
-// --------------------------------- //
+// ---------------------------------------------------------------------------------------------------------- //
+//          DEMO ABILITY                                                                                      //
+// REWORKED: Extremely high knockback, Damage now scales with players in radius, Reduced invulnerability time //
+// Getting oneshot by a random demo charge is really stupid, but demo should still be able to bunker bust     //
+// Skybox individual players instead because it's funny and more fair                                         //
+// ---------------------------------------------------------------------------------------------------------- //
 class CDemoCharge extends CZombieAbility
 {
     constructor( hAbilityOwner )
@@ -610,7 +616,8 @@ class CDemoCharge extends CZombieAbility
         // todo - array
         this.m_hAbilityOwner.AddCond   ( TF_COND_CRITBOOSTED_PUMPKIN );
         this.m_hAbilityOwner.AddCond   ( TF_COND_TAUNTING );
-        this.m_hAbilityOwner.AddCondEx ( TF_COND_INVULNERABLE_USER_BUFF, 1.76, this.m_hAbilityOwner );
+        // this.m_hAbilityOwner.AddCondEx ( TF_COND_INVULNERABLE_USER_BUFF, 1.76, this.m_hAbilityOwner );
+        this.m_hAbilityOwner.AddCondEx ( TF_COND_INVULNERABLE_USER_BUFF, DEMOMAN_CHARGE_INVULN_TIME, this.m_hAbilityOwner );
         this.m_hAbilityOwner.AddCond   ( TF_COND_RADIUSHEAL ); // just the heal ring
 
         this.m_hAbilityOwner.RemoveOutOfCombat ( true );
@@ -668,7 +675,8 @@ class CDemoCharge extends CZombieAbility
         _d.m_tblEventQueue     <- { };
 
         DemomanExplosionPreCheck( this.m_hAbilityOwner.GetOrigin(),
-                                  DEMOMAN_CHARGE_DAMAGE,
+                                  DEMOMAN_CHARGE_BASE_DAMAGE,
+                                  DEMOMAN_CHARGE_DAMAGE_PER_PLAYER_MULT,
                                   DEMOMAN_CHARGE_RADIUS,
                                   this.m_hAbilityOwner );
 
@@ -676,7 +684,6 @@ class CDemoCharge extends CZombieAbility
         return;
     };
 };
-
 class CPassiveAbility extends CZombieAbility
 {
     function AbilityCast()

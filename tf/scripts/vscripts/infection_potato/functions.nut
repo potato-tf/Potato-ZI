@@ -86,13 +86,14 @@ PlayGlobalBell <- function( _bForce )
     flTimeLastBell <- Time();
 };
 
-DemomanExplosionPreCheck <- function( _vecLocation, _flDmg, _flRange, _hInflictor, _iTeamnum = TF_TEAM_BLUE )
+DemomanExplosionPreCheck <-  function(_vecLocation, _flDmg, _flDmgMult, _flRange, _hInflictor, _iTeamnum = TF_TEAM_BLUE)
 {
     local _buildableArr    =  [ ];
     local _buildable       =  null;
     local _buildableCount  =  0;
+    local _finalDmg        =  _flDmg;
 
-    while ( _buildable = Entities.FindByClassnameWithin( _buildable, "obj_*", _vecLocation, ( DEMOMAN_CHARGE_RADIUS ) ) )
+    while ( _buildable = FindByClassnameWithin( _buildable, "obj_*", _vecLocation, DEMOMAN_CHARGE_RADIUS ) )
     {
         if ( _buildable != null )
         {
@@ -106,8 +107,12 @@ DemomanExplosionPreCheck <- function( _vecLocation, _flDmg, _flRange, _hInflicto
 
     if ( _buildableCount == 0 )
     {
+        local _player = null
+        while (_player = FindByClassnameWithin( _player, "player", _vecLocation, _flRange ))
+            _finalDmg *= _flDmgMult;
+
         CreateExplosion( _vecLocation,
-                         _flDmg,
+                         _finalDmg,
                          _flRange,
                          _hInflictor );
         return;
@@ -127,8 +132,12 @@ DemomanExplosionPreCheck <- function( _vecLocation, _flDmg, _flRange, _hInflicto
         };
     };
 
-    CreateExplosion( _vecNearestBuildingOrigin,
-                     _flDmg,
+    local _player = null
+    while (_player = FindByClassnameWithin( _player, "player", _vecLocation, _flRange ))
+        _finalDmg *= _flDmgMult;
+
+    CreateExplosion( _vecLocation,
+                     _finalDmg,
                      _flRange,
                      _hInflictor );
     return;
@@ -147,8 +156,8 @@ CreateExplosion <- function( _vecLocation, _flDmg, _flRange, _hInflictor, _iTeam
     {
         explode_particle = "mvm_loot_explosion",
         sound            = "Halloween.Merasmus_Hiding_Explode",
-        damage           = DEMOMAN_CHARGE_DAMAGE.tostring(),
-        radius           = DEMOMAN_CHARGE_RADIUS.tostring(),
+        damage           = _flDmg.tostring(),
+        radius           = _flRange.tostring(),
         friendlyfire     = "0",
     });
 

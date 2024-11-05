@@ -469,6 +469,6 @@ ZI_EventHooks.AddRemoveEventHook("post_inventory_application", "SpawnAnywhere_Po
 ZI_EventHooks.AddRemoveEventHook("player_death", "SpawnAnywhere_PlayerDeath", function(params) {
 
     local player = GetPlayerFromUserID(params.userid)
-    player.RemoveFlag(CONST.FL_GHOST)
+    player.RemoveFlag(FL_ATCONTROLS|FL_DUCKING|FL_DONTTOUCH|FL_NOTARGET)
     player.TerminateScriptScope()
 })

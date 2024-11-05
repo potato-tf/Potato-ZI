@@ -380,7 +380,7 @@ ZI_EventHooks.AddRemoveEventHook("teamplay_setup_finished", "Infection_SetupFini
 
             ChangeTeamSafe( _nextPlayer, TF_TEAM_BLUE, false );
 
-            if (bDontSwitchInPlace)
+            if (bZombiesDontSwitchInPlace)
             {
                 if (_nextPlayer.GetPlayerClass() == TF_CLASS_PYRO)
                     _sc.m_iFlags = _sc.m_iFlags | ZBIT_PYRO_DONT_EXPLODE;
