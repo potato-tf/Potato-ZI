@@ -1493,7 +1493,8 @@ CTFPlayer_SetNextActTime <- function( _iAct, _fTime )
 {
     local _sc = this.GetScriptScope();
 
-	// if (!_sc) return
+	if (!_sc) return
+
     local _nextTime = ( _fTime == ACT_LOCKED ? ACT_LOCKED : ( Time() + _fTime ).tofloat() );
 
     switch ( _iAct )

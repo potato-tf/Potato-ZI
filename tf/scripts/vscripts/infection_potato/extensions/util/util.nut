@@ -1,5 +1,3 @@
-::CONST <- getconsttable()
-::ROOT <- getroottable()
 foreach(k, v in ::NetProps.getclass())
 	if (k != "IsValid" && !(k in ROOT))
 		ROOT[k] <- ::NetProps[k].bindenv(::NetProps)

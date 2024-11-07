@@ -1,6 +1,8 @@
 //"reminder that constants are resolved at preprocessor level and not runtime"
 //"if you add them dynamically to the table they wont show up until you execute a new script as the preprocessor isnt aware yet"
 
+::ROOT <- getroottable()
+::CONST <- getconsttable()
 //fold into both const and root table to work around this.
 if (!("ConstantNamingConvention" in ROOT)) {
 

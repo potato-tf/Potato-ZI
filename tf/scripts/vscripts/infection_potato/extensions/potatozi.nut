@@ -403,15 +403,15 @@ ZI_EventHooks.AddRemoveEventHook("player_activ	ate", "PZI_PlayerActivate", funct
 	local player = GetPlayerFromUserID(params.userid);
 	if (!player) return;
 
-	Players[player] <- null;
+	PZI.Players[player] <- null;
 });
 
 ZI_EventHooks.AddRemoveEventHook("player_disconnect", "PZI_PlayerDisconnect", function(params) {
 	local player = GetPlayerFromUserID(params.userid);
 	if (!player) return;
 
-	if (player in Players)
-		delete Players[player];
+	if (player in PZI.Players)
+		delete PZI.Players[player];
 });
 
 ZI_EventHooks.AddRemoveEventHook("player_team", "PZI_PlayerTeam", function(params) {
@@ -511,7 +511,7 @@ ZI_EventHooks.AddRemoveEventHook("player_death", "PZI_PlayerDeath", function(par
 });
 
 ZI_EventHooks.AddRemoveEventHook("teamplay_set	up_finished", "PZI_TeamplaySetupFinished", function(params) {
-	InSetup = false;
+	PZI.InSetup = false;
 
 	//BalanceTeams();
 	/*
@@ -521,8 +521,8 @@ ZI_EventHooks.AddRemoveEventHook("teamplay_set	up_finished", "PZI_TeamplaySetupF
 });
 
 ZI_EventHooks.AddRemoveEventHook("teamplay_round_start", "PZI_TeamplayRoundStart", function(params) {
-	InSetup = true;
-	HandleMapSpawn();
+	PZI.InSetup = true;
+	PZI.HandleMapSpawn();
 });
 
 // function OnScriptHook_OnTakeDamage(params)
