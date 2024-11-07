@@ -180,6 +180,7 @@ function OnPostSpawn()
 
 
 ZI_EventHooks.AddRemoveEventHook("player_spawn", "Infection_PlayerSpawn", function(params) {
+
     local _hPlayer     = GetPlayerFromUserID( params.userid );
     local _iRoundState = GetPropInt( GameRules, "m_iRoundState" );
 
@@ -190,7 +191,16 @@ ZI_EventHooks.AddRemoveEventHook("player_spawn", "Infection_PlayerSpawn", functi
 
     local _sc = _hPlayer.GetScriptScope();
 
-    if (!_sc) return
+    _sc.ThinkTable <- {}
+
+    _sc.Think <- function() {
+
+        foreach(name, func in _sc.ThinkTable)
+            func.call(_sc)
+        return -1
+    }
+
+    AddThinkToEnt(_hPlayer, "Think")
 
     // we use the script overlay material for zombie ability hud
     // so let's make sure it's cleared whenever a player has respawned
@@ -357,7 +367,7 @@ ZI_EventHooks.AddRemoveEventHook("teamplay_setup_finished", "Infection_SetupFini
 
             local _sc = _nextPlayer.GetScriptScope();
 
-            if (!_sc) return
+            // if (!_sc) return
 
             // ------------------------------------------- //
             // make sure heavy doesn't get stuck in t-pose //
@@ -509,7 +519,7 @@ ZI_EventHooks.AddRemoveEventHook("player_death", "Infection_PlayerDeath", functi
 
     local _sc                  =  _hPlayer.GetScriptScope();
 
-    if (!_sc) return
+    // if (!_sc) return
     local _iClassNum           =  _hPlayer.GetPlayerClass();
     local _hPlayerTeam         =  _hPlayer.GetTeam();
     local _bIsEngineerWithEMP  =  ( _hPlayer.GetPlayerClass() == TF_CLASS_ENGINEER && _hPlayer.CanDoAct( ZOMBIE_ABILITY_CAST ) );
@@ -630,7 +640,9 @@ ZI_EventHooks.AddRemoveEventHook("player_death", "Infection_PlayerDeath", functi
             DemomanExplosionPreCheck( _hPlayer.GetOrigin(),
                                     DEMOMAN_CHARGE_DAMAGE,
                                     DEMOMAN_CHARGE_RADIUS,
-                                    _hPlayer );
+                                    _hPlayer,
+                                    DEMOMAN_CHARGE_FORCE,
+                                    DEMOMAN_CHARGE_FORCE_UPWARD_MULT );
         }
 
         // hide our fx wearable to stop the particles from generating
@@ -647,7 +659,7 @@ ZI_EventHooks.AddRemoveEventHook("player_death", "Infection_PlayerDeath", functi
     if ( ::bGameStarted ) // if the game is started, a dying survivor becomes a zombie
     {
         // player was survivor, killed by a zombie and wasn't suicide
-        if ( _hKiller && _hKiller.GetClassname() == "player" && _hKiller.GetTeam() == TF_TEAM_BLUE && _hPlayerTeam == TF_TEAM_RED )
+        if ( _hKiller && _hKiller.IsPlayer() && _hKiller.GetTeam() == TF_TEAM_BLUE && _hPlayerTeam == TF_TEAM_RED )
         {
             if ( _hKiller == null || _hPlayer == _hKiller )
                 return;
@@ -678,7 +690,7 @@ ZI_EventHooks.AddRemoveEventHook("player_death", "Infection_PlayerDeath", functi
         ShouldZombiesWin ( _hPlayer );
 
         // make sure players can only add time once per round
-        if ( ( !_sc.m_bCanAddTime ) )
+        if ( "m_bCanAddTime" in _sc && !_sc.m_bCanAddTime )
         {
             return;
         }
@@ -729,15 +741,13 @@ ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "Infection_OnTakeDamage", funct
     local _hAttacker      =   params.attacker;
     local _hInflictor     =   params.inflictor;
     local _sc             =   _hVictim.GetScriptScope();
-    if (!_sc) return
     local _iWeaponIDX     =   0;
     local _szWeaponName   =   "none";
     local _iForceGibDmg   =   ( _hVictim.GetMaxHealth() + 20 );
     local _szKillicon     =   "";
-
     if ( _hVictim.GetName() == "engie_nade_physprop" )
     {
-        if ( _hAttacker.GetClassname() == "player" ) // must check before trying to access active weapon
+        if ( _hAttacker.IsPlayer() ) // must check before trying to access active weapon
         {
             if ( _hAttacker.GetPlayerClass() == TF_CLASS_PYRO && _hAttacker.GetActiveWeapon().GetPropInt( STRING_NETPROP_ITEMDEF ) == 153 ) // homewrecker
             {
@@ -745,7 +755,7 @@ ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "Infection_OnTakeDamage", funct
             }
         }
     }
-    if ( _hVictim.GetClassname() != "player" || _hVictim.GetClassname() == "player" && _hVictim.GetHealth() <= 0 )
+    if ( !_hVictim.IsPlayer() || _hVictim.GetHealth() <= 0 )
         return;
 
     // nasty stuff here //
@@ -817,7 +827,7 @@ ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "Infection_OnTakeDamage", funct
         }
 
         // base weapon adjustments
-        if ( _hAttacker.GetClassname() == "player" && _szWeaponName != "none" )
+        if ( _hAttacker.IsPlayer() && _szWeaponName != "none" )
         {
             switch ( _hAttacker.GetPlayerClass() )
             {
@@ -882,7 +892,7 @@ ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "Infection_OnTakeDamage", funct
                 local _flDamage = params.damage;
                 local _hGroundEnt = GetPropEntity( _hVictim, "m_hGroundEntity" );
 
-                if ( _hGroundEnt.GetClassname() == "player" )
+                if ( _hGroundEnt.IsPlayer() )
                 {
                     _flDamage = ( _flDamage * 3 ) + 10;
                     if ( _hGroundEnt.GetTeam() == TF_TEAM_BLUE || !( _sc.m_iFlags & ZBIT_SOLDIER_IN_POUNCE ) )
@@ -915,14 +925,12 @@ ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "Infection_OnTakeDamage", funct
     // zombie applies damage to survivors                          //
     // ----------------------------------------------------------- //
 
-    if ( _hAttacker.GetClassname() == "player" &&
+    if ( _hAttacker.IsPlayer() &&
         _hVictim.GetTeam() == TF_TEAM_RED &&
         _hAttacker.GetTeam() == TF_TEAM_BLUE )
     {
 
         local _sc = _hAttacker.GetScriptScope();
-
-        if (!_sc) return
 
         // ----------------------------------------------------------- //
         // zombie heavy knock up effect                                //
@@ -930,12 +938,33 @@ ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "Infection_OnTakeDamage", funct
 
         if ( _hAttacker.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS && _hAttacker.GetTeam() == TF_TEAM_BLUE && params.damage_type & DMG_CLUB )
         {
-            if ( !_hVictim || _hVictim.GetClassname() != "player" )
+            if ( !_hVictim || !_hVictim.IsPlayer() )
                 return;
 
             local _iPushForce  =  HEAVY_KNOCK_BACK_FORCE;
             local _vecFwd      =  _hAttacker.EyeAngles().Forward();
             local _vecBump     =  Vector( 0, 0, _iPushForce * 2 );
+            local _vecThrow    =  ( ( _vecFwd * _iPushForce ) + _vecBump );
+
+            SetPropEntity         ( _hVictim, "m_hGroundEntity", null );
+            _hVictim.AddCond      ( TF_COND_KNOCKED_INTO_AIR );
+            _hVictim.RemoveFlag   ( FL_ONGROUND );
+
+            _hVictim.ApplyAbsVelocityImpulse ( _vecThrow );
+            EmitSoundOn( "DemoCharge.HitFlesh", _hVictim ); // todo - const
+        }
+
+        // ----------------------------------------------------------- //
+        // zombie demo charge knock up effect                          //
+        // ----------------------------------------------------------- //
+        if (_hAttacker.GetPlayerClass() == TF_CLASS_DEMOMAN && _hAttacker.GetTeam() == TF_TEAM_BLUE && _hInflictor.GetClassname() == KILLICON_DEMOMAN_BOOM)
+        {
+            if ( !_hVictim || !_hVictim.IsPlayer() )
+                return;
+
+            local _iPushForce  =  DEMOMAN_CHARGE_FORCE;
+            local _vecFwd      =  _hAttacker.EyeAngles().Forward();
+            local _vecBump     =  Vector( 0, 0, _iPushForce * DEMOMAN_CHARGE_FORCE_UPWARD_MULT );
             local _vecThrow    =  ( ( _vecFwd * _iPushForce ) + _vecBump );
 
             SetPropEntity         ( _hVictim, "m_hGroundEntity", null );
@@ -1026,7 +1055,7 @@ ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "Infection_OnTakeDamage", funct
 
         // register the time we hit someone
         // and remove out of combat buff
-        _sc.m_fTimeLastHit <- Time();
+        if (_sc) _sc.m_fTimeLastHit <- Time();
         _hAttacker.RemoveOutOfCombat();
         return;
     }
@@ -1038,7 +1067,7 @@ ZI_EventHooks.AddRemoveEventHook("player_hurt", "Infection_PlayerHurt", function
     local _hAttacker = GetPlayerFromUserID ( params.attacker );
     local _sc        = _hPlayer.GetScriptScope();
 
-    if (!_sc) return
+    // if (!_sc) return
 
     local _iTeamNum  = _hPlayer.GetTeam();
 
@@ -1058,9 +1087,10 @@ ZI_EventHooks.AddRemoveEventHook("player_hurt", "Infection_PlayerHurt", function
             if ( _hAttacker == null )
                 return;
 
-            if ( _hAttacker.GetClassname() == "player" )
+            if ( _hAttacker.IsPlayer() )
             {
-                if ( _hAttacker.GetActiveWeapon().GetClassname() == "tf_weapon_drg_pomson" )
+                local _hAttackerWeapon = _hAttacker.GetActiveWeapon()
+                if ( _hAttackerWeapon && _hAttackerWeapon.GetClassname() == "tf_weapon_drg_pomson" )
                 {
                     local _flCooldownMod = DRG_RAYGUN_ZOMBIE_COOLDOWN_MOD;
 

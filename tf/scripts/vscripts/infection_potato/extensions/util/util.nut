@@ -1,5 +1,24 @@
+::CONST <- getconsttable()
+::ROOT <- getroottable()
+foreach(k, v in ::NetProps.getclass())
+	if (k != "IsValid" && !(k in ROOT))
+		ROOT[k] <- ::NetProps[k].bindenv(::NetProps)
+
+foreach(k, v in ::Entities.getclass())
+	if (k != "IsValid" && !(k in ROOT))
+		ROOT[k] <- ::Entities[k].bindenv(::Entities)
+
+foreach(k, v in ::EntityOutputs.getclass())
+	if (k != "IsValid" && !(k in ROOT))
+		ROOT[k] <- ::EntityOutputs[k].bindenv(::EntityOutputs)
+
+foreach(k, v in ::NavMesh.getclass())
+	if (k != "IsValid" && !(k in ROOT))
+		ROOT[k] <- ::NavMesh[k].bindenv(::NavMesh)
+
 // All Global Utility Functions go here, also use IncludeScript and place it inside Root
-::ZI_Util <- {
+class ZI_Util
+{
 
 	HumanArray = []
 	ZombieArray = []

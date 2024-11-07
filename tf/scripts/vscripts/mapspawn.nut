@@ -23,6 +23,7 @@ local include = [
     "infection_potato/extensions/potatozi",
 
     "infection_potato/extensions/event_hook_table",
+    "infection_potato/extensions/damageradiusmult",
     "infection_potato/extensions/spawnanywhere",
 ]
 

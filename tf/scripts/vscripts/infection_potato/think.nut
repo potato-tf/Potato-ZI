@@ -14,7 +14,7 @@
     // foreach (k, v in scope)
     //     printl(k + ": " + v)
 
-    if (self.GetFlags() & FL_DONTTOUCH)
+    if (self.GetFlags() & FL_NOTARGET)
         return;
 
     if ( GetPropInt( self, "m_lifeState" ) != 0 )

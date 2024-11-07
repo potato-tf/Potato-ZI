@@ -2,10 +2,6 @@
 //"if you add them dynamically to the table they wont show up until you execute a new script as the preprocessor isnt aware yet"
 
 //fold into both const and root table to work around this.
-
-::CONST <- getconsttable()
-::ROOT <- getroottable()
-
 if (!("ConstantNamingConvention" in ROOT)) {
 
 	foreach(a, b in Constants)

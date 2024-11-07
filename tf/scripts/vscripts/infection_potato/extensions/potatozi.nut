@@ -24,22 +24,6 @@
 	copy over zombie abilities, etc from zi
 */
 
-::ROOT <- getroottable();
-if (!("ConstantNamingConvention" in ROOT))
-{
-	foreach(a, b in Constants)
-		foreach(k, v in b)
-			ROOT[k] <- v != null ? v : 0;
-}
-
-foreach(k, v in ::NetProps.getclass())
-	if (k != "IsValid" && !(k in ROOT))
-		ROOT[k] <- ::NetProps[k].bindenv(::NetProps);
-
-foreach(k, v in ::Entities.getclass())
-	if (k != "IsValid" && !(k in ROOT))
-		ROOT[k] <- ::Entities[k].bindenv(::Entities);
-
 local MAXPLAYERS = MaxClients().tointeger();
 
 local TF_GAMERULES  = FindByClassname(null, "tf_gamerules");
@@ -70,10 +54,11 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 	"color_correction", "team_round_timer", "game_round_win",
 ];
 
-::PZI <- {
-	Players = {},
-	InSetup   = true,
-	ZombieRatio = 0.2,
+class PZI
+{
+	Players = {}
+	InSetup   = true
+	ZombieRatio = 0.2
 
 	// Balance teams with all players, or find a spot for player provided in args
 	function BalanceTeams(player=null)
@@ -130,7 +115,7 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 			local scope = player.GetScriptScope();
 			scope.assigned_team <- player.GetTeam();
 		}
-	},
+	}
 
 	function HandleMapSpawn()
 	{
@@ -412,152 +397,143 @@ local MAPSPAWN_ENT_DESTROY_LIST = [
 			switch_teams    = false,
 			TeamNum         = 3,
 		});
-	},
-
-	function OnGameEvent_player_activate(params)
-	{
-		local player = GetPlayerFromUserID(params.userid);
-		if (!player) return;
-
-		Players[player] <- null;
-	},
-	function OnGameEvent_player_disconnect(params)
-	{
-		local player = GetPlayerFromUserID(params.userid);
-		if (!player) return;
-
-		if (player in Players)
-			delete Players[player];
-	},
-
-	function OnGameEvent_player_team(params)
-	{
-		/*
-		if (InSetup) return;
-
-		// While round is active:
-
-		local player = GetPlayerFromUserID(params.userid);
-		if (!player) return;
-
-		player.ValidateScriptScope();
-		local scope = player.GetScriptScope();
-
-		// Unassigned gets sent to spectator
-		if (!params.oldteam)
-			scope.assigned_team <- 1;
-		// Red team can join spectator / blue mid round if they want
-		else if (params.oldteam == 2)
-			return;
-
-		if ("assigned_team" in scope)
-			if (scope.assigned_team != params.team)
-				EntFireByHandle(player, "RunScriptCode", "self.ForceChangeTeam(assigned_team, false); self.ForceRespawn()", 0.015, null, null);
-		*/
-	},
-
-	function OnGameEvent_player_spawn(params)
-	{
-		local player = GetPlayerFromUserID(params.userid);
-		if (!player) return;
-
-		// Teleport to spawn points
-		local area = null;
-		local team = player.GetTeam();
-		if (team == 2) area = PZI_NavMesh.AreaSpawnRed;
-		else if (team == 3) area = PZI_NavMesh.AreaSpawnBlue;
-		if (area)
-		{
-			local center = area.GetCenter();
-			center.z += 24;
-
-			player.KeyValueFromVector("origin", center);
-			player.SetAbsVelocity(Vector());
-
-			// Face center of world
-			local ang = PZI_Misc.VectorAngles(PZI_Misc.GetWorldCenter() - player.EyePosition());
-			ang.x = 0;
-			player.SnapEyeAngles(ang);
-		}
-	},
-
-	function OnGameEvent_post_inventory_application(params)
-	{
-		local player = GetPlayerFromUserID(params.userid);
-		if (!player) return;
-
-		player.ValidateScriptScope();
-		local scope = player.GetScriptScope();
-
-		player.AcceptInput("SetFogController", "__potatozi_fog", global_fog, global_fog);
-
-		// todo after winning a round spawning as red from blue makes you not have your weapons
-		/*
-		local team  = player.GetTeam();
-		local melee = null;
-		for (local child = player.FirstMoveChild(); child != null; child = child.NextMovePeer())
-		{
-			if (child instanceof CBaseCombatWeapon && child.GetSlot() == 2) melee = child;
-
-			if (!child || !child.IsValid()) continue;
-			if (child.GetClassname() == "tf_viewmodel") continue;
-			if (team == 2 && child instanceof CBaseCombatWeapon) continue;
-			if (team == 3 && child == melee) continue;
-
-			EntFireByHandle(child, "Kill", "", 0, null, null);
-		}
-
-		if (team == 3 && melee)
-			player.Weapon_Switch(melee);
-		*/
-	},
-
-	function OnGameEvent_player_death(params)
-	{
-		/*
-		local player = GetPlayerFromUserID(params.userid);
-		if (!player) return;
-
-		player.ValidateScriptScope();
-		local scope = player.GetScriptScope();
-
-		local team = player.GetTeam();
-		if (!InSetup && team == 2)
-		{
-			scope.assigned_team <- 3;
-			EntFireByHandle(player, "RunScriptCode", "self.ForceChangeTeam(3, false);", 0.015, null, null);
-		}
-		*/
-	},
-
-	function OnGameEvent_teamplay_setup_finished(params)
-	{
-		InSetup = false;
-
-		//BalanceTeams();
-		/*
-		foreach (player, n in Players)
-			player.ForceRespawn();
-		*/
-	},
-
-	function OnGameEvent_teamplay_round_start(params)
-	{
-		InSetup = true;
-		HandleMapSpawn();
-	},
-
-	// function OnScriptHook_OnTakeDamage(params)
-	// {
-	// 	if (InSetup)
-	// 	{
-	// 		params.damage = 0;
-	// 		params.early_out = true;
-	// 		return;
-	// 	}
-	// },
+	}
 };
-__CollectGameEventCallbacks(PZI);
+ZI_EventHooks.AddRemoveEventHook("player_activ	ate", "PZI_PlayerActivate", function(params) {
+	local player = GetPlayerFromUserID(params.userid);
+	if (!player) return;
+
+	Players[player] <- null;
+});
+
+ZI_EventHooks.AddRemoveEventHook("player_disconnect", "PZI_PlayerDisconnect", function(params) {
+	local player = GetPlayerFromUserID(params.userid);
+	if (!player) return;
+
+	if (player in Players)
+		delete Players[player];
+});
+
+ZI_EventHooks.AddRemoveEventHook("player_team", "PZI_PlayerTeam", function(params) {
+	/*
+	if (InSetup) return;
+
+	// While round is active:
+
+	local player = GetPlayerFromUserID(params.userid);
+	if (!player) return;
+
+	player.ValidateScriptScope();
+	local scope = player.GetScriptScope();
+
+	// Unassigned gets sent to spectator
+	if (!params.oldteam)
+		scope.assigned_team <- 1;
+	// Red team can join spectator / blue mid round if they want
+	else if (params.oldteam == 2)
+		return;
+
+	if ("assigned_team" in scope)
+		if (scope.assigned_team != params.team)
+			EntFireByHandle(player, "RunScriptCode", "self.ForceChangeTeam(assigned_team, false); self.ForceRespawn()", 0.015, null, null);
+	*/
+});
+
+ZI_EventHooks.AddRemoveEventHook("player_spawn", "PZI_PlayerSpawn", function(params) {
+	local player = GetPlayerFromUserID(params.userid);
+	if (!player) return;
+
+	// Teleport to spawn points
+	local area = null;
+	local team = player.GetTeam();
+	if (team == 2) area = PZI_NavMesh.AreaSpawnRed;
+	else if (team == 3) area = PZI_NavMesh.AreaSpawnBlue;
+	if (area)
+	{
+		local center = area.GetCenter();
+		center.z += 24;
+
+		player.KeyValueFromVector("origin", center);
+		player.SetAbsVelocity(Vector());
+
+		// Face center of world
+		local ang = PZI_Misc.VectorAngles(PZI_Misc.GetWorldCenter() - player.EyePosition());
+		ang.x = 0;
+		player.SnapEyeAngles(ang);
+	}
+});
+
+ZI_EventHooks.AddRemoveEventHook("post_inventory_application", "PZI_PostInventoryApplication", function(params) {
+	local player = GetPlayerFromUserID(params.userid);
+	if (!player) return;
+
+	player.ValidateScriptScope();
+	local scope = player.GetScriptScope();
+
+	player.AcceptInput("SetFogController", "__potatozi_fog", global_fog, global_fog);
+
+	// todo after winning a round spawning as red from blue makes you not have your weapons
+	/*
+	local team  = player.GetTeam();
+	local melee = null;
+	for (local child = player.FirstMoveChild(); child != null; child = child.NextMovePeer())
+	{
+		if (child instanceof CBaseCombatWeapon && child.GetSlot() == 2) melee = child;
+
+		if (!child || !child.IsValid()) continue;
+		if (child.GetClassname() == "tf_viewmodel") continue;
+		if (team == 2 && child instanceof CBaseCombatWeapon) continue;
+		if (team == 3 && child == melee) continue;
+
+		EntFireByHandle(child, "Kill", "", 0, null, null);
+	}
+
+	if (team == 3 && melee)
+		player.Weapon_Switch(melee);
+	*/
+});
+
+ZI_EventHooks.AddRemoveEventHook("player_death", "PZI_PlayerDeath", function(params) {
+	/*
+	local player = GetPlayerFromUserID(params.userid);
+	if (!player) return;
+
+	player.ValidateScriptScope();
+	local scope = player.GetScriptScope();
+
+	local team = player.GetTeam();
+	if (!InSetup && team == 2)
+	{
+		scope.assigned_team <- 3;
+		EntFireByHandle(player, "RunScriptCode", "self.ForceChangeTeam(3, false);", 0.015, null, null);
+	}
+	*/
+});
+
+ZI_EventHooks.AddRemoveEventHook("teamplay_set	up_finished", "PZI_TeamplaySetupFinished", function(params) {
+	InSetup = false;
+
+	//BalanceTeams();
+	/*
+	foreach (player, n in Players)
+		player.ForceRespawn();
+	*/
+});
+
+ZI_EventHooks.AddRemoveEventHook("teamplay_round_start", "PZI_TeamplayRoundStart", function(params) {
+	InSetup = true;
+	HandleMapSpawn();
+});
+
+// function OnScriptHook_OnTakeDamage(params)
+// {
+// 	if (InSetup)
+// 	{
+// 		params.damage = 0;
+// 		params.early_out = true;
+// 		return;
+// 	}
+// }
 
 local script_entity = FindByName(null, "__potatozi_entity");
 if (!script_entity)

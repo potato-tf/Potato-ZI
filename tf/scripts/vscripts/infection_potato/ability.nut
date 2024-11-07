@@ -68,8 +68,10 @@ MEDIC_HEAL_RATE                  <- 0.5;   // time in sec between each heal tick
 // DEMOMAN_CHARGE_DAMAGE              <- 275;   //                                         //
 DEMOMAN_CHARGE_BASE_DAMAGE            <- 100;   //                                         //
 DEMOMAN_CHARGE_DAMAGE_PER_PLAYER_MULT <- 1.35;  //                                         //
-DEMOMAN_CHARGE_RADIUS                 <- 150;   //                                         //
+DEMOMAN_CHARGE_RADIUS                 <- 200;   //                                         //
 DEMOMAN_CHARGE_INVULN_TIME            <- 1.4;   //                                         //
+DEMOMAN_CHARGE_FORCE                  <- 650;  //                                         //
+DEMOMAN_CHARGE_FORCE_UPWARD_MULT      <- 1.5;   //                                         //
 /////////////////////////////////////////////////////////////////////////////////////////////
 // generic zombie stuff      |------------------------------------------------------------ //
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -647,7 +649,7 @@ class CDemoCharge extends CZombieAbility
 
         this.m_hAbilityOwner.AddCond    ( TF_COND_SHIELD_CHARGE );
         this.m_hAbilityOwner.RemoveCond ( TF_COND_RADIUSHEAL );
-        this.m_hAbilityOwner.AddCondEx  ( TF_COND_INVULNERABLE_USER_BUFF, 0.298, this.m_hAbilityOwner );
+        // this.m_hAbilityOwner.AddCondEx  ( TF_COND_INVULNERABLE_USER_BUFF, 0.298, this.m_hAbilityOwner );
         this.m_hAbilityOwner.AddEventToQueue   ( EVENT_DEMO_CHARGE_EXIT, 1.5 );
 
         this.m_hAbilityOwner.RemoveCustomAttribute ( "no_jump" );
@@ -678,7 +680,9 @@ class CDemoCharge extends CZombieAbility
                                   DEMOMAN_CHARGE_BASE_DAMAGE,
                                   DEMOMAN_CHARGE_DAMAGE_PER_PLAYER_MULT,
                                   DEMOMAN_CHARGE_RADIUS,
-                                  this.m_hAbilityOwner );
+                                  this.m_hAbilityOwner,
+                                  DEMOMAN_CHARGE_FORCE,
+                                  DEMOMAN_CHARGE_FORCE_UPWARD_MULT );
 
         this.m_hAbilityOwner.AddEventToQueue( EVENT_DEMO_CHARGE_RESET, 0.1 );
         return;

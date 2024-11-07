@@ -1,16 +1,5 @@
 PrecacheModel("models/bots/skeleton_sniper/skeleton_sniper.mdl")
 
-::CONST <- getconsttable()
-::ROOT <- getroottable()
-if (!("ConstantNamingConvention" in ROOT)) {
-
-	foreach(a, b in Constants)
-		foreach(k, v in b)
-		{
-			CONST[k] <- v != null ? v : 0
-			ROOT[k] <- v != null ? v : 0
-		}
-}
 const MAX_NAV_VIEW_DISTANCE = 2048
 const NEAREST_NAV_RADIUS = 1024
 const MAX_SPAWN_DISTANCE = 16384 //NOT HAMMER UNITS, see trace_dist
@@ -18,31 +7,17 @@ const MAX_SPAWN_DISTANCE = 16384 //NOT HAMMER UNITS, see trace_dist
 const SUMMON_ANIM_MULT = 0.7
 const SUMMON_HEAL_DELAY = 1.5
 const SUMMON_MAX_OVERHEAL_MULT = 1
+const SUMMON_RADIUS = 512
 
 const PLAYER_HULL_HEIGHT = 82
 
 CONST.HIDEHUD_GHOST <- (HIDEHUD_CROSSHAIR|HIDEHUD_HEALTH|HIDEHUD_WEAPONSELECTION|HIDEHUD_METAL|HIDEHUD_BUILDING_STATUS|HIDEHUD_CLOAK_AND_FEIGN|HIDEHUD_PIPES_AND_CHARGE)
 CONST.TRACEMASK <- (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_PLAYERCLIP|CONTENTS_WINDOW|CONTENTS_MONSTER|CONTENTS_GRATE)
 
-foreach(k, v in ::NetProps.getclass())
-	if (k != "IsValid" && !(k in ROOT))
-		ROOT[k] <- ::NetProps[k].bindenv(::NetProps)
-
-foreach(k, v in ::Entities.getclass())
-	if (k != "IsValid" && !(k in ROOT))
-		ROOT[k] <- ::Entities[k].bindenv(::Entities)
-
-foreach(k, v in ::EntityOutputs.getclass())
-	if (k != "IsValid" && !(k in ROOT))
-		ROOT[k] <- ::EntityOutputs[k].bindenv(::EntityOutputs)
-
-foreach(k, v in ::NavMesh.getclass())
-	if (k != "IsValid" && !(k in ROOT))
-		ROOT[k] <- ::NavMesh[k].bindenv(::NavMesh)
-
 if ("ZI_SpawnAnywhere" in ROOT) delete ::ZI_SpawnAnywhere
 
-::ZI_SpawnAnywhere <- {
+class ZI_SpawnAnywhere
+{
 
     // Convert 3D world coordinates to 2D screen coordinates
     function worldToScreenCoords(objectPos, cameraPos, cameraForward, cameraRight, cameraUp, fovDegrees = 90.0) {
@@ -110,20 +85,15 @@ if ("ZI_SpawnAnywhere" in ROOT) delete ::ZI_SpawnAnywhere
     }
     function SetGhostMode(player) {
 
-        player.GiveZombieCosmetics()
-
         local scope = player.GetScriptScope()
 
         SetPropInt(player, "m_nRenderMode", kRenderTransColor)
         SetPropInt(player, "m_clrRender", 0)
 
         SetPropInt(player, "m_afButtonDisabled", IN_ATTACK2)
-        // SetPropFloat(player.GetActiveWeapon(), "m_flNextSecondaryAttack", INT_MAX)
 
-        if (player.GetPlayerClass() == TF_CLASS_PYRO)
-            scope.m_iFlags <- ZBIT_PYRO_DONT_EXPLODE
+        scope.m_iFlags <- ZBIT_PYRO_DONT_EXPLODE
 
-        // scope.playerclass <- player.GetPlayerClass()
         scope.playermodel <- player.GetModelName()
 
         // player.SetPlayerClass(TF_CLASS_SCOUT)
@@ -133,21 +103,21 @@ if ("ZI_SpawnAnywhere" in ROOT) delete ::ZI_SpawnAnywhere
 
         player.AddHudHideFlags(CONST.HIDEHUD_GHOST)
 
-        //full loadout strip
         for (local child = player.FirstMoveChild(); child != null; child = child.NextMovePeer())
-            //only delete weapons
-            if (child instanceof CBaseCombatWeapon)
+            if (child instanceof CBaseCombatWeapon || child instanceof CEconEntity || child.GetClassname() == "tf_wearable")
                 EntFireByHandle(child, "Kill", "", -1, null, null)
             else
                 child.DisableDraw()
 
-        // EntFireByHandle(player, "SetForcedTauntCam", "1", -1, null, null)
+
+        // player.SetSolid(SOLID_NONE)
+        // player.AddSolidFlags(FSOLID_NOT_SOLID)
+        // player.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 
         EntFireByHandle(player, "RunScriptCode", "self.AddCustomAttribute(`dmg taken increased`, 0, -1)", -1, null, null)
         EntFireByHandle(player, "RunScriptCode", "self.AddCustomAttribute(`move speed bonus`, 5, -1)", -1, null, null)
         EntFireByHandle(player, "RunScriptCode", "self.AddCustomAttribute(`major increased jump height`, 3, -1)", -1, null, null)
         EntFireByHandle(player, "RunScriptCode", "self.AddCustomAttribute(`voice pitch scale`, 0, -1)", -1, null, null)
-        // EntFireByHandle(player, "RunScriptCode", "self.AddCustomAttribute(`air dash count`, 10, -1)", -1, null, null) //doesn't work, active weapon only
         player.AddFlag(FL_DONTTOUCH|FL_NOTARGET)
     }
 
@@ -155,9 +125,9 @@ if ("ZI_SpawnAnywhere" in ROOT) delete ::ZI_SpawnAnywhere
 
         local scope = player.GetScriptScope()
 
-        delete scope.ThinkTable.GetValidSpawnPoint
-        delete scope.ThinkTable.SummonZombie
+        delete scope.ThinkTable.GhostThink
 
+        // player.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
         //should already be invis but whatever
         SetPropInt(player, "m_nRenderMode", kRenderTransColor)
         SetPropInt(player, "m_clrRender", 0)
@@ -195,23 +165,26 @@ if ("ZI_SpawnAnywhere" in ROOT) delete ::ZI_SpawnAnywhere
 
         local dummy_player = CreateByClassname("funCBaseFlex")
 
-        dummy_player.SetModel(scope.playermodel)
+        // dummy_player.SetModel(scope.playermodel)
+        dummy_player.SetModel(format("models/player/%s_infected.mdl", ZI_Util.Classes[player.GetPlayerClass()]))
         dummy_player.SetOrigin(origin)
         dummy_player.SetSkin(player.GetSkin())
         dummy_player.AcceptInput("SetParent", "!activator", dummy_skeleton, dummy_skeleton)
         SetPropInt(dummy_player, "m_fEffects", EF_BONEMERGE|EF_BONEMERGE_FASTCULL)
         dummy_player.DispatchSpawn()
+
         player.RemoveCustomAttribute("dmg taken increased")
         player.SetHealth(1)
         player.RemoveHudHideFlags(CONST.HIDEHUD_GHOST)
-        player.RemoveFlag(FL_NOTARGET)
+        player.RemoveFlag(FL_NOTARGET|FL_DONTTOUCH)
         EntFireByHandle(player, "RunScriptCode", "self.AddCond(TF_COND_HALLOWEEN_QUICK_HEAL)", SUMMON_HEAL_DELAY, null, null)
 
-        scope.ThinkTable.SpawnHealEffect <- function() {
+        scope.ThinkTable.SummonPreSpawn <- function() {
+
             if (player.GetHealth() >= player.GetMaxHealth() * SUMMON_MAX_OVERHEAL_MULT)
             {
                 player.RemoveCond(TF_COND_HALLOWEEN_QUICK_HEAL)
-                delete scope.ThinkTable.SpawnHealEffect
+                delete scope.ThinkTable.SummonPreSpawn
             }
         }
 
@@ -236,7 +209,7 @@ if ("ZI_SpawnAnywhere" in ROOT) delete ::ZI_SpawnAnywhere
 
                 SendGlobalGameEvent("hide_annotation", { id = FindByName(null, format("spawn_hint_teleporter_%d", player.entindex())).entindex() })
 
-                player.RemoveFlag(FL_ATCONTROLS|FL_DUCKING|FL_DONTTOUCH|FL_NOTARGET)
+                player.RemoveFlag(FL_ATCONTROLS|FL_DUCKING)
                 SetPropInt(player, "m_afButtonForced", 0)
                 SetPropBool(player, "m_Local.m_bDucked", false)
 
@@ -249,6 +222,36 @@ if ("ZI_SpawnAnywhere" in ROOT) delete ::ZI_SpawnAnywhere
                 player.RemoveCustomAttribute("major increased jump height")
                 player.RemoveCustomAttribute("voice pitch scale")
 
+                local eye_particle = szEyeParticles[RandomInt(0, szEyeParticles.len() - 1)]
+
+                if (player.GetPlayerClass() != TF_CLASS_DEMOMAN)
+                {
+                    local particleL = CreateByClassname("trigger_particle")
+
+                    particleL.KeyValueFromString("particle_name", eye_particle)
+                    particleL.KeyValueFromString("attachment_name", "eyeglow_L")
+                    particleL.KeyValueFromInt("attachment_type", 4)
+                    particleL.KeyValueFromInt("spawnflags", SF_TRIGGER_ALLOW_ALL)
+
+                    particleL.DispatchSpawn()
+
+                    particleL.AcceptInput("StartTouch", "!activator", player, player)
+                    particleL.Kill()
+                }
+                local particleR = CreateByClassname("trigger_particle")
+
+                particleR.KeyValueFromString("particle_name", eye_particle)
+                particleR.KeyValueFromString("attachment_name", "eyeglow_R")
+                particleR.KeyValueFromInt("attachment_type", 4)
+                particleR.KeyValueFromInt("spawnflags", SF_TRIGGER_ALLOW_ALL)
+
+                particleR.DispatchSpawn()
+
+                particleR.AcceptInput("StartTouch", "!activator", player, player)
+
+                particleR.Kill()
+
+                dummy_player.SetModel(format("models/player/%s.mdl", ZI_Util.Classes[player.GetPlayerClass()]))
                 player.GiveZombieCosmetics()
 
                 for (local child = player.FirstMoveChild(); child != null; child = child.NextMovePeer())
@@ -291,15 +294,8 @@ ZI_EventHooks.AddRemoveEventHook("post_inventory_application", "SpawnAnywhere_Po
     player.ValidateScriptScope() //temporary solo testing
     local scope = player.GetScriptScope()
 
-    PlayerThink <- ::PlayerThink
-    PlayerThink <- PlayerThink.bindenv(scope)
-
     local items = {
         tracepos = Vector()
-
-        ThinkTable = {
-            // "PlayerThink" : PlayerThink
-        }
 
         spawn_nests = []
 
@@ -368,7 +364,12 @@ ZI_EventHooks.AddRemoveEventHook("post_inventory_application", "SpawnAnywhere_Po
         })
     ", player.entindex()), 0.5, null, null)
 
-    scope.ThinkTable.GetValidSpawnPoint <- function() {
+    scope.ThinkTable.GhostThink <- function() {
+
+        //test, this doesn't belong here
+        for (local child = player.FirstMoveChild(); child != null; child = child.NextMovePeer())
+            if (child instanceof CBaseCombatWeapon || child instanceof CEconEntity || child.GetClassname() == "tf_wearable")
+            EntFireByHandle(child, "Kill", "", -1, null, null)
 
         local nav_trace = {
 
@@ -399,8 +400,8 @@ ZI_EventHooks.AddRemoveEventHook("post_inventory_application", "SpawnAnywhere_Po
 
         // DebugDrawBox(hull_trace.pos, hull_trace.hullmin, hull_trace.hullmax, 0, 0, 255, 0, 0.1)
 
-        //smooth movement for the annotation instead of snapping
-        // spawn_hint_teleporter.KeyValueFromVector("origin", hull_trace.pos + Vector(0, 0, 20))
+        // smooth movement for the annotation instead of snapping, see below for snapping
+        spawn_hint_teleporter.KeyValueFromVector("origin", hull_trace.pos + Vector(0, 0, 20))
 
         if (hull_trace.hit)
         {
@@ -411,14 +412,17 @@ ZI_EventHooks.AddRemoveEventHook("post_inventory_application", "SpawnAnywhere_Po
 
         scope.spawn_area <- nav_area
 
-        spawn_hint_teleporter.KeyValueFromVector("origin", nav_area.GetCenter() + Vector(0, 0, 20))
-
-        // scope.spawn_area.DebugDrawFilled(255, 0, 0, 100, 0.1, false, 0.1)
-    }
-
-    scope.ThinkTable.SummonZombie <- function() {
+        // snap the annotation to the nav area center
+        // spawn_hint_teleporter.KeyValueFromVector("origin", nav_area.GetCenter() + Vector(0, 0, 20))
 
         local buttons = GetPropInt(player, "m_nButtons")
+
+        local survivor
+        while (survivor = FindByClassnameWithin(survivor, "player", scope.tracepos, SUMMON_RADIUS))
+        {
+            if (survivor.GetTeam() == TF_TEAM_RED)
+                break
+        }
 
         //NORMAL GROUND SPAWN
         //left or right clicking when no nests are active
@@ -434,7 +438,11 @@ ZI_EventHooks.AddRemoveEventHook("post_inventory_application", "SpawnAnywhere_Po
             (scope.spawn_nests.len() && (buttons & IN_ATTACK2)))
         )
         {
-            ZI_SpawnAnywhere.BeginSummonSequence(player, scope.tracepos)
+            if (survivor)
+                ClientPrint(player, HUD_PRINTTALK, "Too close to a survivor!")
+            else
+                ZI_SpawnAnywhere.BeginSummonSequence(player, scope.tracepos)
+
         }
 
         //NEST SPAWN
@@ -450,25 +458,13 @@ ZI_EventHooks.AddRemoveEventHook("post_inventory_application", "SpawnAnywhere_Po
                 }
             }
         }
-
-        // player.SetOrigin(scope.spawn_area.GetCenter())
     }
-
-    //add ZI thinks last
-    scope.ThinkTable.PlayerThink <- PlayerThink
-
-    scope.Think <- function() {
-
-        foreach(name, func in scope.ThinkTable)
-            func.call(scope)
-        return -1
-    }
-    AddThinkToEnt(player, "Think")
 })
 
 ZI_EventHooks.AddRemoveEventHook("player_death", "SpawnAnywhere_PlayerDeath", function(params) {
 
     local player = GetPlayerFromUserID(params.userid)
     player.RemoveFlag(FL_ATCONTROLS|FL_DUCKING|FL_DONTTOUCH|FL_NOTARGET)
+    player.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null)
     player.TerminateScriptScope()
 })

@@ -25,6 +25,9 @@ PrecacheResources <- function()
         };
     };
 
+    foreach (particle in szEyeParticles)
+        PrecacheEntityFromTable( { classname = "info_particle_system", effect_name = particle } );
+
     return;
 };
 
@@ -86,7 +89,7 @@ PlayGlobalBell <- function( _bForce )
     flTimeLastBell <- Time();
 };
 
-DemomanExplosionPreCheck <-  function(_vecLocation, _flDmg, _flDmgMult, _flRange, _hInflictor, _iTeamnum = TF_TEAM_BLUE)
+DemomanExplosionPreCheck <-  function(_vecLocation, _flDmg, _flDmgMult, _flRange, _hInflictor, _flForceMultiplier = 0.0, _flUpwardForce = 0.0, _iTeamnum = TF_TEAM_BLUE)
 {
     local _buildableArr    =  [ ];
     local _buildable       =  null;
@@ -107,10 +110,19 @@ DemomanExplosionPreCheck <-  function(_vecLocation, _flDmg, _flDmgMult, _flRange
 
     if ( _buildableCount == 0 )
     {
-        local _player = null
-        while (_player = FindByClassnameWithin( _player, "player", _vecLocation, _flRange ))
-            _finalDmg *= _flDmgMult;
+        local _skipFirstPlayer = false
+        for (local _player; _player = FindByClassnameWithin(_player, "player", _vecLocation, _flRange);)
+        {
+            if (_player.GetTeam() != TF_TEAM_RED)
+                continue
 
+            if (_skipFirstPlayer)
+                _finalDmg *= _flDmgMult
+
+            _skipFirstPlayer = true
+        }
+
+        printl("Final damage: " + _finalDmg)
         CreateExplosion( _vecLocation,
                          _finalDmg,
                          _flRange,
@@ -131,11 +143,19 @@ DemomanExplosionPreCheck <-  function(_vecLocation, _flDmg, _flDmgMult, _flRange
             _buildable.TakeDamage( 999, DMG_BLAST, _hInflictor );
         };
     };
+    local _skipFirstPlayer = false
+    for (local _player; _player = FindByClassnameWithin(_player, "player", _vecLocation, _flRange);)
+    {
+        if (_player.GetTeam() != TF_TEAM_RED)
+            continue
 
-    local _player = null
-    while (_player = FindByClassnameWithin( _player, "player", _vecLocation, _flRange ))
-        _finalDmg *= _flDmgMult;
+        if (_skipFirstPlayer)
+            _finalDmg *= _flDmgMult
 
+        _skipFirstPlayer = true
+    }
+
+    printl("Final damage: " + _finalDmg)
     CreateExplosion( _vecLocation,
                      _finalDmg,
                      _flRange,
@@ -143,7 +163,7 @@ DemomanExplosionPreCheck <-  function(_vecLocation, _flDmg, _flDmgMult, _flRange
     return;
 };
 
-CreateExplosion <- function( _vecLocation, _flDmg, _flRange, _hInflictor, _iTeamnum = TF_TEAM_BLUE )
+CreateExplosion <-  function(_vecLocation, _flDmg, _flRange, _hInflictor, _flForceMultiplier = 0.0, _flUpwardForce = 0.0, _iTeamnum = TF_TEAM_BLUE)
 {
     ScreenShake ( _vecLocation, 5000, 5000, 4, 350, 0, true );
 
@@ -191,11 +211,13 @@ CreateExplosion <- function( _vecLocation, _flDmg, _flRange, _hInflictor, _iTeam
     _hBomb.SetTeam       ( TF_TEAM_BLUE );
     _hBomb.SetOrigin     ( _vecLocation );
     _hBomb.SetOwner      ( _hInflictor );
+    // KnockbackPlayer(_hBomb, _hInflictor, _flForceMultiplier, _flUpwardForce, Vector(400, 400, 400), true)
 
     // EntFireByHandle ( _hBomb,   "Detonate", "", -1, _hInflictor, _hInflictor )
     _hBomb.KeyValueFromString( "classname", KILLICON_DEMOMAN_BOOM );
     _hBomb.TakeDamage(1, DMG_CLUB, _hInflictor)
     _hInflictor.TakeDamage(1, DMG_NEVERGIB, _hInflictor)
+    // _hInflictor.TakeDamageEx(_hBomb, _hInflictor, null, Vector(_flForceMultiplier, _flForceMultiplier, _flForceMultiplier * _flUpwardForce), _hInflictor.GetOrigin(), _flDmg, DMG_CLUB);
     return;
 };
 
@@ -446,7 +468,7 @@ SlayPlayerWithSpoofedIDX <-  function(_hAttacker, _hVictim, _hAttackerWep, _vecD
         // set the IDX back
      //   SetPropInt( _hAttackerWep, STRING_NETPROP_ITEMDEF, _iPreviousIDX );
     }
-    else if ( _hVictim.GetClassname() == "player" )
+    else if ( _hVictim.IsPlayer() )
     {
         _hVictim.SetHealth( 1 ); // prep the player to be slain
 
@@ -551,7 +573,7 @@ CTFPlayer_GiveZombieAbility <- function()
 {
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
     _sc.m_hZombieAbility <- null;
     _sc.m_fTimeNextCast  <- 0.0;
@@ -624,70 +646,70 @@ CTFPlayer_GiveZombieCosmetics <- function()
 
     local _iClassnum = this.GetPlayerClass();
 
-    this.SetCustomModelWithClassAnimations(szArrZombiePlayerModels[ _iClassnum ]);
+    // this.SetCustomModelWithClassAnimations(szArrZombiePlayerModels[ _iClassnum ]);
 
-    // local _sc = this.GetScriptScope();
+    local _sc = this.GetScriptScope();
 
 	// if (!_sc) return
 
-    // if ( "m_hZombieWearable" in _sc && _sc.m_hZombieWearable != null && _sc.m_hZombieWearable.IsValid() )
-    // _sc.m_hZombieWearable.Destroy();
+    if ( "m_hZombieWearable" in _sc && _sc.m_hZombieWearable != null && _sc.m_hZombieWearable.IsValid() )
+    _sc.m_hZombieWearable.Destroy();
 
-    // local _zombieCosmetic  =  Entities.CreateByClassname( "tf_wearable" );
-    // local _soulIDX         =  arrZombieCosmeticIDX[ this.GetPlayerClass() ];
+    local _zombieCosmetic  =  Entities.CreateByClassname( "tf_wearable" );
+    local _soulIDX         =  arrZombieCosmeticIDX[ this.GetPlayerClass() ];
 
-    // _zombieCosmetic.AddAttribute ( "player skin override", 1, -1 );
-    // SetPropInt                   ( this, "m_iPlayerSkinOverride", 1 );
+    _zombieCosmetic.AddAttribute ( "player skin override", 1, -1 );
+    SetPropInt                   ( this, "m_iPlayerSkinOverride", 1 );
 
-    // Entities.DispatchSpawn       ( _zombieCosmetic );
-    // _zombieCosmetic.SetAbsOrigin ( this.GetLocalOrigin() );
-    // _zombieCosmetic.SetAbsAngles ( this.GetLocalAngles() );
+    Entities.DispatchSpawn       ( _zombieCosmetic );
+    _zombieCosmetic.SetAbsOrigin ( this.GetLocalOrigin() );
+    _zombieCosmetic.SetAbsAngles ( this.GetLocalAngles() );
 
-    // // Zombie Cosmetics NetProps // ----------------------------------------------------------------- //
-    // SetPropInt    ( _zombieCosmetic, "m_iTeamNum",                                     this.GetTeam() );
-    // SetPropInt    ( _zombieCosmetic, "m_AttributeManager.m_Item.m_iItemDefinitionIndex",     _soulIDX );
-    // SetPropBool   ( _zombieCosmetic, "m_bValidatedAttachedEntity",                               true );
-    // SetPropBool   ( _zombieCosmetic, "m_AttributeManager.m_Item.m_bInitialized",                 true );
-    // SetPropEntity ( _zombieCosmetic, "m_hOwnerEntity",                                           this );
-    // SetPropInt    ( _zombieCosmetic, "m_Collision.m_usSolidFlags",                                  4 );
-    // SetPropInt    ( _zombieCosmetic, "m_nModelIndex", arrZombieCosmeticModel[ this.GetPlayerClass() ] );
-    // // ---------------------------------------------------------------------------------------------- //
+    // Zombie Cosmetics NetProps // ----------------------------------------------------------------- //
+    SetPropInt    ( _zombieCosmetic, "m_iTeamNum",                                     this.GetTeam() );
+    SetPropInt    ( _zombieCosmetic, "m_AttributeManager.m_Item.m_iItemDefinitionIndex",     _soulIDX );
+    SetPropBool   ( _zombieCosmetic, "m_bValidatedAttachedEntity",                               true );
+    SetPropBool   ( _zombieCosmetic, "m_AttributeManager.m_Item.m_bInitialized",                 true );
+    SetPropEntity ( _zombieCosmetic, "m_hOwnerEntity",                                           this );
+    SetPropInt    ( _zombieCosmetic, "m_Collision.m_usSolidFlags",                                  4 );
+    SetPropInt    ( _zombieCosmetic, "m_nModelIndex", arrZombieCosmeticModel[ this.GetPlayerClass() ] );
+    // ---------------------------------------------------------------------------------------------- //
 
-    // _zombieCosmetic.SetOwner( this );
+    _zombieCosmetic.SetOwner( this );
 
-    // SetPropInt      ( _zombieCosmetic, "m_fEffects", ( EF_BONEMERGE ) );
-    // EntFireByHandle ( _zombieCosmetic, "SetParent",  "!activator", -1, this, this );
+    SetPropInt      ( _zombieCosmetic, "m_fEffects", ( EF_BONEMERGE ) );
+    EntFireByHandle ( _zombieCosmetic, "SetParent",  "!activator", -1, this, this );
 }
 
 
 CTFPlayer_GiveZombieFXWearable <- function()
 {
-  // local _sc = this.GetScriptScope();
+//   local _sc = this.GetScriptScope();
 
-	// if (!_sc) return
+// 	// if (!_sc) return
 
-  // if ( _sc.m_hZombieFXWearable != null && _sc.m_hZombieFXWearable.IsValid() )
-  //     _sc.m_hZombieFXWearable.Destroy();
+//   if ( _sc.m_hZombieFXWearable != null && _sc.m_hZombieFXWearable.IsValid() )
+//       _sc.m_hZombieFXWearable.Destroy();
 
-  // local _zombieFXWearable = Entities.CreateByClassname( "tf_wearable" );
+//   local _zombieFXWearable = Entities.CreateByClassname( "tf_wearable" );
 
-  // Entities.DispatchSpawn         ( _zombieFXWearable );
-  // _zombieFXWearable.SetAbsOrigin ( this.GetLocalOrigin() );
-  // _zombieFXWearable.SetAbsAngles ( this.GetLocalAngles() );
+//   Entities.DispatchSpawn         ( _zombieFXWearable );
+//   _zombieFXWearable.SetAbsOrigin ( this.GetLocalOrigin() );
+//   _zombieFXWearable.SetAbsAngles ( this.GetLocalAngles() );
 
-  // // Zombie FX Wearable NetProps
-  // SetPropBool   ( _zombieFXWearable,  "m_bValidatedAttachedEntity", true );
-  // SetPropBool   ( _zombieFXWearable,  "m_AttributeManager.m_Item.m_bInitialized", true );
-  // SetPropEntity ( _zombieFXWearable,  "m_hOwnerEntity",  this );
-  // SetPropInt    ( _zombieFXWearable,  "m_Collision.m_usSolidFlags", 4 );
-  // SetPropInt    ( _zombieFXWearable,  "m_nModelIndex", arrZombieFXWearable[ this.GetPlayerClass() ] );
+//   // Zombie FX Wearable NetProps
+//   SetPropBool   ( _zombieFXWearable,  "m_bValidatedAttachedEntity", true );
+//   SetPropBool   ( _zombieFXWearable,  "m_AttributeManager.m_Item.m_bInitialized", true );
+//   SetPropEntity ( _zombieFXWearable,  "m_hOwnerEntity",  this );
+//   SetPropInt    ( _zombieFXWearable,  "m_Collision.m_usSolidFlags", 4 );
+//   SetPropInt    ( _zombieFXWearable,  "m_nModelIndex", arrZombieFXWearable[ this.GetPlayerClass() ] );
 
-  // _zombieFXWearable.SetOwner( this );
+//   _zombieFXWearable.SetOwner( this );
 
-  // SetPropInt      ( _zombieFXWearable, "m_fEffects", ( EF_BONEMERGE | EF_BONEMERGE_FASTCULL ) );
-  // EntFireByHandle ( _zombieFXWearable, "SetParent", "!activator", -1, this, this );
+//   SetPropInt      ( _zombieFXWearable, "m_fEffects", ( EF_BONEMERGE | EF_BONEMERGE_FASTCULL ) );
+//   EntFireByHandle ( _zombieFXWearable, "SetParent", "!activator", -1, this, this );
 
-  // _sc.m_hZombieFXWearable  <-  _zombieFXWearable;
+//   _sc.m_hZombieFXWearable  <-  _zombieFXWearable;
     return;
 };
 
@@ -700,7 +722,7 @@ CTFPlayer_ApplyOutOfCombat <- function()
 
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
     _sc.m_iFlags <- ( _sc.m_iFlags | ZBIT_OUT_OF_COMBAT );
 
@@ -715,7 +737,7 @@ CTFPlayer_RemoveOutOfCombat <- function( _bForceCooldown = false )
 {
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
     if ( _bForceCooldown )
     {
@@ -746,7 +768,7 @@ CTFPlayer_GiveZombieWeapon <- function()
 {
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
     if ( _sc.m_hZombieWep != null && _sc.m_hZombieWep.IsValid() )
         _sc.m_hZombieWep.Destroy();
@@ -896,7 +918,7 @@ CTFPlayer_AbilityStateToString <- function()
 {
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
     if ( !IsPlayerAlive( this ) || _sc.m_fTimeNextCast == ACT_LOCKED )
         return "off.vtf";
@@ -920,7 +942,7 @@ CTFPlayer_BuildZombieHUDString <- function()
 {
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
     if ( _sc.m_hZombieAbility == null )
     {
@@ -1003,7 +1025,7 @@ CTFPlayer_InitializeZombieHUD <- function()
 {
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
     local _hAbilityHUDText = SpawnEntityFromTable( "game_text",
     {
@@ -1254,7 +1276,7 @@ CTFPlayer_RemoveEventFomQueue <- function( _event )
 {
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
     if ( _event == -1 )
     {
@@ -1277,7 +1299,7 @@ CTFPlayer_AddEventToQueue <- function( _event, _delay )
     local _sc        =  this.GetScriptScope();
     local _fireTime  =  ( Time() + _delay );
 
-    if (!_sc) return
+    // if (!_sc) return
 
     if ( _sc.m_tblEventQueue.rawin( _event ) )
     {
@@ -1293,16 +1315,17 @@ CTFPlayer_AddEventToQueue <- function( _event, _delay )
 
 CTFPlayer_ResetInfectionVars <- function()
 {
-    // AddThinkToEnt( this, null );
-    if ("PlayerThink" in this.GetScriptScope())
-    {
-        delete this.GetScriptScope().PlayerThink
-        return;
-    };
 
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	if (!_sc) return;
+
+    // AddThinkToEnt( this, null );
+    if ("PlayerThink" in _sc.ThinkTable)
+    {
+        delete _sc.ThinkTable.PlayerThink
+        return;
+    };
 
     if ( ( "m_iUserConfigFlags" in _sc ) )
     {
@@ -1354,6 +1377,8 @@ CTFPlayer_ResetInfectionVars <- function()
     _sc.m_iAbilityState         <- 0;
 
     // AddThinkToEnt( this, "PlayerThink" );
+
+    _sc.ThinkTable.PlayerThink <- ::PlayerThink
 
     return true;
 };
@@ -1413,7 +1438,7 @@ CTFPlayer_HowLongUntilAct <- function( _iAct )
 {
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
     switch ( _iAct )
     {
@@ -1468,7 +1493,7 @@ CTFPlayer_SetNextActTime <- function( _iAct, _fTime )
 {
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
     local _nextTime = ( _fTime == ACT_LOCKED ? ACT_LOCKED : ( Time() + _fTime ).tofloat() );
 
     switch ( _iAct )
@@ -1541,7 +1566,7 @@ CTFPlayer_ClearZombieEntities <- function()
 {
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
     if ( "m_hZombieWep" in _sc && _sc.m_hZombieWep != null && _sc.m_hZombieWep.IsValid() )
         _sc.m_hZombieWep.Destroy();
@@ -1562,7 +1587,7 @@ CTFPlayer_AlreadyInSpit <-  function()
 {
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
     return _sc.m_bStandingOnSpit;
 }
@@ -1572,7 +1597,7 @@ CTFPlayer_GetLinkedSpitPoolEnt <- function()
    // printl("Getting linked spit pool entity from player...")
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
     if ( !_sc.m_bStandingOnSpit )
         return null;
@@ -1587,7 +1612,7 @@ CTFPlayer_SetLinkedSpitPoolEnt <- function( _hSpitPool )
 {
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
     if ( _hSpitPool == null || !_hSpitPool.IsValid() )
         return;
@@ -1603,7 +1628,7 @@ CTFPlayer_ClearSpitStatus <- function()
 {
     local _sc = this.GetScriptScope();
 
-	if (!_sc) return
+	// if (!_sc) return
 
    // printl("Clearing spit status for player...")
 
@@ -1644,9 +1669,9 @@ foreach ( key, value in this )
     }
 }
 
-KnockbackPlayer <-  function( _hInflictor, _hVictim, _flForceMultiplier = 500.0, _flUpwardForce =  0.25, _bRemoveOnGround = false )
+KnockbackPlayer <-  function( _hInflictor, _hVictim, _flForceMultiplier = 500.0, _flUpwardForce =  0.25, _vecDirOverride = Vector(0, 0, 0), _bRemoveOnGround = false )
 {
-    if ( _hInflictor == null || _hVictim == null )
+    if ( _hInflictor == null || _hVictim == null || !_hInflictor.IsValid() || !_hVictim.IsValid() )
          return;
 
     if ( _bRemoveOnGround )
@@ -1659,6 +1684,9 @@ KnockbackPlayer <-  function( _hInflictor, _hVictim, _flForceMultiplier = 500.0,
     local _vecInflictorPos  = _hInflictor.GetOrigin();
     local _vecVictimPos     = _hVictim.GetOrigin();
     local _vecDirection     = _vecVictimPos - _vecInflictorPos;
+
+    if (_vecDirection.Length() == 0 && _vecDirOverride.Length() > 0)
+        _vecDirection = _vecDirOverride;
 
     local _vecLength = sqrt(( _vecDirection.x * _vecDirection.x ) +
                             ( _vecDirection.y * _vecDirection.y ) +
@@ -1678,7 +1706,7 @@ KnockbackPlayer <-  function( _hInflictor, _hVictim, _flForceMultiplier = 500.0,
     _hVictim.ApplyAbsVelocityImpulse( _vecImpulse );
 
     local _vecAngularImpulse = Vector( RandomFloat( -50.0, 50.0 ), RandomFloat( -50.0, 50.0 ), RandomFloat( -50.0, 50.0 ) );
-    _hVictim.ApplyLocalAngularVelocityImpulse( _vecAngularImpulse );
+    _hVictim.ApplyLocalAngularVelocityImpulse( _vecAngularImpulse * 5 );
 
     return;
 };

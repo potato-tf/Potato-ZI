@@ -1,4 +1,5 @@
-::ZI_EventHooks <- {
+class ZI_EventHooks
+{
 
     Events = {}
     CompiledEvents = {}

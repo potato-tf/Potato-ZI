@@ -95,6 +95,7 @@ ZOMBIE_WEP_ATTRIBS <- [ ////////////////////////////////////////////////////////
 ["melee bounds multiplier",  1, -1],            // Increase melee range for zombie         //
 ["crit mod disabled hidden", 0, -1],            // No crits                                //
 ["zombiezombiezombiezombie", 1, -1],            // enable zombie cosmetic vo               //
+["attach particle effect", 3105, -1],            // enable particle effect                 //
 ],                                              //                                         //
 [// attributes for scout zombie weapon --------------------------------------------------- //
 ["damage bonus", ZSCOUT_DMG_MULTI, -1 ],        // set class specific damage multi         //
@@ -352,6 +353,13 @@ szArrZombiePlayerModels <-
     "models/player/spy_infected.mdl",
     "models/player/engineer_infected.mdl",
 ];
+szEyeParticles <- [
+    // "killstreak_eyes_level1",
+    // "killstreak_eyes_base",
+    // "killstreak_eyes_trails01",
+    // "killstreak_eyes_rays",
+    "eye_powerup_red_lvl_3",
+]
 
 const MDL_ZOMBIE_VIEW_MODEL_SCOUT          = "models/player/infection/v_models/v_infected_scout.mdl";
 const MDL_ZOMBIE_VIEW_MODEL_SNIPER         = "models/player/infection/v_models/v_infected_sniper.mdl";
@@ -383,30 +391,59 @@ const MDL_FX_WEARABLE_ENGINEER             = "models/player/infection/engineer_z
 const MDL_WORLD_MODEL_ENGIE_NADE           = "models/player/infection/w_grenade_emp.mdl";
 const MDL_GUNSLINGER_PATH                  = "models/weapons/c_models/c_engineer_gunslinger.mdl";
 
-const FX_ZOMBIE_BODY          = "zombie_body_parent";
-const FX_ZOMBIE_SPARKS        = "zombie_body_sparks";
-const FX_EMP_FLASH            = "zombie_emp_flash";
-const FX_EMP_ELECTRIC         = "zombie_emp_electric";
-const FX_EMP_BURST            = "zombie_emp_burst";
-const FX_EMP_GIBS             = "zombie_emp_gibs";
-const FX_EMP_SPARK            = "halloween_boss_axe_hit_sparks";
-const FX_SPIT_SMOKE           = "zombie_spit";
-const FX_SPIT_TRAIL           = "zombie_spit_trail";
-const FX_SPIT_HIT_PLAYER      = "zombie_spit_impact_cloud";
-const FX_ABILITY_IN_USE       = "zombie_body_sparks";
-const FX_EMITTER_FX           = "zombie_screech";
-const FX_DEMOGUTS             = "zombie_demoguts_parent";
-const FX_SPIT_SPLAT           = "zombie_spit_impact_splat";
-const FX_SPIT_IMPACT          = "zombie_spit_impact";
-const FX_ZOMBIE_SPAWN         = "zombie_spawn_parent";
-const FX_TF_STOMP_TEXT        = "stomp_text";
-const FX_MEDIC_HEAL           = "zombie_heal_parent";
-const FX_FIREBALL_FIREBALL    = "zombie_fireball_fireball";
-const FX_FIREBALL_SMOKEBALL   = "zombie_fireball_smokeball";
-const FX_FIREBALL_SMOKEPUFF   = "zombie_fireball_smokepuff";
-const FX_FIREBALL_TRAIL       = "zombie_fireball_trail";
-const FX_ZOMBIE_FIREBALL      = "zombie_fireball";
+//https://wiki.teamfortress.com/w/images/thumb/3/31/Unusual_Charged_Arcane.png/600px-Unusual_Charged_Arcane.png
+const FX_ZOMBIE_BODY                 = "zombie_body_parent";
+const FX_ZOMBIE_BODY_AURA            = "zombie_body_aura";
+const FX_ZOMBIE_BODY_FLIES           = "zombie_body_flies";
+const FX_ZOMBIE_SPARKS               = "zombie_body_sparks";
+
+// const FX_ZOMBIE_EYEFLARE             = "zombie_eyeflare";
+// const FX_ZOMBIE_EYEFLARE             = "killstreak_t1_lvl2";
+const FX_ZOMBIE_EYEFLARE             = "killstreak_t7_lvl2";
+const FX_ZOMBIE_LIGHTNING            = "zombie_lightning";
+const FX_ZOMBIE_LIGHTNING_CONTROLLER = "zombie_lightning_controller";
+
+const FX_ZOMBIE_SPAWN                = "zombie_spawn_parent";
+const FX_ZOMBIE_SPAWN_BURST          = "zombie_spawn_burst";
+const FX_ZOMBIE_SPAWN_SMOKE          = "zombie_spawn_smoke";
+const FX_ZOMBIE_SPAWN_FLASH          = "zombie_spawn_flash";
+const FX_ZOMBIE_SPAWN_SKYFLASH       = "zombie_spawn_skyflash";
+
+const FX_EMP_PARENT                  = "zombie_emp_parent";
+const FX_EMP_ELECTRIC                = "zombie_emp_electric";
+const FX_EMP_GIBS                    = "zombie_emp_gibs";
+const FX_EMP_FLASH                   = "medic_resist_bullet";
+const FX_EMP_BURST                   = "rd_robot_explosion_smoke_linger";
+const FX_EMP_SPARK                   = "halloween_boss_axe_hit_sparks";
+// const FX_EMP_FLASH                   = "zombie_emp_flash";
+// const FX_EMP_BURST                   = "zombie_emp_burst";
+
+const FX_SPIT_SMOKE                 = "zombie_spit";
+const FX_SPIT_TRAIL                 = "zombie_spit_trail";
+const FX_SPIT_TRAIL2                = "zombie_spit_trail2";
+const FX_SPIT_IMPACT                = "zombie_spit_impact";
+const FX_SPIT_IMPACT_BITS           = "zombie_spit_impact_bits";
+const FX_SPIT_HIT_PLAYER            = "zombie_spit_impact_cloud";
+const FX_SPIT_IMPACT_GROUND         = "zombie_spit_impact_ground";
+const FX_SPIT_IMPACT_SMOKE          = "zombie_spit_impact_smoke";
+const FX_SPIT_IMPACT_SPLAT          = "zombie_spit_impact_splat";
+const FX_SPIT_IMPACT_SPURTS         = "zombie_spit_impact_spurts";
+
+const FX_EMITTER_FX                 = "zombie_screech";
+
+const FX_DEMOGUTS                   = "zombie_demoguts_parent";
+const FX_SPIT_SPLAT                 = "zombie_spit_impact_splat";
+const FX_SPIT_IMPACT                = "zombie_spit_impact";
+
+const FX_MEDIC_HEAL                 = "zombie_heal_parent";
+const FX_FIREBALL_FIREBALL          = "zombie_fireball_fireball";
+const FX_FIREBALL_SMOKEBALL         = "zombie_fireball_smokeball";
+const FX_FIREBALL_SMOKEPUFF         = "zombie_fireball_smokepuff";
+const FX_FIREBALL_TRAIL             = "zombie_fireball_trail";
+const FX_ZOMBIE_FIREBALL            = "zombie_fireball";
+
 const FX_FLAMER               = "flamethrower_blue";
+const FX_TF_STOMP_TEXT        = "stomp_text";
 
 const SFX_ZOMBIE_SPIT_START   = "Infection.SniperSpitStart";
 const SFX_ZOMBIE_SPIT_END     = "Infection.SniperSpitEnd";

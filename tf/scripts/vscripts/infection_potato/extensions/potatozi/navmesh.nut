@@ -1,12 +1,14 @@
-::PZI_NavMesh <- {
-	ALL_AREAS = {},
-	ISLANDS   = [],
-	ISLAND_AREAS = {},
-	IslandsParsed = false,
-	ActiveIsland = null,
-	ActiveArea = null,
-	AreaSpawnRed = null,
-	AreaSpawnBlue = null,
+class PZI_NavMesh
+{
+
+	ALL_AREAS = {}
+	ISLANDS   = []
+	ISLAND_AREAS = {}
+	IslandsParsed = false
+	ActiveIsland = null
+	ActiveArea = null
+	AreaSpawnRed = null
+	AreaSpawnBlue = null
 
 	// Simple Breadth First Search selecting all connected areas
 	function FloodSelect(area, max_iters=10000)
@@ -44,7 +46,7 @@
 		}
 
 		return reached;
-	},
+	}
 
 	// Simple Breadth First Search with multiple start points
 	function MultiFloodSelect(areas, max_iters=10000)
@@ -101,7 +103,7 @@
 			reached[area] <- d.reached;
 
 		return reached;
-	},
+	}
 
 	function GetRandomArea(areas, spawnpoint=false)
 	{
@@ -144,7 +146,7 @@
 				}
 			}
 		}
-	},
+	}
 	// Look for nav mesh islands and generate 3 areas within each
 	// VERY EXPENSIVE, use only on first teamplay_round_start
 	function GenerateIslandAreas()
@@ -260,6 +262,6 @@
 
 		// Used elsewhere to check if this function should be ran
 		PZI_NavMesh.IslandsParsed = true;
-	},
+	}
 };
-__CollectGameEventCallbacks(PZI_NavMesh);
+// __CollectGameEventCallbacks(PZI_NavMesh);
