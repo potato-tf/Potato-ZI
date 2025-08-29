@@ -1,10 +1,13 @@
+// if ( "_CONST" in getconsttable() && _CONST )
+//     return
+
 // --------------------------------------------------------------------------------------- //
 // Zombie Infection                                                                        //
 // --------------------------------------------------------------------------------------- //
 // All Code By: Harry Colquhoun (https://steamcommunity.com/profiles/76561198025795825)    //
 // Assets/Game Design by: Diva Dan (https://steamcommunity.com/profiles/76561198072146551) //
 // --------------------------------------------------------------------------------------- //
-const _CONST                           = true;
+const _CONST                           = false;
 const TF_COND_NO_KNOCKBACK             = 130;
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Cooldowns (in seconds) |--------------------------------------------------------------- //
@@ -359,6 +362,7 @@ szEyeParticles <- [
     // "killstreak_eyes_trails01",
     // "killstreak_eyes_rays",
     "eye_powerup_red_lvl_3",
+    "eye_powerup_red_lvl_2",
 ]
 
 const MDL_ZOMBIE_VIEW_MODEL_SCOUT          = "models/player/infection/v_models/v_infected_scout.mdl";

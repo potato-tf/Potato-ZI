@@ -37,7 +37,7 @@ function initPayload()
     AddThinkToEnt( _payload, "PayloadThink" );
 }
 
-::PayloadThink  <- function()
+function PayloadThink()
 {
     local _payload   = Entities.FindByClassname( null, "func_tracktrain" );
 

@@ -1,4 +1,8 @@
 // Itemdef constants generated on 17:25 2024/04/13 UTC
+
+if ( "ID_QUEST25050" in getconsttable() )
+    return
+
 const ID_DEFAULT = "default" // '#TF_Default_ItemDef'
 const ID_BAT = 0 // 'Bat'
 const ID_BOTTLE = 1 // 'Bottle'

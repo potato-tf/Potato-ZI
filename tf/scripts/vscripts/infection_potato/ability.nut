@@ -146,7 +146,7 @@ class CSpyReveal extends CZombieAbility
         if ( _d.m_hZombieWearable != null && _d.m_hZombieWearable.IsValid() )
             _d.m_hZombieWearable.Destroy();
 
-        this.m_hAbilityOwner.GiveZombieFXWearable();
+        // this.m_hAbilityOwner.GiveZombieFXWearable();
         this.m_hAbilityOwner.GiveZombieCosmetics();
 
         this.m_hAbilityOwner.AddCond            ( TF_COND_TAUNTING );
@@ -279,7 +279,7 @@ class CMedicHeal extends CZombieAbility
         if ( _d.m_hZombieWearable != null && _d.m_hZombieWearable.IsValid() )
             _d.m_hZombieWearable.Destroy();
 
-        this.m_hAbilityOwner.GiveZombieFXWearable();
+        // this.m_hAbilityOwner.GiveZombieFXWearable();
         this.m_hAbilityOwner.GiveZombieCosmetics();
 
         this.m_hAbilityOwner.SetForcedTauntCam  ( 1 );
@@ -395,7 +395,7 @@ class CSniperSpitball extends CZombieAbility
 
         // spit projectile is just an engie nade
         _spitEnt.SetModel  ( MDL_WORLD_MODEL_ENGIE_NADE );
-        _spitEnt.SetOrigin ( _angPos );
+        _spitEnt.SetAbsOrigin ( _angPos );
 
         // not sure if this does anything
         SetPropVector ( _spitEnt, "m_vInitialVelocity ", _vecThrow );
@@ -512,7 +512,7 @@ class CEngineerSapperNade extends CZombieAbility
         SetPropFloat( _d.m_hZombieWep, "m_flNextPrimaryAttack", FLT_MAX );
 
         _nadeEnt.SetModel  ( MDL_WORLD_MODEL_ENGIE_NADE );
-        _nadeEnt.SetOrigin ( _angPos );
+        _nadeEnt.SetAbsOrigin ( _angPos );
 
         _nadeEnt.SetModelScale ( 1.4, 0.0 ); // todo - const
         _nadeEnt.SetSize       ( ( _nadeEnt.GetBoundingMins() * 1 ),
@@ -610,7 +610,7 @@ class CDemoCharge extends CZombieAbility
             _d.m_hZombieWearable.Destroy();
 
         // create new ones now that the player can see themselves
-        this.m_hAbilityOwner.GiveZombieFXWearable();
+        // this.m_hAbilityOwner.GiveZombieFXWearable();
         this.m_hAbilityOwner.GiveZombieCosmetics();
 
         EmitSoundOn( SFX_DEMO_CHARGE_RAMP, this.m_hAbilityOwner );

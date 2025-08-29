@@ -7,17 +7,14 @@
 // think scripts                                                                           //
 // --------------------------------------------------------------------------------------- //
 
-::PlayerThink <- function()
+function PlayerThink()
 {
     local scope = self.GetScriptScope()
-
-    // foreach (k, v in scope)
-    //     printl(k + ": " + v)
 
     if (self.GetFlags() & FL_NOTARGET)
         return;
 
-    if ( GetPropInt( self, "m_lifeState" ) != 0 )
+    if ( !self.IsAlive() )
         return; // no need to think when we're dead
 
     if ( self.GetPlayerClass() == 0 )
@@ -200,7 +197,7 @@
                     self.AddCondEx( TF_COND_STEALTHED_USER_BUFF, -1, null );
                 };
 
-                m_vecVelocityPrevious <- self.GetVelocity();
+                m_vecVelocityPrevious <- self.GetAbsVelocity();
 
                 local _hTooltip = self.ZombieInitialTooltip();
 
@@ -418,7 +415,7 @@
             {
                 if ( ( m_tblEventQueue.rawin( EVENT_DEMO_CHARGE_EXIT ) ) && !self.InCond( TF_COND_INVULNERABLE_USER_BUFF ) )
                 {
-                    if ( ( !self.InCond( TF_COND_SHIELD_CHARGE ) ) || ( abs( self.GetVelocity().y ) < ( abs( m_vecVelocityPrevious.y ) - 100 ) ) )
+                    if ( ( !self.InCond( TF_COND_SHIELD_CHARGE ) ) || ( abs( self.GetAbsVelocity().y ) < ( abs( m_vecVelocityPrevious.y ) - 100 ) ) )
                     {
                         m_hZombieAbility.ExitDemoCharge ();
                         m_tblEventQueue.rawdelete       ( EVENT_DEMO_CHARGE_EXIT );
@@ -431,7 +428,7 @@
                 self.AddCustomAttribute ( "move speed penalty", 0.001, -1 );
             };
 
-            m_vecVelocityPrevious = self.GetVelocity();
+            m_vecVelocityPrevious = self.GetAbsVelocity();
 
             // ------------------------------------------------------------------------------ //
             // passive self healing                                                           //
@@ -457,16 +454,16 @@
 
             if  ( self.InCond( TF_COND_TAUNTING ) && !( m_iFlags & ZBIT_PARTICLE_HACK ) )
             {
-            //     // destroy current particle/cosmetic to avoid duplicates on other player's view
-            // if ( m_hZombieFXWearable != null && m_hZombieFXWearable.IsValid() )
-            //      m_hZombieFXWearable.Destroy();
+                // destroy current particle/cosmetic to avoid duplicates on other player's view
+                if ( m_hZombieFXWearable != null && m_hZombieFXWearable.IsValid() )
+                    m_hZombieFXWearable.Destroy();
 
-            // if ( m_hZombieWearable != null && m_hZombieWearable.IsValid() )
-            //     m_hZombieWearable.Destroy();
+                if ( m_hZombieWearable != null && m_hZombieWearable.IsValid() )
+                    m_hZombieWearable.Destroy();
 
             //     // create new ones now that the player can see themselves
-            //     self.GiveZombieFXWearable();
-            //     self.GiveZombieCosmetics();
+                // self.GiveZombieFXWearable();
+                self.GiveZombieCosmetics();
 
                 m_iFlags = ( m_iFlags | ZBIT_PARTICLE_HACK );
             };
@@ -677,7 +674,7 @@
     return PLAYER_RETHINK_TIME;
 };
 
-SniperSpitThink <- function()
+function SniperSpitThink()
 {
     // flying through the air
     if ( m_iState == SPIT_STATE_IN_TRANSIT )
@@ -790,7 +787,7 @@ SniperSpitThink <- function()
         EmitSoundOn( SFX_SPIT_POP, self );
 
         local _flSafezone   =   SNIPER_SPIT_HITBOX_SIZE; // hu - size of spitball hitbox
-        local _vecVel       =   self.GetVelocity();
+        local _vecVel       =   self.GetAbsVelocity();
         local _flSafeX      =   ( _vecVel.x * _flSafezone );
         local _flSafeY      =   ( _vecVel.y * _flSafezone );
         local _start        =   m_vecHitPosition;
@@ -1021,7 +1018,7 @@ SniperSpitThink <- function()
     };
 };
 
-EngieEMPThink <- function ()
+function EngieEMPThink()
 {
     if ( m_bMustFizzle )
     {
@@ -1230,7 +1227,7 @@ EngieEMPThink <- function ()
     return 0.0;
 };
 
-BuildableEMPThink <- function()
+function BuildableEMPThink()
 {
     local _angAngles  =  self.GetAbsAngles();
     local _vecAngles  =  Vector( _angAngles.x, _angAngles.y, _angAngles.z );
@@ -1249,7 +1246,7 @@ BuildableEMPThink <- function()
     return 0.1;
 };
 
-KillMeThink <- function()
+function KillMeThink()
 {
     if ( m_flKillTime < Time() )
     {
@@ -1260,7 +1257,7 @@ KillMeThink <- function()
     return 0.01;
 };
 
-ZombieWearableThink <- function()
+function ZombieWearableThink()
 {
     if ( !IsPlayerAlive( this.GetOwner() ) )
     {
@@ -1274,7 +1271,7 @@ ZombieWearableThink <- function()
     };
 };
 
-GameStateThink <- function()
+function GameStateThink()
 {
     local _iNumRedPlayers = PlayerCount( TF_TEAM_RED );
     local _iNumBluPlayers = PlayerCount( TF_TEAM_BLUE );
@@ -1302,7 +1299,7 @@ GameStateThink <- function()
     return 0.5;
 }
 
-PyroFireballThink <-  function()
+function PyroFireballThink()
 {
     local _vecOrigin  =  self.GetLocalOrigin()
     local _angAngles  =  self.GetAbsAngles();

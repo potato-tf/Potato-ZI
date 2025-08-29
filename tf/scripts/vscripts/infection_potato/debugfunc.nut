@@ -26,7 +26,7 @@ function ChatCmdZombie( _hPlayer )
 
     _hPlayer.RemovePlayerWearables();
     _hPlayer.GiveZombieCosmetics();
-    _hPlayer.GiveZombieFXWearable();
+    // _hPlayer.GiveZombieFXWearable();
 
     _hPlayer.SetHealth      ( _hPlayer.GetMaxHealth() );
     _hPlayer.SetNextActTime ( ZOMBIE_BECOME_ZOMBIE, 1 );

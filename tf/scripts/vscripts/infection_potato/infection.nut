@@ -179,7 +179,7 @@ function OnPostSpawn()
 }
 
 
-ZI_EventHooks.AddRemoveEventHook("player_spawn", "Infection_PlayerSpawn", function(params) {
+PZI_EVENT("player_spawn", "Infection_PlayerSpawn", function(params) {
 
     local _hPlayer     = GetPlayerFromUserID( params.userid );
     local _iRoundState = GetPropInt( GameRules, "m_iRoundState" );
@@ -189,14 +189,14 @@ ZI_EventHooks.AddRemoveEventHook("player_spawn", "Infection_PlayerSpawn", functi
     if ( _hPlayer == null )
         return;
 
-    local _sc = _hPlayer.GetScriptScope();
+    _sc <- _hPlayer.GetScriptScope();
 
     _sc.ThinkTable <- {}
 
-    _sc.Think <- function() {
+    function _sc::Think() {
 
-        foreach(name, func in _sc.ThinkTable)
-            func.call(_sc)
+        foreach(name, func in ThinkTable)
+            func()
         return -1
     }
 
@@ -271,9 +271,11 @@ ZI_EventHooks.AddRemoveEventHook("player_spawn", "Infection_PlayerSpawn", functi
 
         // add the zombie cosmetics/skin modifications
         _hPlayer.GiveZombieCosmetics();
-        _hPlayer.GiveZombieFXWearable();
+        // _hPlayer.GiveZombieFXWearable();
 
+        _hPlayer.SetEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
         SendGlobalGameEvent( "post_inventory_application", { userid = GetPlayerUserID(_hPlayer) });
+        _hPlayer.RemoveEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
 
         // make sure their health is correct
         _hPlayer.SetHealth ( _hPlayer.GetMaxHealth() );
@@ -285,9 +287,10 @@ ZI_EventHooks.AddRemoveEventHook("player_spawn", "Infection_PlayerSpawn", functi
 
     _hPlayer.ResetInfectionVars();
     return;
-}, 0);
+}, EVENT_WRAPPER_MAIN );
 
-ZI_EventHooks.AddRemoveEventHook("teamplay_setup_finished", "Infection_SetupFinished", function(params) {
+PZI_EVENT("teamplay_setup_finished", "Infection_SetupFinished", function(params) {
+
     ::bGameStarted <- true;
 
     local _iPlayerCountRed    = PlayerCount( TF_TEAM_RED );
@@ -375,9 +378,10 @@ ZI_EventHooks.AddRemoveEventHook("teamplay_setup_finished", "Infection_SetupFini
 
             if ( _nextPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS )
             {
-                if ( _nextPlayer.GetActiveWeapon().GetClassname() == "tf_weapon_minigun" )
+                local _activeWeapon = _nextPlayer.GetActiveWeapon()
+                if ( _activeWeapon && _activeWeapon.GetClassname() == "tf_weapon_minigun" )
                 {
-                    SetPropInt( _nextPlayer.GetActiveWeapon(), "m_iWeaponState", 0 );
+                    SetPropInt( _activeWeapon, "m_iWeaponState", 0 );
                 }
             }
 
@@ -403,9 +407,11 @@ ZI_EventHooks.AddRemoveEventHook("teamplay_setup_finished", "Infection_SetupFini
 
             // add the zombie cosmetics/skin modifications
             _nextPlayer.GiveZombieCosmetics();
-            _nextPlayer.GiveZombieFXWearable();
+            // _nextPlayer.GiveZombieFXWearable();
 
+            _nextPlayer.SetEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
             SendGlobalGameEvent( "post_inventory_application", { userid = GetPlayerUserID(_nextPlayer) });
+            _nextPlayer.RemoveEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
 
             // add the pending zombie flag
             // the actual zombie conversion is handled in the player's think script
@@ -469,13 +475,13 @@ ZI_EventHooks.AddRemoveEventHook("teamplay_setup_finished", "Infection_SetupFini
         // show the first infected announce message to all players
         PrintToChat( _szFirstInfectedAnnounceMSG );
     }
-}, 0);
+}, EVENT_WRAPPER_MAIN );
 
-ZI_EventHooks.AddRemoveEventHook("teamplay_broadcast_audio", "Infection_BroadcastAudio", function(params) {
+PZI_EVENT("teamplay_broadcast_audio", "Infection_BroadcastAudio", function(params) {
     return;
-}, 0);
+}, EVENT_WRAPPER_MAIN );
 
-ZI_EventHooks.AddRemoveEventHook("teamplay_restart_round", "Infection_RestartRound", function(params) {
+PZI_EVENT("teamplay_restart_round", "Infection_RestartRound", function(params) {
     ::bGameStarted <- false;
 
     local _hNextPlayer = null;
@@ -505,9 +511,9 @@ ZI_EventHooks.AddRemoveEventHook("teamplay_restart_round", "Infection_RestartRou
     }
 
     return;
-}, 0);
+}, EVENT_WRAPPER_MAIN );
 
-ZI_EventHooks.AddRemoveEventHook("player_death", "Infection_PlayerDeath", function(params) {
+PZI_EVENT("player_death", "Infection_PlayerDeath", function(params) {
 
     local _hPlayer      =  GetPlayerFromUserID ( params.userid );
     local _hKiller      =  GetPlayerFromUserID ( params.attacker );
@@ -531,7 +537,7 @@ ZI_EventHooks.AddRemoveEventHook("player_death", "Infection_PlayerDeath", functi
 
         if ( _iClassNum ==  TF_CLASS_MEDIC )
         {
-            if ("m_hMedicDispenser" in _sc)
+            if ("m_hMedicDispenser" in _sc && _sc.m_hMedicDispenser.IsValid())
                 _sc.m_hMedicDispenser.Destroy();
         }
 
@@ -648,8 +654,11 @@ ZI_EventHooks.AddRemoveEventHook("player_death", "Infection_PlayerDeath", functi
         // hide our fx wearable to stop the particles from generating
         SetPropInt( _sc.m_hZombieFXWearable, "m_nRenderMode", kRenderNone );
 
-        // _sc.m_hZombieWearable.Kill();
+        try { _sc.m_hZombieWearable.Destroy() } catch ( e ) {}
+
+        _hPlayer.SetEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
         SendGlobalGameEvent( "post_inventory_application", { userid = GetPlayerUserID(_hPlayer) });
+        _hPlayer.RemoveEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
 
         try { _sc.m_hZombieFXWearable.Destroy() } catch ( e ) {}
 
@@ -730,10 +739,9 @@ ZI_EventHooks.AddRemoveEventHook("player_death", "Infection_PlayerDeath", functi
 
         EntFireByHandle( _hRoundTimer, "AddTime", ADDITIONAL_SEC_PER_PLAYER.tostring(), 0, null, null );
     }
-}, 0);
+}, EVENT_WRAPPER_MAIN );
 
-ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "Infection_OnTakeDamage", function(params)
-{
+PZI_EVENT("OnTakeDamage", "Infection_OnTakeDamage", function(params) {
     if ( params.const_entity == null || params.inflictor == null || params.attacker == null )
         return;
 
@@ -772,7 +780,7 @@ ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "Infection_OnTakeDamage", funct
         _szWeaponName = "worldspawn";
     }
 
-    if ( _sc.m_iFlags & ZBIT_MUST_EXPLODE )
+    if ( _sc && "m_iFlags" in _sc && _sc.m_iFlags & ZBIT_MUST_EXPLODE )
     {
         if ( _hVictim == _hAttacker && _hInflictor.GetClassname() == "tf_generic_bomb" )
             params.damage <- ( _iForceGibDmg );
@@ -1059,10 +1067,10 @@ ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "Infection_OnTakeDamage", funct
         _hAttacker.RemoveOutOfCombat();
         return;
     }
-}, 0);
+}, EVENT_WRAPPER_MAIN );
 
-ZI_EventHooks.AddRemoveEventHook("player_hurt", "Infection_PlayerHurt", function(params)
-{
+PZI_EVENT("player_hurt", "Infection_PlayerHurt", function(params) {
+
     local _hPlayer   = GetPlayerFromUserID ( params.userid );
     local _hAttacker = GetPlayerFromUserID ( params.attacker );
     local _sc        = _hPlayer.GetScriptScope();
@@ -1113,4 +1121,4 @@ ZI_EventHooks.AddRemoveEventHook("player_hurt", "Infection_PlayerHurt", function
             _hPlayer.SetScriptOverlayMaterial( "" );
         }
     }
-}, 0);
+}, EVENT_WRAPPER_MAIN );

@@ -1,87 +1,61 @@
-const RADIUS = 256
-const MIN = 0.5
-const MAX = 2.5
-const DMG_ADD_PER_PLAYER = 0.25
-const UPDATE_INTERVAL = 1.0
+local DMG_MULT_RADIUS = 256
+local DMG_MULT_MIN = 0.5
+local DMG_MULT_MAX = 2.5
+local DMG_MULT_PER_PLAYER = 0.25
+local UPDATE_INTERVAL = 1.0
 
-//not using this one because we need the multiplier value for other things (hud elements etc)
-//update the multiplier on a fixed interval think on each player to read back later
-// ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "DamageRadiusMult_OnTakeDamage", function(params) {
-
-//     local victim = params.const_entity
-
-//     if (victim.IsPlayer() && victim.GetTeam() == TF_TEAM_RED)
-//     {
-//         local dmg_mult = MIN
-
-//         for (local survivor; survivor = FindByClassnameWithin(survivor, "player", victim.GetOrigin(), RADIUS);)
-//         {
-//             if (dmg_mult >= MAX)
-//             {
-//                 dmg_mult = MAX
-//                 break
-//             }
-
-//             if (survivor.GetTeam() == TF_TEAM_RED && survivor != victim)
-//                 dmg_mult += DMG_ADD_PER_PLAYER
-//         }
-//         params.damage *= dmg_mult
-//     }
-// })
-
-ZI_EventHooks.AddRemoveEventHook("player_spawn", "DamageRadiusMult_OnPlayerSpawn", function(params) {
+PZI_EVENT("player_spawn", "DamageRadiusMult_OnPlayerSpawn", function(params) {
 
     local player = GetPlayerFromUserID(params.userid)
 
     if (player.GetTeam() != TF_TEAM_RED) return
 
-    local scope = player.GetScriptScope()
-    local dmg_mult = MIN
+    PlayerScope <- player.GetScriptScope()
+    local dmg_mult = DMG_MULT_MIN
     local cooldown_time = 0.0
 
-    for (local survivor; survivor = FindByClassnameWithin(survivor, "player", player.GetOrigin(), RADIUS);)
+    for (local survivor; survivor = FindByClassnameWithin(survivor, "player", player.GetOrigin(), DMG_MULT_RADIUS);)
     {
-        if (dmg_mult >= MAX)
+        if ( dmg_mult >= DMG_MULT_MAX )
             break
 
-        if (survivor.GetTeam() == TF_TEAM_RED && survivor != player)
-            dmg_mult += DMG_ADD_PER_PLAYER
+        if ( survivor.GetTeam() == TF_TEAM_RED && survivor != player )
+            dmg_mult += DMG_MULT_PER_PLAYER
     }
 
-    // scope.DmgMult <- dmg_mult > MAX ? MAX : dmg_mult
-    scope.DmgMult <- dmg_mult
+    // scope.DmgMult <- dmg_mult > DMG_MULT_MAX ? DMG_MULT_MAX : dmg_mult
+    PlayerScope.DmgMult <- dmg_mult
 
-    scope.ThinkTable.DamageRadiusMult <-  function() {
+    function PlayerScope::ThinkTable::DamageRadiusMult() {
 
-        if (Time() < cooldown_time)
+        if ( Time() < cooldown_time )
             return
 
-        local _dmg_mult = MIN
+        local _dmg_mult = DMG_MULT_MIN
 
-        for (local survivor; survivor = FindByClassnameWithin(survivor, "player", player.GetOrigin(), RADIUS);)
+        for ( local survivor; survivor = FindByClassnameWithin( survivor, "player", player.GetOrigin(), DMG_MULT_RADIUS ); )
         {
-            if (_dmg_mult >= MAX)
+            if (_dmg_mult >= DMG_MULT_MAX)
                 break
 
             if (survivor.GetTeam() == TF_TEAM_RED && survivor != player)
-                _dmg_mult += DMG_ADD_PER_PLAYER
+                _dmg_mult += DMG_MULT_PER_PLAYER
         }
 
-        ClientPrint(player, HUD_PRINTCENTER, "Damage multiplier: " + _dmg_mult)
-        // scope.DmgMult <- _dmg_mult > MAX ? MAX : _dmg_mult
-        scope.DmgMult <- _dmg_mult
+        ClientPrint( player, HUD_PRINTCENTER, "Damage multiplier: " + _dmg_mult )
+        // DmgMult <- _dmg_mult > DMG_MULT_MAX ? DMG_MULT_MAX : _dmg_mult
+        DmgMult = _dmg_mult
 
         cooldown_time = Time() + UPDATE_INTERVAL
     }
 })
 
-ZI_EventHooks.AddRemoveEventHook("OnTakeDamage", "DamageRadiusMult_OnTakeDamage", function(params) {
+PZI_EVENT( "OnTakeDamage", "DamageRadiusMult_OnTakeDamage", function(params) {
 
     local victim = params.const_entity
+    local victim_scope = PZI_Util.GetEntScope(victim)
 
-    if (IsPlayerABot(victim)) return
-
-    if (victim.IsPlayer() && victim.GetTeam() == TF_TEAM_RED)
-        params.damage *= victim.GetScriptScope().DmgMult
+    if ( victim.IsPlayer() && victim.GetTeam() == TF_TEAM_RED && "DmgMult" in victim_scope )
+        params.damage *= victim_scope.DmgMult
 
 })

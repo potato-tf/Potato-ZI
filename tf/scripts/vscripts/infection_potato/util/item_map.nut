@@ -1,5 +1,8 @@
 // TFItemMap generated on 02:27 2024/07/11 UTC
-::PopExtItems <- {
+if ( "PZI_ItemMap" in ROOT )
+    return
+
+::PZI_ItemMap <- {
     "default" : {
         id = "default",
         item_class = "tf_wearable",

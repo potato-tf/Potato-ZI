@@ -26,8 +26,8 @@ if ( "InfectionLoaded" in getroottable() )
 ::bNoPyroExplosionMod    <- false;
 ::bZombiesDontSwitchInPlace     <- true;
 
-const GAMEMODE_NAME =  "Zombie Infection";
-const VERSION       =  "v3.0.4 - 24/10/2024";
+const GAMEMODE_NAME =  "Potato Zombie Infection";
+const VERSION       =  "v0.1.0 - 28/08/2025";
 
 ::INFECTION_CONVARS <-
 {
@@ -61,7 +61,7 @@ const VERSION       =  "v3.0.4 - 24/10/2024";
     "mp_tournament_blueteamname"           : STRING_UI_TEAM_BLUE,
 };
 
-::SetInfectionConvars <- function()
+function SetInfectionConvars()
 {
     foreach( _cvar, _value in INFECTION_CONVARS )
     {
@@ -70,10 +70,6 @@ const VERSION       =  "v3.0.4 - 24/10/2024";
 };
 
 SetInfectionConvars();
-
-foreach (k, v in ::NetProps.getclass())
-    if (k != "IsValid")
-        getroottable()[k] <- ::NetProps[k].bindenv(::NetProps);
 
 // engie nade
 PrecacheModel       ( MDL_WORLD_MODEL_ENGIE_NADE );

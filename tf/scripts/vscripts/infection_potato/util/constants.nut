@@ -1,40 +1,58 @@
-//"reminder that constants are resolved at preprocessor level and not runtime"
-//"if you add them dynamically to the table they wont show up until you execute a new script as the preprocessor isnt aware yet"
-
-::ROOT <- getroottable()
+::ROOT  <- getroottable()
 ::CONST <- getconsttable()
-//fold into both const and root table to work around this.
-if (!("ConstantNamingConvention" in ROOT)) {
 
-	foreach(a, b in Constants)
-		foreach(k, v in b)
-		{
-			CONST[k] <- v != null ? v : 0
-			ROOT[k] <- v != null ? v : 0
-		}
-}
-
-CONST.setdelegate({ _newslot = @(k, v) compilestring("const " + k + "=" + (typeof(v) == "string" ? ("\"" + v + "\"") : v))() })
+CONST.setdelegate( { _newslot = @( k, v ) compilestring( "const " + k + "=" + ( typeof v == "string" ? ( "\"" + v + "\"" ) : v ) )() } )
 CONST.MAX_CLIENTS <- MaxClients().tointeger()
+CONST.MAPNAME <- GetMapName()
 
-foreach(k, v in ::NetProps.getclass())
-	if (k != "IsValid" && !(k in ROOT))
-		ROOT[k] <- ::NetProps[k].bindenv(::NetProps)
+// fold every class into the root table for performance
+foreach( _class in [ "NetProps", "Entities", "EntityOutputs", "NavMesh", "Convars" ] )
+	foreach( k, v in ROOT[_class].getclass() )
+		if ( !( k in ROOT ) && k != "IsValid" )
+			ROOT[k] <- ROOT[_class][k].bindenv( ROOT[_class] )
 
-foreach(k, v in ::Entities.getclass())
-	if (k != "IsValid" && !(k in ROOT))
-		ROOT[k] <- ::Entities[k].bindenv(::Entities)
+// fold every pre-defined constant into the const table
+if ( !( "ConstantNamingConvention" in ROOT ) )
+	foreach( a, b in Constants )
+		foreach( k, v in b )
+			CONST[k] <- v != null ? v : 0
 
-foreach(k, v in ::EntityOutputs.getclass())
-	if (k != "IsValid" && !(k in ROOT))
-		ROOT[k] <- ::EntityOutputs[k].bindenv(::EntityOutputs)
+/***********************************************************************************************************************
+ * this is the amount of iterations the event wrapper will do to look for functions to call on a given event           *
+ * so don't set it to something unnecessarily high.                                                                    *
+ *                                                                                                                     *
+ * If the limit is 8 and you try to do                                                                                 *
+ * PZI_EVENT("player_death", "PlayerDeath", function() ..., 10)                                                        *
+ * you will get errors 				                                                                                   *
+ * extensions can simply re-define this to whatever they want/need                                                     *
+ ***********************************************************************************************************************/
+const MAX_EVENT_FUNCTABLES      = 8
 
-foreach(k, v in ::NavMesh.getclass())
-	if (k != "IsValid" && !(k in ROOT))
-		ROOT[k] <- ::NavMesh[k].bindenv(::NavMesh)
+// event call ordering
+// these ensure the core library has a consistent call ordering, regardless of include order.
+// any extensions included after the main file will have their own separate GameEventCallbacks entry with its own configurable ordering
+const EVENT_WRAPPER_MAIN  	    = 0
+const EVENT_WRAPPER_UTIL  	    = 1
 
-const POPEXT_ERROR = "POPEXTENSIONS ERROR: "
-const STRING_NETPROP_ITEMDEF = "m_AttributeManager.m_Item.m_iItemDefinitionIndex"
+// String caches
+const STRING_NETPROP_ITEMDEF 	  	    = "m_AttributeManager.m_Item.m_iItemDefinitionIndex"
+const STRING_NETPROP_INIT 	 	  	    = "m_AttributeManager.m_Item.m_bInitialized"
+const STRING_NETPROP_ATTACH  	  	    = "m_bValidatedAttachedEntity"
+const STRING_NETPROP_PURGESTRINGS 	    = "m_bForcePurgeFixedupStrings"
+const STRING_NETPROP_MYWEAPONS    	    = "m_hMyWeapons"
+const STRING_NETPROP_AMMO		  	    = "m_iAmmo"
+const STRING_NETPROP_NAME		  	    = "m_iName"
+const STRING_NETPROP_MODELINDEX   	    = "m_nModelIndex"
+const STRING_NETPROP_POPNAME    		= "m_iszMvMPopfileName"
+const STRING_NETPROP_MDLINDEX_OVERRIDES = "m_nModelIndexOverrides"
+
+// Logging
+const PZI_LOG_DEBUG   = "[PZI DEBUG] "
+const PZI_LOG_WARNING = "[PZI WARNING] "
+const PZI_LOG_ERROR   = "[PZI ERROR] "
+const PZI_LOG_FATAL   = "[PZI FATAL ERROR] "
+
+// Single tick interval
 const SINGLE_TICK = 0.015
 
 // Clientprint chat colors
@@ -49,16 +67,8 @@ const INT_COLOR_WHITE = 16777215
 
 // redefine crit/uber conds so we don't end up using different conds all over the place
 
-const COND_CRITBOOST = 39 //TF_COND_CRITBOOSTED_CTF_CAPTURE
+const COND_CRITBOOST  = 39 //TF_COND_CRITBOOSTED_CTF_CAPTURE
 const COND_UBERCHARGE = 57 //TF_COND_INVULNERABLE_CARD_EFFECT
-
-//redefine EFlags
-const EFL_USER = 1048576 // EFL_IS_BEING_LIFTED_BY_BARNACLE
-const EFL_USER2 = 1073741824 //EFL_NO_PHYSCANNON_INTERACTION
-const EFL_SPAWNTEMPLATE = 33554432 //EFL_DONTBLOCKLOS
-const EFL_PROJECTILE = 2097152 //EFL_NO_ROTORWASH_PUSH
-const EFL_BOT = 268435456 //EFL_NO_MEGAPHYSCANNON_RAGDOLL
-const EFL_BOT2 = 67108864 //EFL_DONTWALKON
 
 // CONST.COLOR_END <- "\x07"
 // CONST.COLOR_DEFAULT <- "\x07FBECCB"
@@ -77,25 +87,25 @@ const VISION_MODE_HALLOWEEN = 2
 const VISION_MODE_ROME      = 3
 
 // m_iSelectedSpellIndex
-const SPELL_ROLLING    = -2
-const SPELL_EMPTY      = -1
-const SPELL_FIREBALL   =  0
-const SPELL_BATS       =  1
-const SPELL_OVERHEAL   =  2
-const SPELL_PUMPKIN    =  3
-const SPELL_SUPERJUMP  =  4
-const SPELL_STEALTH    =  5
-const SPELL_TELEPORT   =  6
-const SPELL_ENERGYORB  =  7
-const SPELL_MINIFY     =  8
-const SPELL_METEOR     =  9
-const SPELL_MONOCULOUS =  10
-const SPELL_SKELETON   =  11
+const SPELL_ROLLING    			 = -2
+const SPELL_EMPTY      			 = -1
+const SPELL_FIREBALL   			 = 0
+const SPELL_BATS       			 = 1
+const SPELL_OVERHEAL   			 = 2
+const SPELL_PUMPKIN    			 = 3
+const SPELL_SUPERJUMP  			 = 4
+const SPELL_STEALTH    			 = 5
+const SPELL_TELEPORT   			 = 6
+const SPELL_ENERGYORB  			 = 7
+const SPELL_MINIFY     			 = 8
+const SPELL_METEOR     			 = 9
+const SPELL_MONOCULOUS 			 = 10
+const SPELL_SKELETON   			 = 11
 const SPELL_BUMPER_BOXING_ROCKET = 12
 const SPELL_BUMPER_PARACHUTE     = 13
 const SPELL_BUMPER_OVERHEAL      = 14
 const SPELL_BUMPER_BOMBHEAD      = 15
-const SPELL_COUNT = 16
+const SPELL_COUNT 			     = 16
 
 // Weapon slots
 const SLOT_PRIMARY   = 0
@@ -107,13 +117,13 @@ const SLOT_PDA       = 5
 const SLOT_PDA2      = 6
 const SLOT_COUNT     = 7
 
-// Cosmetic slots (UNTESTED)
+// Cosmetic slots ( UNTESTED )
 const LOADOUT_POSITION_HEAD   = 8
 const LOADOUT_POSITION_MISC   = 9
 const LOADOUT_POSITION_ACTION = 10
 const LOADOUT_POSITION_MISC2  = 11
 
-// Taunt slots (UNTESTED)
+// Taunt slots ( UNTESTED )
 const LOADOUT_POSITION_TAUNT  = 12
 const LOADOUT_POSITION_TAUNT2 = 13
 const LOADOUT_POSITION_TAUNT3 = 14
@@ -137,7 +147,7 @@ const TTYPE_EXIT     = 2
 
 // env_shake/ScreenShake function
 const SHAKE_START = 0
-const SHAKE_STOP = 1
+const SHAKE_STOP  = 1
 
 // tf_gamerules m_iRoundState
 const GR_STATE_BONUS        = 9
@@ -206,19 +216,38 @@ const DMG_DONT_COUNT_DAMAGE_TOWARDS_CRIT_RATE = 67108864 //DMG_DISSOLVE
 
 //can only be used with trigger_hurts
 const DMG_IGNORE_MAXHEALTH = 2
-const DMG_IGNORE_DEBUFFS = 4
+const DMG_IGNORE_DEBUFFS   = 4
+
+// death flags
+const TF_DEATH_DOMINATION 			= 1
+const TF_DEATH_ASSISTER_DOMINATION 	= 2
+const TF_DEATH_REVENGE 				= 4
+const TF_DEATH_ASSISTER_REVENGE 	= 8
+const TF_DEATH_FIRST_BLOOD 			= 16
+const TF_DEATH_FEIGN_DEATH 			= 32
+const TF_DEATH_INTERRUPTED 			= 64
+const TF_DEATH_GIBBED 				= 128
+const TF_DEATH_PURGATORY 			= 256
+const TF_DEATH_MINIBOSS 			= 512
+const TF_DEATH_AUSTRALIUM 			= 1024
+
+// m_nWaterLevel
+const WL_NotInWater 	= 0
+const WL_Feet 			= 1 // movement unaffected
+const WL_Waist 			= 2 // we can still breathe
+const WL_Eyes 			= 3 // completely submerged
 
 //stun flags
-const TF_STUN_NONE = 0
-const TF_STUN_MOVEMENT = 1
-const TF_STUN_CONTROLS = 2
-const TF_STUN_MOVEMENT_FORWARD_ONLY = 4
-const TF_STUN_SPECIAL_SOUND = 8
-const TF_STUN_DODGE_COOLDOWN = 16
-const TF_STUN_NO_EFFECTS = 32
-const TF_STUN_LOSER_STATE = 64
-const TF_STUN_BY_TRIGGER = 128
-const TF_STUN_BOTH = 256
+const TF_STUN_NONE                   = 0
+const TF_STUN_MOVEMENT               = 1
+const TF_STUN_CONTROLS               = 2
+const TF_STUN_MOVEMENT_FORWARD_ONLY  = 4
+const TF_STUN_SPECIAL_SOUND          = 8
+const TF_STUN_DODGE_COOLDOWN         = 16
+const TF_STUN_NO_EFFECTS             = 32
+const TF_STUN_LOSER_STATE            = 64
+const TF_STUN_BY_TRIGGER             = 128
+const TF_STUN_BOTH                   = 256
 
 //powerup
 const TF_POWERUP_LIFETIME = 30
@@ -238,13 +267,13 @@ const TFBOT_IGNORE_ENEMY_SENTRY_GUNS = 512
 const TFBOT_IGNORE_SCENARIO_GOALS    = 1024
 
 // m_iAmmo
-const TF_AMMO_PRIMARY = 1
+const TF_AMMO_PRIMARY 	= 1
 const TF_AMMO_SECONDARY = 2
-const TF_AMMO_METAL = 3
+const TF_AMMO_METAL 	= 3
 const TF_AMMO_GRENADES1 = 4
 const TF_AMMO_GRENADES2 = 5
 const TF_AMMO_GRENADES3 = 6
-const TF_AMMO_COUNT = 7
+const TF_AMMO_COUNT 	= 7
 
 // m_iObjectType
 const OBJ_DISPENSER         = 0
@@ -257,23 +286,14 @@ const TTYPE_NONE     = 0
 const TTYPE_ENTRANCE = 1
 const TTYPE_EXIT     = 2
 
-// Flags for wavebar functions below
-const MVM_CLASS_FLAG_NONE			 = 0
-const MVM_CLASS_FLAG_NORMAL          = 1 // Non support or mission icon
-const MVM_CLASS_FLAG_SUPPORT         = 2 // Support icon flag. Mission icon does not have this flag
-const MVM_CLASS_FLAG_MISSION         = 4 // Mission icon flag. Support icon does not have this flag
-const MVM_CLASS_FLAG_MINIBOSS        = 8 // Giant icon flag. Support and mission icons do not display red background when set
-const MVM_CLASS_FLAG_ALWAYSCRIT      = 16 // Crit icon flag. Support and mission icons do not display crit outline when set
-const MVM_CLASS_FLAG_SUPPORT_LIMITED = 32 // Support limited flag. Game uses it together with support flag
-
-//also add to root table so they can be used in popfiles
-::MVM_CLASS_FLAG_NONE            <- 0
-::MVM_CLASS_FLAG_NORMAL          <- 1 // Non support or mission icon
-::MVM_CLASS_FLAG_SUPPORT         <- 2 // Support icon flag. Mission icon does not have this flag
-::MVM_CLASS_FLAG_MISSION         <- 4 // Mission icon flag. Support icon does not have this flag
-::MVM_CLASS_FLAG_MINIBOSS        <- 8 // Giant icon flag. Support and mission icons do not display red background when set
-::MVM_CLASS_FLAG_ALWAYSCRIT      <- 16 // Crit icon flag. Support and mission icons do not display crit outline when set
-::MVM_CLASS_FLAG_SUPPORT_LIMITED <- 32 // Support limited flag. Game uses it together with support flag
+// bot SetMission flags
+const NO_MISSION 			   = 0
+const MISSION_SEEK_AND_DESTROY = 1 // focus on finding and killing enemy players
+const MISSION_DESTROY_SENTRIES = 2 // focus on finding and destroying enemy sentry guns ( and buildings )
+const MISSION_SNIPER 		   = 3 // maintain teams of snipers harassing the enemy
+const MISSION_SPY 			   = 4 // maintain teams of spies harassing the enemy
+const MISSION_ENGINEER 		   = 5 // maintain engineer nests for harassing the enemy
+const MISSION_REPROGRAMMED 	   = 6 // MvM: robot has been hacked and will do bad things to their team
 
 // trigger_* entity spawnflags
 const SF_TRIGGER_ALLOW_CLIENTS                = 1
@@ -427,16 +447,16 @@ const MP_CONCEPT_MVM_LAST_MAN_STANDING     = 108
 const MP_CONCEPT_MVM_ENCOURAGE_MONEY       = 109
 const MP_CONCEPT_MVM_MONEY_PICKUP          = 110
 
-const MP_CONCEPT_MVM_ENCOURAGE_UPGRADE = 111
-const MP_CONCEPT_MVM_UPGRADE_COMPLETE  = 112
-const MP_CONCEPT_MVM_GIANT_CALLOUT     = 113
-const MP_CONCEPT_MVM_GIANT_HAS_BOMB    = 114
-const MP_CONCEPT_MVM_GIANT_KILLED      = 115
+const MP_CONCEPT_MVM_ENCOURAGE_UPGRADE 	   = 111
+const MP_CONCEPT_MVM_UPGRADE_COMPLETE  	   = 112
+const MP_CONCEPT_MVM_GIANT_CALLOUT     	   = 113
+const MP_CONCEPT_MVM_GIANT_HAS_BOMB    	   = 114
+const MP_CONCEPT_MVM_GIANT_KILLED      	   = 115
 const MP_CONCEPT_MVM_GIANT_KILLED_TEAMMATE = 116
-const MP_CONCEPT_MVM_SAPPED_ROBOT      = 117
-const MP_CONCEPT_MVM_CLOSE_CALL        = 118
-const MP_CONCEPT_MVM_TANK_CALLOUT      = 119
-const MP_CONCEPT_MVM_TANK_DEAD         = 120
+const MP_CONCEPT_MVM_SAPPED_ROBOT      	   = 117
+const MP_CONCEPT_MVM_CLOSE_CALL        	   = 118
+const MP_CONCEPT_MVM_TANK_CALLOUT      	   = 119
+const MP_CONCEPT_MVM_TANK_DEAD         	   = 120
 
 const MP_CONCEPT_MVM_TANK_DEPLOYING  = 121
 const MP_CONCEPT_MVM_ATTACK_THE_TANK = 122
@@ -449,11 +469,11 @@ const MP_CONCEPT_MAGIC_BIGHEAD       = 128
 const MP_CONCEPT_MAGIC_SMALLHEAD     = 129
 const MP_CONCEPT_MAGIC_GRAVITY       = 130
 
-const MP_CONCEPT_MAGIC_GOOD           = 131
-const MP_CONCEPT_MAGIC_DANCE          = 132
-const MP_CONCEPT_HALLOWEEN_LONGFALL   = 133
-const MP_CONCEPT_TAUNT_GUITAR_RIFF    = 134
-const MP_CONCEPT_PLAYER_CAST_FIREBALL = 135
+const MP_CONCEPT_MAGIC_GOOD           	  = 131
+const MP_CONCEPT_MAGIC_DANCE          	  = 132
+const MP_CONCEPT_HALLOWEEN_LONGFALL   	  = 133
+const MP_CONCEPT_TAUNT_GUITAR_RIFF    	  = 134
+const MP_CONCEPT_PLAYER_CAST_FIREBALL 	  = 135
 const MP_CONCEPT_PLAYER_CAST_MERASMUS_ZAP = 136
 const MP_CONCEPT_PLAYER_CAST_SELF_HEAL    = 137
 const MP_CONCEPT_PLAYER_CAST_MIRV         = 138
@@ -471,10 +491,10 @@ const MP_CONCEPT_PLAYER_SPELL_FIREBALL       = 148
 const MP_CONCEPT_PLAYER_SPELL_MERASMUS_ZAP   = 149
 const MP_CONCEPT_PLAYER_SPELL_SELF_HEAL      = 150
 
-const MP_CONCEPT_PLAYER_SPELL_MIRV       = 151
-const MP_CONCEPT_PLAYER_SPELL_BLAST_JUMP = 152
-const MP_CONCEPT_PLAYER_SPELL_STEALTH    = 153
-const MP_CONCEPT_PLAYER_SPELL_TELEPORT   = 154
+const MP_CONCEPT_PLAYER_SPELL_MIRV       	  = 151
+const MP_CONCEPT_PLAYER_SPELL_BLAST_JUMP 	  = 152
+const MP_CONCEPT_PLAYER_SPELL_STEALTH    	  = 153
+const MP_CONCEPT_PLAYER_SPELL_TELEPORT   	  = 154
 const MP_CONCEPT_PLAYER_SPELL_LIGHTNING_BALL  = 155
 const MP_CONCEPT_PLAYER_SPELL_MOVEMENT_BUFF   = 156
 const MP_CONCEPT_PLAYER_SPELL_MONOCULOUS      = 157
@@ -486,65 +506,150 @@ const MP_CONCEPT_PLAYER_SPELL_PICKUP_COMMON  = 161
 const MP_CONCEPT_PLAYER_SPELL_PICKUP_RARE    = 162
 const MP_CONCEPT_PLAYER_HELLTOWER_MIDNIGHT   = 163
 const MP_CONCEPT_PLAYER_SKELETON_KING_APPEAR = 164
-const MP_CONCEPT_MANNHATTAN_GATE_ATK  = 165
-const MP_CONCEPT_MANNHATTAN_GATE_TAKE = 166
-const MP_CONCEPT_RESURRECTED          = 167
-const MP_CONCEPT_MVM_LOOT_COMMON      = 168
-const MP_CONCEPT_MVM_LOOT_RARE        = 169
-const MP_CONCEPT_MVM_LOOT_ULTRARARE   = 170
+const MP_CONCEPT_MANNHATTAN_GATE_ATK  		 = 165
+const MP_CONCEPT_MANNHATTAN_GATE_TAKE 		 = 166
+const MP_CONCEPT_RESURRECTED          		 = 167
+const MP_CONCEPT_MVM_LOOT_COMMON      		 = 168
+const MP_CONCEPT_MVM_LOOT_RARE        		 = 169
+const MP_CONCEPT_MVM_LOOT_ULTRARARE   		 = 170
 
-const MP_CONCEPT_MEDIC_HEAL_SHIELD   = 171
+const MP_CONCEPT_MEDIC_HEAL_SHIELD   		  = 171
 const MP_CONCEPT_TAUNT_EUREKA_EFFECT_TELEPORT = 172
-const MP_CONCEPT_COMBO_KILLED        = 173
-const MP_CONCEPT_PLAYER_ASK_FOR_BALL = 174
-const MP_CONCEPT_ROUND_START_COMP    = 175
-const MP_CONCEPT_GAME_OVER_COMP      = 176
-const MP_CONCEPT_MATCH_OVER_COMP     = 177
+const MP_CONCEPT_COMBO_KILLED        		  = 173
+const MP_CONCEPT_PLAYER_ASK_FOR_BALL 		  = 174
+const MP_CONCEPT_ROUND_START_COMP    		  = 175
+const MP_CONCEPT_GAME_OVER_COMP      		  = 176
+const MP_CONCEPT_MATCH_OVER_COMP     		  = 177
 
 // Default max ammo values
-const MAXAMMO_BASE_SCOUT_PRIMARY   = 32
-const MAXAMMO_BASE_SCOUT_SECONDARY = 36
+const MAXAMMO_BASE_SCOUT_PRIMARY   	   = 32
+const MAXAMMO_BASE_SCOUT_SECONDARY 	   = 36
 
-const MAXAMMO_BASE_SOLDIER_PRIMARY   = 20
-const MAXAMMO_BASE_SOLDIER_JUMPER    = 60
-const MAXAMMO_BASE_SOLDIER_SECONDARY = 32
+const MAXAMMO_BASE_SOLDIER_PRIMARY     = 20
+const MAXAMMO_BASE_SOLDIER_JUMPER      = 60
+const MAXAMMO_BASE_SOLDIER_SECONDARY   = 32
 
-const MAXAMMO_BASE_PYRO_PRIMARY      = 200
-const MAXAMMO_BASE_PYRO_DRAGONS_FURY = 40
-const MAXAMMO_BASE_PYRO_SECONDARY    = 32
-const MAXAMMO_BASE_PYRO_FLARE        = 32
+const MAXAMMO_BASE_PYRO_PRIMARY        = 200
+const MAXAMMO_BASE_PYRO_DRAGONS_FURY   = 40
+const MAXAMMO_BASE_PYRO_SECONDARY      = 32
+const MAXAMMO_BASE_PYRO_FLARE          = 32
 
 const MAXAMMO_BASE_DEMO_PRIMARY        = 16
 const MAXAMMO_BASE_DEMO_SECONDARY      = 24
 const MAXAMMO_BASE_DEMO_SCOTRES_JUMPER = 36
 
-const MAXAMMO_BASE_HEAVY_PRIMARY   = 200
-const MAXAMMO_BASE_HEAVY_SECONDARY = 32
+const MAXAMMO_BASE_HEAVY_PRIMARY   	   = 200
+const MAXAMMO_BASE_HEAVY_SECONDARY 	   = 32
 
-const MAXAMMO_BASE_ENGI_PRIMARY       = 32
-const MAXAMMO_BASE_ENGI_RESCUE_RANGER = 16
-const MAXAMMO_BASE_ENGI_SECONDARY     = 200
+const MAXAMMO_BASE_ENGI_PRIMARY        = 32
+const MAXAMMO_BASE_ENGI_RESCUE_RANGER  = 16
+const MAXAMMO_BASE_ENGI_SECONDARY      = 200
 
-const MAXAMMO_BASE_MEDIC_PRIMARY     = 150
-const MAXAMMO_BASE_MEDIC_CROSSBOW    = 38
+const MAXAMMO_BASE_MEDIC_PRIMARY       = 150
+const MAXAMMO_BASE_MEDIC_CROSSBOW      = 38
 
-const MAXAMMO_BASE_SNIPER_PRIMARY   = 25
-const MAXAMMO_BASE_SNIPER_BOW       = 12
-const MAXAMMO_BASE_SNIPER_SECONDARY = 75
+const MAXAMMO_BASE_SNIPER_PRIMARY      = 25
+const MAXAMMO_BASE_SNIPER_BOW          = 12
+const MAXAMMO_BASE_SNIPER_SECONDARY    = 75
 
-const MAXAMMO_BASE_SPY_PRIMARY = 24
+const MAXAMMO_BASE_SPY_PRIMARY 		   = 24
 
-// Content masks
-CONST.MASK_OPAQUE      <- (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_OPAQUE)
-CONST.MASK_PLAYERSOLID <- (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_PLAYERCLIP|CONTENTS_WINDOW|CONTENTS_MONSTER|CONTENTS_GRATE)
-CONST.MASK_SOLID_BRUSHONLY <- (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_WINDOW|CONTENTS_GRATE)
+// DAMAGE enums, https://developer.valvesoftware.com/wiki/Team_Fortress_2/Scripting/Script_Functions/Constants#DAMAGE
+const DAMAGE_NO 			= 0
+const DAMAGE_EVENTS_ONLY 	= 1
+const DAMAGE_YES 			= 2
+const DAMAGE_AIM 			= 3
+
+// FFADE flags, https://developer.valvesoftware.com/wiki/Team_Fortress_2/Scripting/Script_Functions/Constants#FFADE
+const FFADE_IN 			= 1
+const FFADE_OUT 		= 2
+const FFADE_MODULATE 	= 4
+const FFADE_STAYOUT 	= 8
+const FFADE_PURGE 		= 16
+
+// kBonusEffect enums, https://developer.valvesoftware.com/wiki/Team_Fortress_2/Scripting/Script_Functions/Constants#kBonusEffect
+const kBonusEffect_Crit 				= 0
+const kBonusEffect_MiniCrit 			= 1
+const kBonusEffect_DoubleDonk 			= 2
+const kBonusEffect_WaterBalloonSploosh 	= 3
+const kBonusEffect_None 				= 4
+const kBonusEffect_DragonsFury		 	= 5
+const kBonusEffect_Stomp 				= 6
+const kBonusEffect_Count 				= 7
+
+// MASK, https://developer.valvesoftware.com/wiki/Team_Fortress_2/Scripting/Script_Functions/Constants#MASK
+const MASK_ALL 						= -1
+const MASK_SPLITAREAPORTAL 			= 48
+const MASK_SOLID_BRUSHONLY 			= 16395
+const MASK_WATER 					= 16432
+const MASK_BLOCKLOS 				= 16449
+const MASK_OPAQUE 					= 16513
+const MASK_DEADSOLID 				= 65547
+const MASK_PLAYERSOLID_BRUSHONLY 	= 81931
+const MASK_NPCWORLDSTATIC 			= 131083
+const MASK_NPCSOLID_BRUSHONLY 		= 147467
+const MASK_CURRENT				 	= 16515072
+const MASK_SHOT_PORTAL 				= 33570819
+const MASK_SOLID 					= 33570827
+const MASK_BLOCKLOS_AND_NPCS 		= 33570881
+const MASK_OPAQUE_AND_NPCS 			= 33570945
+const MASK_VISIBLE_AND_NPCS 		= 33579137
+const MASK_PLAYERSOLID 				= 33636363
+const MASK_NPCSOLID 				= 33701899
+const MASK_SHOT_HULL 				= 100679691
+const MASK_SHOT 					= 1174421507
+
+// RUNE enums, likely used in mannpower mode, https://developer.valvesoftware.com/wiki/Team_Fortress_2/Scripting/Script_Functions/Constants#RUNE
+const RUNE_NONE 		= -1
+const RUNE_STRENGTH 	= 0
+const RUNE_HASTE 		= 1
+const RUNE_REGEN 		= 2
+const RUNE_RESIST 		= 3
+const RUNE_VAMPIRE 		= 4
+const RUNE_REFLECT 		= 5
+const RUNE_PRECISION 	= 6
+const RUNE_AGILITY 		= 7
+const RUNE_KNOCKOUT 	= 8
+const RUNE_KING 		= 9
+const RUNE_PLAGUE 		= 10
+const RUNE_SUPERNOVA 	= 11
+const RUNE_TYPES_MAX 	= 12
+
+// TFCOLLISION_GROUP, https://developer.valvesoftware.com/wiki/Team_Fortress_2/Scripting/Script_Functions/Constants#TFCOLLISION_GROUP
+const TFCOLLISION_GROUP_GRENADES 							= 20
+const TFCOLLISION_GROUP_OBJECT 								= 21
+const TFCOLLISION_GROUP_OBJECT_SOLIDTOPLAYERMOVEMENT 		= 22
+const TFCOLLISION_GROUP_COMBATOBJECT 						= 23
+const TFCOLLISION_GROUP_ROCKETS 							= 24
+const TFCOLLISION_GROUP_RESPAWNROOMS 						= 25
+const TFCOLLISION_GROUP_PUMPKIN_BOMB 						= 26
+const TFCOLLISION_GROUP_ROCKET_BUT_NOT_WITH_OTHER_ROCKETS 	= 27
 
 // NavMesh related
 const STEP_HEIGHT = 18
 
-//random useful constants
+// https://developer.valvesoftware.com/wiki/Team_Fortress_2/Scripting/Script_Functions/Constants#MATHLIB
+const DEG2RAD   = 0.0174532924
+const RAD2DEG   = 57.295779513
 const FLT_SMALL = 0.0000001
 const FLT_MIN   = 1.175494e-38
 const FLT_MAX   = 3.402823466e+38
 const INT_MIN   = -2147483648
 const INT_MAX   = 2147483647
+
+// now re-fold the entire constant table into the root table
+// this is done in a separate loop so our custom constants are also available in the root table
+// check a random constant to see if we've already re-scoped them to root
+if ( !( "STEP_HEIGHT" in ROOT ) )
+	foreach( k, v in CONST )
+		ROOT[k] <- v
+
+// Content masks
+// These are defined after the folding step so we can use the constants we just defined
+CONST.MASK_OPAQUE      	   <- ( CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_OPAQUE )
+CONST.MASK_PLAYERSOLID 	   <- ( CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_PLAYERCLIP|CONTENTS_WINDOW|CONTENTS_MONSTER|CONTENTS_GRATE )
+CONST.MASK_SOLID_BRUSHONLY <- ( CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_WINDOW|CONTENTS_GRATE )
+
+::MASK_OPAQUE 		   <- CONST.MASK_OPAQUE
+::MASK_PLAYERSOLID 	   <- CONST.MASK_PLAYERSOLID
+::MASK_SOLID_BRUSHONLY <- CONST.MASK_SOLID_BRUSHONLY

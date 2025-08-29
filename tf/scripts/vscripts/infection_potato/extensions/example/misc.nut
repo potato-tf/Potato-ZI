@@ -53,6 +53,7 @@ class Queue
 }
 
 ::PZI_Misc <- {
+
 	function GetWorldCenter()
 	{
 		local world = FindByClassname(null, "worldspawn");

@@ -7,7 +7,7 @@
 // utility functions                                                                       //
 // --------------------------------------------------------------------------------------- //
 
-PrecacheResources <- function()
+function PrecacheResources()
 {
     foreach ( _key, _value in getconsttable() )
     {
@@ -31,7 +31,7 @@ PrecacheResources <- function()
     return;
 };
 
-RoundUp <- function( _fValue ) {
+function RoundUp ( _fValue ) {
 
     local _iPart = _fValue.tointeger();
 
@@ -43,17 +43,17 @@ RoundUp <- function( _fValue ) {
     return _iPart;
 }
 
-GetPlayerUserID <- function( _hPlayer )
+function GetPlayerUserID ( _hPlayer )
 {
     return ( GetPropIntArray( TFPlayerManager, "m_iUserID", _hPlayer.entindex() ) );
 };
 
-IsPlayerAlive <- function( _hPlayer )
+function IsPlayerAlive ( _hPlayer )
 {
     return ( GetPropInt( _hPlayer, "m_lifeState" ) == 0 );
 };
 
-PlayerCount <- function( _team = -1 )
+function PlayerCount ( _team = -1 )
 {
     local _playerCount   = 0;
     local _targTeamCount = 0;
@@ -74,7 +74,7 @@ PlayerCount <- function( _team = -1 )
     return _playerCount;
 };
 
-PlayGlobalBell <- function( _bForce )
+function PlayGlobalBell ( _bForce )
 {
     if ( !_bForce && ( Time() - flTimeLastBell ) < 0.75 )
         return;
@@ -89,7 +89,7 @@ PlayGlobalBell <- function( _bForce )
     flTimeLastBell <- Time();
 };
 
-DemomanExplosionPreCheck <-  function(_vecLocation, _flDmg, _flDmgMult, _flRange, _hInflictor, _flForceMultiplier = 0.0, _flUpwardForce = 0.0, _iTeamnum = TF_TEAM_BLUE)
+function DemomanExplosionPreCheck (_vecLocation, _flDmg, _flDmgMult, _flRange, _hInflictor, _flForceMultiplier = 0.0, _flUpwardForce = 0.0, _iTeamnum = TF_TEAM_BLUE)
 {
     local _buildableArr    =  [ ];
     local _buildable       =  null;
@@ -163,7 +163,7 @@ DemomanExplosionPreCheck <-  function(_vecLocation, _flDmg, _flDmgMult, _flRange
     return;
 };
 
-CreateExplosion <-  function(_vecLocation, _flDmg, _flRange, _hInflictor, _flForceMultiplier = 0.0, _flUpwardForce = 0.0, _iTeamnum = TF_TEAM_BLUE)
+function CreateExplosion (_vecLocation, _flDmg, _flRange, _hInflictor, _flForceMultiplier = 0.0, _flUpwardForce = 0.0, _iTeamnum = TF_TEAM_BLUE)
 {
     ScreenShake ( _vecLocation, 5000, 5000, 4, 350, 0, true );
 
@@ -209,7 +209,7 @@ CreateExplosion <-  function(_vecLocation, _flDmg, _flRange, _hInflictor, _flFor
     _hBomb.DispatchSpawn();
 
     _hBomb.SetTeam       ( TF_TEAM_BLUE );
-    _hBomb.SetOrigin     ( _vecLocation );
+    _hBomb.SetAbsOrigin     ( _vecLocation );
     _hBomb.SetOwner      ( _hInflictor );
     // KnockbackPlayer(_hBomb, _hInflictor, _flForceMultiplier, _flUpwardForce, Vector(400, 400, 400), true)
 
@@ -221,7 +221,7 @@ CreateExplosion <-  function(_vecLocation, _flDmg, _flRange, _hInflictor, _flFor
     return;
 };
 
-GetAllPlayers <- function()
+function GetAllPlayers()
 {
     for ( local i = 1; i <= MaxPlayers; i++ )
     {
@@ -236,7 +236,7 @@ GetAllPlayers <- function()
     return;
 };
 
-GetRandomPlayers <- function( _howMany = 1 )
+function GetRandomPlayers ( _howMany = 1 )
 {
     local _playerArr = [];
 
@@ -260,7 +260,7 @@ GetRandomPlayers <- function( _howMany = 1 )
     return _selectedPlayers;
 };
 
-ChangeTeamSafe <- function( _hPlayer, _iTeamNum, _bForce = false )
+function ChangeTeamSafe ( _hPlayer, _iTeamNum, _bForce = false )
 {
     if ( _hPlayer == null || _iTeamNum < 0 || _iTeamNum > 3 || _hPlayer.GetTeam() == _iTeamNum )
         return;
@@ -273,7 +273,7 @@ ChangeTeamSafe <- function( _hPlayer, _iTeamNum, _bForce = false )
     return;
 };
 
-NetName <- function( _hPlayer )
+function NetName ( _hPlayer )
 {
     if ( _hPlayer == null )
         return "[UNKNOWN/INVALID PLAYER]";
@@ -286,7 +286,7 @@ NetName <- function( _hPlayer )
     return _szNetname;
 };
 
-PlayerIsValid <- function( _hPlayer )
+function PlayerIsValid ( _hPlayer )
 {
     if ( _hPlayer == null )
         return false;
@@ -294,7 +294,7 @@ PlayerIsValid <- function( _hPlayer )
     return true;
 };
 
-ShouldZombiesWin <- function( _hPlayer )
+function ShouldZombiesWin ( _hPlayer )
 {
     local _iValidSurvivors = 0;
     local _iValidPlayers   = 0;
@@ -388,7 +388,7 @@ ShouldZombiesWin <- function( _hPlayer )
     return;
 };
 
-CreateSmallHealthKit <- function( _vecLocation )
+function CreateSmallHealthKit ( _vecLocation )
 {
     local _hDroppedHealthkit = SpawnEntityFromTable( "item_healthkit_small",
     {
@@ -407,7 +407,7 @@ CreateSmallHealthKit <- function( _vecLocation )
     AddThinkToEnt( _hDroppedHealthkit, "KillMeThink" );
 }
 
-CreateMediumHealthKit <- function( _vecLocation )
+function CreateMediumHealthKit ( _vecLocation )
 {
     local _hDroppedHealthkit = SpawnEntityFromTable( "item_healthkit_medium",
     {
@@ -426,7 +426,7 @@ CreateMediumHealthKit <- function( _vecLocation )
     AddThinkToEnt( _hDroppedHealthkit, "KillMeThink" );
 }
 
-PrintToChat <- function( _szMessage )
+function PrintToChat ( _szMessage )
 {
     if ( typeof _szMessage != "string" || _szMessage == "" || _szMessage == null )
         return;
@@ -435,7 +435,7 @@ PrintToChat <- function( _szMessage )
     return;
 };
 
-SlayPlayerWithSpoofedIDX <-  function(_hAttacker, _hVictim, _hAttackerWep, _vecDmgForce, _vecDmgPosition, _iIDX = ZOMBIE_SPOOF_WEAPON_IDX, _szKillicon = "" )
+function SlayPlayerWithSpoofedIDX (_hAttacker, _hVictim, _hAttackerWep, _vecDmgForce, _vecDmgPosition, _iIDX = ZOMBIE_SPOOF_WEAPON_IDX, _szKillicon = "" )
 {
     if ( _hAttacker == null || _hVictim == null || _hAttackerWep == null )
         return;
@@ -496,7 +496,7 @@ SlayPlayerWithSpoofedIDX <-  function(_hAttacker, _hVictim, _hAttackerWep, _vecD
 // usage: _playerHandle.<functionName>( _args );                                           //
 // --------------------------------------------------------------------------------------- //
 
-CTFPlayer_HasThisWeapon <-  function( _WeaponIndentity, _bDeleteItemOnFind = false )
+function CTFPlayer_HasThisWeapon ( _WeaponIndentity, _bDeleteItemOnFind = false )
 {
     for ( local i = 0; i < TF_WEAPON_COUNT; i++ )
     {
@@ -534,7 +534,7 @@ CTFPlayer_HasThisWeapon <-  function( _WeaponIndentity, _bDeleteItemOnFind = fal
 	return false
 };
 
-CTFPlayer_HasThisWearable <- function( _WearableClassname )
+function CTFPlayer_HasThisWearable ( _WearableClassname )
 {
     local _wearable = null;
     while ( _wearable = Entities.FindByClassname( _wearable, "tf_wearable*" ) )
@@ -551,7 +551,7 @@ CTFPlayer_HasThisWearable <- function( _WearableClassname )
 	return false
 };
 
-CTFPlayer_LockInPlace <- function( _bEnable = true )
+function CTFPlayer_LockInPlace ( _bEnable = true )
 {
     if ( _bEnable )
     {
@@ -569,7 +569,7 @@ CTFPlayer_LockInPlace <- function( _bEnable = true )
     };
 };
 
-CTFPlayer_GiveZombieAbility <- function()
+function CTFPlayer_GiveZombieAbility()
 {
     local _sc = this.GetScriptScope();
 
@@ -615,7 +615,7 @@ CTFPlayer_GiveZombieAbility <- function()
     _sc.m_iCurrentAbilityType <- _sc.m_hZombieAbility.GetAbilityType();
 }
 
-CTFPlayer_RemovePlayerWearables <- function()
+function CTFPlayer_RemovePlayerWearables()
 {
     local _wearable = null;
     while ( _wearable = Entities.FindByClassname( _wearable, "tf_wearable*" ) )
@@ -629,7 +629,7 @@ CTFPlayer_RemovePlayerWearables <- function()
     return;
 };
 
-CTFPlayer_SpawnEffect <- function()
+function CTFPlayer_SpawnEffect()
 {
     local _angPlayer     =  this.GetLocalAngles();
     local _vecAngPlayer  =  Vector( _angPlayer.x, _angPlayer.y, _angPlayer.z );
@@ -641,14 +641,21 @@ CTFPlayer_SpawnEffect <- function()
     return;
 };
 
-CTFPlayer_GiveZombieCosmetics <- function()
-{
 
+function CTFPlayer_GiveZombieCosmetics()
+{
+    local wearable = PZI_Util.GiveWearableItem( this, 8000, arrZombieCosmeticModelStr[ this.GetPlayerClass() ] )
+    PZI_Util.SetTargetname( wearable, format( "__pzi_zombie_cosmetic_%d", this.entindex() ) )
+    this.GetScriptScope().m_hZombieWearable <- wearable 
+}
+
+function CTFPlayer_GiveZombieCosmetics_OLD()
+{
     local _iClassnum = this.GetPlayerClass();
 
     // this.SetCustomModelWithClassAnimations(szArrZombiePlayerModels[ _iClassnum ]);
 
-    local _sc = this.GetScriptScope();
+    local _sc = this.GetScriptScope() || ( this.ValidateScriptScope(), this.GetScriptScope() );
 
 	// if (!_sc) return
 
@@ -682,38 +689,38 @@ CTFPlayer_GiveZombieCosmetics <- function()
 }
 
 
-CTFPlayer_GiveZombieFXWearable <- function()
+function CTFPlayer_GiveZombieFXWearable()
 {
-//   local _sc = this.GetScriptScope();
+    local _sc = this.GetScriptScope();
 
-// 	// if (!_sc) return
+    if (!_sc) return
 
-//   if ( _sc.m_hZombieFXWearable != null && _sc.m_hZombieFXWearable.IsValid() )
-//       _sc.m_hZombieFXWearable.Destroy();
+    if ( _sc.m_hZombieFXWearable != null && _sc.m_hZombieFXWearable.IsValid() )
+        _sc.m_hZombieFXWearable.Destroy();
 
-//   local _zombieFXWearable = Entities.CreateByClassname( "tf_wearable" );
+    local _zombieFXWearable = Entities.CreateByClassname( "tf_wearable" );
 
-//   Entities.DispatchSpawn         ( _zombieFXWearable );
-//   _zombieFXWearable.SetAbsOrigin ( this.GetLocalOrigin() );
-//   _zombieFXWearable.SetAbsAngles ( this.GetLocalAngles() );
+    Entities.DispatchSpawn         ( _zombieFXWearable );
+    _zombieFXWearable.SetAbsOrigin ( this.GetLocalOrigin() );
+    _zombieFXWearable.SetAbsAngles ( this.GetLocalAngles() );
 
-//   // Zombie FX Wearable NetProps
-//   SetPropBool   ( _zombieFXWearable,  "m_bValidatedAttachedEntity", true );
-//   SetPropBool   ( _zombieFXWearable,  "m_AttributeManager.m_Item.m_bInitialized", true );
-//   SetPropEntity ( _zombieFXWearable,  "m_hOwnerEntity",  this );
-//   SetPropInt    ( _zombieFXWearable,  "m_Collision.m_usSolidFlags", 4 );
-//   SetPropInt    ( _zombieFXWearable,  "m_nModelIndex", arrZombieFXWearable[ this.GetPlayerClass() ] );
+    // Zombie FX Wearable NetProps
+    SetPropBool   ( _zombieFXWearable,  "m_bValidatedAttachedEntity", true );
+    SetPropBool   ( _zombieFXWearable,  "m_AttributeManager.m_Item.m_bInitialized", true );
+    SetPropEntity ( _zombieFXWearable,  "m_hOwnerEntity",  this );
+    SetPropInt    ( _zombieFXWearable,  "m_Collision.m_usSolidFlags", 4 );
+    SetPropInt    ( _zombieFXWearable,  "m_nModelIndex", arrZombieFXWearable[ this.GetPlayerClass() ] );
 
-//   _zombieFXWearable.SetOwner( this );
+    _zombieFXWearable.SetOwner( this );
 
-//   SetPropInt      ( _zombieFXWearable, "m_fEffects", ( EF_BONEMERGE | EF_BONEMERGE_FASTCULL ) );
-//   EntFireByHandle ( _zombieFXWearable, "SetParent", "!activator", -1, this, this );
+    SetPropInt      ( _zombieFXWearable, "m_fEffects", ( EF_BONEMERGE | EF_BONEMERGE_FASTCULL ) );
+    EntFireByHandle ( _zombieFXWearable, "SetParent", "!activator", -1, this, this );
 
-//   _sc.m_hZombieFXWearable  <-  _zombieFXWearable;
+    _sc.m_hZombieFXWearable  <-  _zombieFXWearable;
     return;
 };
 
-CTFPlayer_ApplyOutOfCombat <- function()
+function CTFPlayer_ApplyOutOfCombat()
 {
     return;
 
@@ -733,7 +740,7 @@ CTFPlayer_ApplyOutOfCombat <- function()
     this.AddCustomAttribute  ( "move speed penalty", ZOMBIE_BOOST_SPEED_DEBUFF, -1 );
 };
 
-CTFPlayer_RemoveOutOfCombat <- function( _bForceCooldown = false )
+function CTFPlayer_RemoveOutOfCombat ( _bForceCooldown = false )
 {
     local _sc = this.GetScriptScope();
 
@@ -756,7 +763,7 @@ CTFPlayer_RemoveOutOfCombat <- function( _bForceCooldown = false )
     this.RemoveCustomAttribute ( "move speed penalty" );
 };
 
-CTFPlayer_RemoveAmmo <- function()
+function CTFPlayer_RemoveAmmo()
 {
     for ( local i = 0; i < 32; i++ )
     {
@@ -764,7 +771,7 @@ CTFPlayer_RemoveAmmo <- function()
     };
 };
 
-CTFPlayer_GiveZombieWeapon <- function()
+function CTFPlayer_GiveZombieWeapon()
 {
     local _sc = this.GetScriptScope();
 
@@ -836,7 +843,7 @@ CTFPlayer_GiveZombieWeapon <- function()
     return;
 };
 
-CTFPlayer_AddZombieAttribs <- function()
+function CTFPlayer_AddZombieAttribs()
 {
     local _iClassNum = this.GetPlayerClass();
 
@@ -875,7 +882,7 @@ CTFPlayer_AddZombieAttribs <- function()
     return;
 };
 
-CTFPlayer_ClearZombieAttribs <- function()
+function CTFPlayer_ClearZombieAttribs()
 {
     local _iClassNum = this.GetPlayerClass();
 
@@ -914,7 +921,7 @@ CTFPlayer_ClearZombieAttribs <- function()
     return;
 };
 
-CTFPlayer_AbilityStateToString <- function()
+function CTFPlayer_AbilityStateToString()
 {
     local _sc = this.GetScriptScope();
 
@@ -938,7 +945,7 @@ CTFPlayer_AbilityStateToString <- function()
     return "off.vtf";
 };
 
-CTFPlayer_BuildZombieHUDString <- function()
+function CTFPlayer_BuildZombieHUDString()
 {
     local _sc = this.GetScriptScope();
 
@@ -1000,7 +1007,7 @@ CTFPlayer_BuildZombieHUDString <- function()
     };
 };
 
-CTFPlayer_ZombieInitialTooltip <- function()
+function CTFPlayer_ZombieInitialTooltip()
 {
     local _hAbilityHUDText = SpawnEntityFromTable( "game_text",
     {
@@ -1021,7 +1028,7 @@ CTFPlayer_ZombieInitialTooltip <- function()
     return _hAbilityHUDText;
 };
 
-CTFPlayer_InitializeZombieHUD <- function()
+function CTFPlayer_InitializeZombieHUD()
 {
     local _sc = this.GetScriptScope();
 
@@ -1074,7 +1081,7 @@ CTFPlayer_InitializeZombieHUD <- function()
     return false;
 };
 
-CTFPlayer_CheckIfLoser <- function()
+function CTFPlayer_CheckIfLoser()
 {
     local _iRoundState = GetPropInt( GameRules, "m_iRoundState" );
 
@@ -1090,7 +1097,7 @@ CTFPlayer_CheckIfLoser <- function()
     return false;
 };
 
-CTFPlayer_CanDoAct <- function( _iAct )
+function CTFPlayer_CanDoAct ( _iAct )
 {
     local _sc    =  this.GetScriptScope();
     local _temp  =  ACT_LOCKED;
@@ -1149,7 +1156,7 @@ CTFPlayer_CanDoAct <- function( _iAct )
     };
 };
 
-CTFPlayer_ProcessEventQueue <- function(  )
+function CTFPlayer_ProcessEventQueue (  )
 {
     local _sc = this.GetScriptScope();
 
@@ -1240,7 +1247,7 @@ CTFPlayer_ProcessEventQueue <- function(  )
                 if ( _sc.m_hZombieWearable != null && _sc.m_hZombieWearable.IsValid() )
                     _sc.m_hZombieWearable.Destroy();
 
-                this.GiveZombieFXWearable();
+                // this.GiveZombieFXWearable();
                 this.GiveZombieCosmetics();
 
                 this.SetForcedTauntCam ( 0 );
@@ -1272,7 +1279,7 @@ CTFPlayer_ProcessEventQueue <- function(  )
     return;
 };
 
-CTFPlayer_RemoveEventFomQueue <- function( _event )
+function CTFPlayer_RemoveEventFomQueue ( _event )
 {
     local _sc = this.GetScriptScope();
 
@@ -1294,7 +1301,7 @@ CTFPlayer_RemoveEventFomQueue <- function( _event )
     return;
 };
 
-CTFPlayer_AddEventToQueue <- function( _event, _delay )
+function CTFPlayer_AddEventToQueue ( _event, _delay )
 {
     local _sc        =  this.GetScriptScope();
     local _fireTime  =  ( Time() + _delay );
@@ -1313,7 +1320,7 @@ CTFPlayer_AddEventToQueue <- function( _event, _delay )
     return;
 };
 
-CTFPlayer_ResetInfectionVars <- function()
+function CTFPlayer_ResetInfectionVars()
 {
 
     local _sc = this.GetScriptScope();
@@ -1321,11 +1328,8 @@ CTFPlayer_ResetInfectionVars <- function()
 	if (!_sc) return;
 
     // AddThinkToEnt( this, null );
-    if ("PlayerThink" in _sc.ThinkTable)
-    {
-        delete _sc.ThinkTable.PlayerThink
-        return;
-    };
+    if ("ThinkTable" in _sc )
+        _sc.ThinkTable.clear()
 
     if ( ( "m_iUserConfigFlags" in _sc ) )
     {
@@ -1376,14 +1380,16 @@ CTFPlayer_ResetInfectionVars <- function()
     _sc.m_iCurrentAbilityType   <- 0;
     _sc.m_iAbilityState         <- 0;
 
-    // AddThinkToEnt( this, "PlayerThink" );
+    if (!("ThinkTable" in _sc))
+        _sc.ThinkTable <- {}
 
+    // AddThinkToEnt( this, "PlayerThink" );
     _sc.ThinkTable.PlayerThink <- ::PlayerThink
 
     return true;
 };
 
-CTFPlayer_ModifyJumperWeapons <- function()
+function CTFPlayer_ModifyJumperWeapons()
 {
     if ( this.GetPlayerClass() == TF_CLASS_SOLDIER )
     {
@@ -1414,7 +1420,7 @@ CTFPlayer_ModifyJumperWeapons <- function()
     };
 };
 
-CTFPlayer_MakeHuman <- function()
+function CTFPlayer_MakeHuman()
 {
     local _hPlayerVM = GetPropEntity( this, "m_hViewModel" );
 
@@ -1434,7 +1440,7 @@ CTFPlayer_MakeHuman <- function()
     return;
 };
 
-CTFPlayer_HowLongUntilAct <- function( _iAct )
+function CTFPlayer_HowLongUntilAct ( _iAct )
 {
     local _sc = this.GetScriptScope();
 
@@ -1474,12 +1480,12 @@ CTFPlayer_HowLongUntilAct <- function( _iAct )
     };
 };
 
-CTFPlayer_PlayZombieVO <- function()
+function CTFPlayer_PlayZombieVO()
 {
     return;
 };
 
-CTFPlayer_ClearProblematicConds <- function()
+function CTFPlayer_ClearProblematicConds()
 {
     foreach ( _iCond in PROBLEMATIC_PLAYER_CONDS )
     {
@@ -1489,7 +1495,7 @@ CTFPlayer_ClearProblematicConds <- function()
     return;
 }
 
-CTFPlayer_SetNextActTime <- function( _iAct, _fTime )
+function CTFPlayer_SetNextActTime ( _iAct, _fTime )
 {
     local _sc = this.GetScriptScope();
 
@@ -1537,7 +1543,7 @@ CTFPlayer_SetNextActTime <- function( _iAct, _fTime )
     return;
 };
 
-CTFPlayer_DestroyAllWeapons <- function()
+function CTFPlayer_DestroyAllWeapons()
 {
     local _tfwep;
 
@@ -1563,7 +1569,7 @@ CTFPlayer_DestroyAllWeapons <- function()
     return;
 };
 
-CTFPlayer_ClearZombieEntities <- function()
+function CTFPlayer_ClearZombieEntities()
 {
     local _sc = this.GetScriptScope();
 
@@ -1584,7 +1590,7 @@ CTFPlayer_ClearZombieEntities <- function()
     return;
 };
 
-CTFPlayer_AlreadyInSpit <-  function()
+function CTFPlayer_AlreadyInSpit()
 {
     local _sc = this.GetScriptScope();
 
@@ -1593,7 +1599,7 @@ CTFPlayer_AlreadyInSpit <-  function()
     return _sc.m_bStandingOnSpit;
 }
 
-CTFPlayer_GetLinkedSpitPoolEnt <- function()
+function CTFPlayer_GetLinkedSpitPoolEnt()
 {
    // printl("Getting linked spit pool entity from player...")
     local _sc = this.GetScriptScope();
@@ -1609,7 +1615,7 @@ CTFPlayer_GetLinkedSpitPoolEnt <- function()
     return null;
 }
 
-CTFPlayer_SetLinkedSpitPoolEnt <- function( _hSpitPool )
+function CTFPlayer_SetLinkedSpitPoolEnt ( _hSpitPool )
 {
     local _sc = this.GetScriptScope();
 
@@ -1625,7 +1631,7 @@ CTFPlayer_SetLinkedSpitPoolEnt <- function( _hSpitPool )
     return;
 }
 
-CTFPlayer_ClearSpitStatus <- function()
+function CTFPlayer_ClearSpitStatus()
 {
     local _sc = this.GetScriptScope();
 
@@ -1638,7 +1644,7 @@ CTFPlayer_ClearSpitStatus <- function()
     return;
 }
 
-CTFPlayer_GetWeaponHandle <- function( _szWeaponClassname )
+function CTFPlayer_GetWeaponHandle ( _szWeaponClassname )
 {
     for ( local i = 0; i < TF_WEAPON_COUNT; i++ )
     {
@@ -1670,7 +1676,7 @@ foreach ( key, value in this )
     }
 }
 
-KnockbackPlayer <-  function( _hInflictor, _hVictim, _flForceMultiplier = 500.0, _flUpwardForce =  0.25, _vecDirOverride = Vector(0, 0, 0), _bRemoveOnGround = false )
+function KnockbackPlayer ( _hInflictor, _hVictim, _flForceMultiplier = 500.0, _flUpwardForce =  0.25, _vecDirOverride = Vector(0, 0, 0), _bRemoveOnGround = false )
 {
     if ( _hInflictor == null || _hVictim == null || !_hInflictor.IsValid() || !_hVictim.IsValid() )
          return;
@@ -1712,7 +1718,7 @@ KnockbackPlayer <-  function( _hInflictor, _hVictim, _flForceMultiplier = 500.0,
     return;
 };
 
-KilliconInflictor <-  function( _szKillIconName )
+function KilliconInflictor ( _szKillIconName )
 {
     local _hKillIcon = SpawnEntityFromTable( "point_template", {
         classname = _szKillIconName
