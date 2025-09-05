@@ -1,13 +1,13 @@
 PZI_CREATE_SCOPE( "__pzi_spawnanywhere", "PZI_SpawnAnywhere", null, "SpawnAnywhereThink" )
 
-const NEST_MODEL      = "models/player/heavy.mdl"
 const SNIPER_SKELETON = "models/bots/skeleton_sniper/skeleton_sniper.mdl"
 
-const NEST_EXPLODE_DAMAGE = 120
-const NEST_EXPLODE_RADIUS = 500
-const NEST_EXPLODE_HEALTH = 650
-const NEST_EXPLODE_SOUND  = "misc/null.wav"
+const NEST_MODEL            = "models/player/heavy.mdl"
+const NEST_EXPLODE_SOUND    = "misc/null.wav"
 const NEST_EXPLODE_PARTICLE = " "
+const NEST_EXPLODE_DAMAGE   = 120
+const NEST_EXPLODE_RADIUS   = 500
+const NEST_EXPLODE_HEALTH   = 650
 
 const MAX_SPAWN_DISTANCE   = 2048
 const NEAREST_NAV_RADIUS   = 1024
@@ -25,71 +25,6 @@ CONST.TRACEMASK <- (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_PLAYERCLIP|CONTENT
 
 PrecacheModel( NEST_MODEL )
 PrecacheModel( SNIPER_SKELETON )
-
-// Convert 3D world coordinates to 2D screen coordinates
-// function PZI_SpawnAnywhere::WorldToScreenCoords(objectPos, cameraPos, cameraForward, cameraRight, cameraUp, fovDegrees = 90.0) {
-//     // Calculate vector from camera to object
-//     local dirToObject = Vector(
-//         objectPos.x - cameraPos.x,
-//         objectPos.y - cameraPos.y,
-//         objectPos.z - cameraPos.z
-//     );
-
-//     // Calculate forward distance for depth scaling
-//     local forwardDist = (dirToObject.x * cameraForward.x +
-//                         dirToObject.y * cameraForward.y +
-//                         dirToObject.z * cameraForward.z);
-
-//     if (forwardDist <= 0.0)  // Behind camera
-//         return null;
-
-//     // Project onto camera plane
-//     local rightProj = (dirToObject.x * cameraRight.x +
-//                     dirToObject.y * cameraRight.y +
-//                     dirToObject.z * cameraRight.z);
-//     local upProj = (dirToObject.x * cameraUp.x +
-//                 dirToObject.y * cameraUp.y +
-//                 dirToObject.z * cameraUp.z);
-
-//     // Convert to screen coordinates (0 to 1)
-//     local fovRad = fovDegrees * PI / 180.0;
-//     local scale = 1.0 / tan(fovRad / 2.0);
-
-//     return Vector(
-//         0.5 + (rightProj / forwardDist) * scale * 0.5,
-//         0.5 + (upProj / forwardDist) * scale * 0.5,
-//         0.0
-//     );
-// }
-
-// // Calculate text scale based on distance
-// function PZI_SpawnAnywhere::CalculateTextScale(baseSize, distance, minSize = 0.1, maxSize = 1.0) {
-//     local scale = baseSize / (distance * distance);
-//     return scale < minSize ? minSize : (scale > maxSize ? maxSize : scale);
-// }
-
-// // Main function to update text entity
-// function PZI_SpawnAnywhere::UpdateTextEntity(textEntity, objectPos, cameraPos, cameraForward, cameraRight, cameraUp, baseTextSize) {
-//     // Calculate distance
-//     local diff = Vector(
-//         objectPos.x - cameraPos.x,
-//         objectPos.y - cameraPos.y,
-//         objectPos.z - cameraPos.z
-//     );
-//     local distance = sqrt(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
-
-//     // Get screen coordinates
-//     local screenPos = WorldToScreenCoords(objectPos, cameraPos, cameraForward, cameraRight, cameraUp);
-
-//     if (screenPos != null) {  // If object is in front of camera
-//         // Update entity position
-//         textEntity.SetPosition(screenPos.x, screenPos.y);
-
-//         // Update text size
-//         local size = CalculateTextScale(baseTextSize, distance);
-//         textEntity.AcceptInput("SetTextSize", size, null, null)
-//     }
-// }
 
 PZI_SpawnAnywhere.ActiveNests <- {}
 
@@ -113,8 +48,8 @@ function PZI_SpawnAnywhere::SetGhostMode(player) {
 
     player.AddHudHideFlags(CONST.HIDEHUD_GHOST)
 
-    for ( local child = player.FirstMoveChild(); child != null; child = child.NextMovePeer() )
-        if ( child instanceof CEconEntity || child.GetClassname() == "tf_wearable" )
+    for ( local child = player.FirstMoveChild(); child; child = child.NextMovePeer() )
+        if ( child instanceof CEconEntity )
             EntFireByHandle(child, "Kill", "", -1, null, null)
         else
             child.DisableDraw()
@@ -124,21 +59,21 @@ function PZI_SpawnAnywhere::SetGhostMode(player) {
     PZI_Util.ScriptEntFireSafe( player, "self.AddCustomAttribute(`major increased jump height`, 3, -1)", -1 )
     PZI_Util.ScriptEntFireSafe( player, "self.AddCustomAttribute(`voice pitch scale`, 0, -1)", -1 )
 
-    player.SetSolid( SOLID_NONE )
+    player.SetCollisionGroup( COLLISION_GROUP_DEBRIS )
     player.SetSolidFlags( FSOLID_NOT_SOLID )
-    player.SetCollisionGroup( TFCOLLISION_GROUP_COMBATOBJECT )
+    player.SetSolid( SOLID_NONE )
+    player.SetSize(Vector(), Vector(1, 1, 1))
 
     player.AddFlag( FL_DONTTOUCH|FL_NOTARGET )
 }
 
 function PZI_SpawnAnywhere::BeginSummonSequence(player, origin) {
 
-    PlayerScope <- player.GetScriptScope()
+    local scope = player.GetScriptScope() || ( player.ValidateScriptScope(), player.GetScriptScope() )
 
-    if ( "GhostThink" in PlayerScope.ThinkTable )
-        delete PlayerScope.ThinkTable.GhostThink
+    if ( "GhostThink" in scope.ThinkTable )
+        delete scope.ThinkTable.GhostThink
 
-    // player.SetCollisionGroup(TFCOLLISION_GROUP_COMBATOBJECT)
     //should already be invis but whatever
     SetPropInt(player, "m_nRenderMode", kRenderTransColor)
     SetPropInt(player, "m_clrRender", 0)
@@ -152,6 +87,8 @@ function PZI_SpawnAnywhere::BeginSummonSequence(player, origin) {
     player.SetAbsVelocity(Vector())
     player.AcceptInput("SetForcedTauntCam", "1", null, null)
     player.AddCustomAttribute("no_jump", 1, -1)
+
+    scope.m_iFlags = scope.m_iFlags | ZBIT_PENDING_ZOMBIE
 
     local dummy_skeleton = CreateByClassname("funCBaseFlex")
 
@@ -194,14 +131,16 @@ function PZI_SpawnAnywhere::BeginSummonSequence(player, origin) {
 
     PZI_Util.ScriptEntFireSafe( player, "self.AddCond(TF_COND_HALLOWEEN_QUICK_HEAL)", SUMMON_HEAL_DELAY )
 
-    function PlayerScope::ThinkTable::SummonPreSpawn() {
+    function SummonPreSpawn() {
 
         if (player.GetHealth() >= player.GetMaxHealth() * SUMMON_MAX_OVERHEAL_MULT)
         {
             player.RemoveCond(TF_COND_HALLOWEEN_QUICK_HEAL)
-            delete PlayerScope.ThinkTable.SummonPreSpawn
+            delete this.ThinkTable.SummonPreSpawn
         }
     }
+
+    scope.ThinkTable.SummonPreSpawn <- SummonPreSpawn
 
     //max health attrib is always last
     local attrib = ZOMBIE_PLAYER_ATTRIBS[player.GetPlayerClass()]
@@ -209,9 +148,9 @@ function PZI_SpawnAnywhere::BeginSummonSequence(player, origin) {
 
     player.AddCustomAttribute(lastattrib[0], lastattrib[1], lastattrib[2])
 
-    DummyScope <- dummy_skeleton.GetScriptScope()
+    local dummy_scope = dummy_skeleton.GetScriptScope()
 
-    function DummyScope::SpawnPlayer() {
+    function SpawnPlayer() {
 
         if ( !player || !player.IsValid() || !player.IsAlive() )
         {
@@ -245,13 +184,13 @@ function PZI_SpawnAnywhere::BeginSummonSequence(player, origin) {
             PZI_Util.AttachParticle( player, eye_particle, "eyeglow_R" )
 
             dummy_player.SetModel(format("models/player/%s.mdl", PZI_Util.Classes[player.GetPlayerClass()]))
-            player.GiveZombieCosmetics()
 
-            for (local child = player.FirstMoveChild(); child != null; child = child.NextMovePeer())
+            for (local child = player.FirstMoveChild(); child; child = child.NextMovePeer())
                 child.EnableDraw()
 
+            player.GiveZombieCosmetics()
             if (player.GetPlayerClass() == TF_CLASS_PYRO)
-                PlayerScope.m_iFlags = PlayerScope.m_iFlags & ~ZBIT_PYRO_DONT_EXPLODE
+                scope.m_iFlags = scope.m_iFlags & ~ZBIT_PYRO_DONT_EXPLODE
 
             SetPropInt(player, "m_afButtonDisabled", 0)
             self.Kill()
@@ -262,6 +201,7 @@ function PZI_SpawnAnywhere::BeginSummonSequence(player, origin) {
         return -1
     }
 
+    dummy_scope.SpawnPlayer <- SpawnPlayer
     AddThinkToEnt(dummy_skeleton, "SpawnPlayer")
 }
 
@@ -295,42 +235,49 @@ PZI_EVENT("player_hurt", "SpawnAnywhere_RemoveQuickHeal", function(params) {
 })
 
 PZI_EVENT("player_activate", "SpawnAnywhere_PlayerActivate", function(params) { GetPlayerFromUserID(params.userid).ValidateScriptScope() })
+PZI_EVENT("player_team", "SpawnAnywhere_PlayerTeam", function(params) { GetPlayerFromUserID(params.userid).ValidateScriptScope() })
 
-PZI_EVENT("post_inventory_application", "SpawnAnywhere_PostInventoryApplication", function(params) {
+PZI_EVENT("player_spawn", "SpawnAnywhere_PlayerSpawn", function(params) {
 
     local player = GetPlayerFromUserID(params.userid)
 
-    if ( player.IsEFlagSet(EFL_IS_BEING_LIFTED_BY_BARNACLE) )
-        return
+    // make everyone non-solid
+    player.SetCollisionGroup( TFCOLLISION_GROUP_COMBATOBJECT )
 
-    PlayerScope <- player.GetScriptScope() || ( player.ValidateScriptScope(), player.GetScriptScope() )
+    local scope = player.GetScriptScope() || ( player.ValidateScriptScope(), player.GetScriptScope() )
 
-    if ( !("ThinkTable" in PlayerScope) )
-        PlayerScope.ThinkTable <- {}
+    if ( GetPropInt(player, "m_nRenderMode") == kRenderTransColor ) {
 
-    SetPropInt(player, "m_nRenderMode", kRenderNormal)
-    SetPropInt(player, "m_clrRender", 0xFFFFFFFF)
+        SetPropInt(player, "m_nRenderMode", kRenderNormal)
+        SetPropInt(player, "m_clrRender", 0xFFFFFFFF)
+    }
 
-    //GHOST MODE LOGIC BEYOND THIS POINT
+    // BLU LOGIC BEYOND THIS POINT
     if ( player.GetTeam() != TF_TEAM_BLUE || GetRoundState() != GR_STATE_RND_RUNNING ) return
 
-    PlayerScope.tracepos    <- Vector()
-    PlayerScope.spawn_nests <- []
-    PlayerScope.spawn_area  <- null
+    scope.spawn_nests <- []
+    scope.tracepos    <- Vector()
+    scope.spawn_area  <- null
 
     // PZI_Util.ScriptEntFireSafe( player, "PZI_SpawnAnywhere.SetGhostMode( self )", -1 )
-    printl( player.GetTeam() )
     PZI_SpawnAnywhere.SetGhostMode( player )
 
+    // make bots behave like mvm spy bots
     if ( IsPlayerABot(player) ) {
 
-        PZI_Util.ScriptEntFireSafe( player, "PZI_SpawnAnywhere.BeginSummonSequence( self, self.GetOrigin() )", RandomFloat( 0.1, 1.2 ) )
+        PZI_Util.ScriptEntFireSafe( player, @"
+
+            local players = GetAllPlayers()
+            PZI_Util.TeleportNearVictim( self, GetRandomPlayers( TF_TEAM_RED )[0], 1024 )
+            PZI_SpawnAnywhere.BeginSummonSequence( self, self.GetOrigin() )
+
+        ", RandomFloat( 0.1, 1.2 ) ) // random delay to avoid predictable spawn waves
         return
     }
 
     local spawn_hint = CreateByClassname( "move_rope" )
     spawn_hint.KeyValueFromString( "targetname", format( "spawn_hint_%d", player.entindex() ) )
-    spawn_hint.AddEFlags( EFL_IN_SKYBOX )
+    // spawn_hint.AddEFlags( EFL_IN_SKYBOX )
     spawn_hint.DispatchSpawn()
     SetPropBool( spawn_hint, STRING_NETPROP_PURGESTRINGS, true )
 
@@ -352,26 +299,11 @@ PZI_EVENT("post_inventory_application", "SpawnAnywhere_PostInventoryApplication"
 
     ", player.entindex()), 0.5)
 
-    function PlayerScope::ThinkTable::GhostThink() {
+    function GhostThink() {
 
-        local buttons = GetPropInt(player, "m_nButtons")
-
-        // NEST SPAWN
-        // loop through active nests and find the one with the most players nearby
-        if ( buttons & IN_ATTACK2 && PZI_SpawnAnywhere.ActiveNests.len() )
-        {
-            local nests = PZI_SpawnAnywhere.ActiveNests.keys().filter( @(nest) PZI_SpawnAnywhere.ActiveNests[nest].last_takedamage < Time() - 2.0 )
-
-            if ( !nests.len() ) return
-
-            PZI_SpawnAnywhere.BeginSummonSequence(player, nests.sort(@(a, b) a.nearby_players > b.nearby_players)[0].GetCenter())
-
-            return
-        }
-
-        // NORMAL GROUND SPAWN
         // find the nav we're looking at
         local nav_trace = {
+
             start  = player.EyePosition()
             end    = player.EyeAngles().Forward() * INT_MAX
             mask   = CONST.TRACEMASK
@@ -385,19 +317,20 @@ PZI_EVENT("post_inventory_application", "SpawnAnywhere_PostInventoryApplication"
 
         tracepos = nav_trace.pos
 
+        // trace too far away
         if ( ( player.GetOrigin() - tracepos ).Length2D() > MAX_SPAWN_DISTANCE ) return
 
         local nav_area = GetNearestNavArea(tracepos, NEAREST_NAV_RADIUS, false, true)
 
-        // printl(nav_area)
-
-        if (!nav_area || !nav_area.IsFlat()) return
+        // not a valid area
+        if (!nav_area || !nav_area.IsFlat() || PZI_Util.IsPointInTrigger( nav_area.GetCenter() + Vector( 0, 0, 64 ), "trigger_hurt" )) return
 
         // smooth movement for the annotation instead of snapping
         // spawn_hint.KeyValueFromVector("origin", hull_trace.pos + Vector(0, 0, 20))
 
         // check if we can fit here
         local hull_trace = {
+
             start   = nav_trace.pos
             end     = nav_trace.pos
             hullmin = Vector(-24, -24, 20)
@@ -407,25 +340,44 @@ PZI_EVENT("post_inventory_application", "SpawnAnywhere_PostInventoryApplication"
         }
 
         TraceHull(hull_trace)
+
         spawn_area = hull_trace.hit ? null : nav_area
 
-        DebugDrawBox( nav_area.GetCenter(), hull_trace.hullmin, hull_trace.hullmax, spawn_area ? 0 : 255, spawn_area ? 255 : 0, 0, 0, 0.015 )
-
-        // snap the spawn point to the nav area center
-        if (spawn_area) {
-
+        if ( spawn_area )
             spawn_hint.KeyValueFromVector("origin", spawn_area.GetCenter() + Vector(0, 0, 20))
 
-            if ( buttons & IN_ATTACK )
-            {
+        DebugDrawBox( nav_area.GetCenter(), hull_trace.hullmin, hull_trace.hullmax, spawn_area ? 0 : 255, spawn_area ? 255 : 0, 0, 255, 0.1 )
+
+        local buttons = GetPropInt( player, "m_nButtons" )
+
+        if ( buttons ) {
+
+            // NORMAL GROUND SPAWN
+            // snap the spawn point to the nav area center
+            if ( spawn_area && buttons & IN_ATTACK && !( buttons & IN_ATTACK2 ) ) {
+
                 for ( local survivor; survivor = FindByClassnameWithin( survivor, "player", tracepos, SUMMON_RADIUS ); )
                     if ( survivor.GetTeam() == TF_TEAM_RED )
                         return ClientPrint(player, HUD_PRINTTALK, "Too close to a survivor!")
 
-                PZI_SpawnAnywhere.BeginSummonSequence(player, spawn_area.GetCenter())
+                PZI_SpawnAnywhere.BeginSummonSequence( player, spawn_area.GetCenter() )
+            }
+
+            // NEST SPAWN
+            // loop through active nests and find the one with the most players nearby
+            else if ( buttons & IN_ATTACK2 && PZI_SpawnAnywhere.ActiveNests.len() ) {
+
+                spawn_nests = PZI_SpawnAnywhere.ActiveNests.keys().filter( @(nest) PZI_SpawnAnywhere.ActiveNests[nest].last_takedamage < Time() - 2.0 )
+
+                if ( !spawn_nests.len() ) return
+
+                PZI_SpawnAnywhere.BeginSummonSequence(player, spawn_nests.sort(@(a, b) a.nearby_players > b.nearby_players)[0].GetCenter())
+
+                return
             }
         }
     }
+    scope.ThinkTable.GhostThink <- GhostThink
 })
 
 PZI_EVENT("player_death", "SpawnAnywhere_PlayerDeath", function(params) {

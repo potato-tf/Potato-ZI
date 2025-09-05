@@ -175,7 +175,7 @@ if ( !( "InfectionLoaded" in getroottable() ) )
 function OnPostSpawn()
 {
     AddThinkToEnt( self, "GameStateThink" );
-    IncludeScript( "infection_potato/payload_logic.nut", root);
+    // IncludeScript( "infection_potato/payload_logic.nut", root);
 }
 
 
@@ -193,14 +193,14 @@ PZI_EVENT("player_spawn", "Infection_PlayerSpawn", function(params) {
 
     _sc.ThinkTable <- {}
 
-    function _sc::Think() {
+    function _sc::PlayerThinks() {
 
-        foreach(name, func in ThinkTable)
-            func()
+        foreach( name, func in ThinkTable )
+            func.call( this )
         return -1
     }
 
-    AddThinkToEnt(_hPlayer, "Think")
+    AddThinkToEnt(_hPlayer, "PlayerThinks")
 
     // we use the script overlay material for zombie ability hud
     // so let's make sure it's cleared whenever a player has respawned
@@ -294,7 +294,27 @@ PZI_EVENT("teamplay_setup_finished", "Infection_SetupFinished", function(params)
     ::bGameStarted <- true;
 
     local _iPlayerCountRed    = PlayerCount( TF_TEAM_RED );
-    local _numStartingZombies = -1;
+    local _numStartingZombies = (_iPlayerCountRed / STARTING_ZOMBIE_FAC) || 1;
+
+    // -------------------------------------------------- //
+    // select players to become zombies                   //
+    // -------------------------------------------------- //
+
+    if ( ( _iPlayerCountRed <= 1 ) && ( DEBUG_MODE < 1 ) )
+    {
+
+        local _hGameWin = SpawnEntityFromTable( "game_round_win",
+        {
+            win_reason      = "0",
+            force_map_reset = "1",
+            TeamNum         = "2", // TF_TEAM_RED
+            switch_teams    = "0"
+        });
+
+        EntFireByHandle( _hGameWin, "RoundWin", "", 0, null, null );
+        ::bGameStarted <- false;
+        return;
+    }
 
     // ------------------ //
     // enable glow on RED//
@@ -302,179 +322,126 @@ PZI_EVENT("teamplay_setup_finished", "Infection_SetupFinished", function(params)
 
     EntFire("player", "RunScriptCode", "if (self.GetTeam() == TF_TEAM_RED) SetPropBool(self, `m_bGlowEnabled`, true)");
 
-    // -------------------------------------------------- //
-    // select players to become zombies                   //
-    // -------------------------------------------------- //
+    local _szZombieNetNames  =  "";
+    local _zombieArr         =  GetRandomPlayers( _numStartingZombies );
 
-    if ( !bNewFirstWaveBehaviour )
+    if ( !_zombieArr.len() )
+        return;
+
+    // ------------------------------------------ //
+    // convert the picked players to zombies      //
+    // ------------------------------------------ //
+
+    foreach ( i, _nextPlayer in _zombieArr )
     {
-        if ( ( _iPlayerCountRed <= 1 ) && ( DEBUG_MODE < 1 ) )
-        {
-            // not enough players, force game over
-            local _hGameWin = SpawnEntityFromTable( "game_round_win",
-            {
-                win_reason      = "0",
-                force_map_reset = "1",
-                TeamNum         = "2", // TF_TEAM_RED
-                switch_teams    = "0"
-            });
+        if ( !_nextPlayer || !_nextPlayer.IsValid() )
+            continue;
 
-            EntFireByHandle( _hGameWin, "RoundWin", "", 0, null, null );
-            ::bGameStarted <- false;
-            return;
-        }
-        else if ( _numStartingZombies == -1 )
+        local _sc = _nextPlayer.GetScriptScope();
+
+        // ------------------------------------------- //
+        // make sure heavy doesn't get stuck in t-pose //
+        // ------------------------------------------- //
+
+        if ( _nextPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS )
         {
-            if ( _iPlayerCountRed <= 4 )
+            local _activeWeapon = _nextPlayer.GetActiveWeapon()
+            if ( _activeWeapon && _activeWeapon.GetClassname() == "tf_weapon_minigun" )
             {
-                _numStartingZombies = 1;
-            }
-            else if ( _iPlayerCountRed <= 8 )
-            {
-                _numStartingZombies = 2;
-            }
-            else if ( _iPlayerCountRed <= 12 )
-            {
-                _numStartingZombies = 3;
-            }
-            else if ( _iPlayerCountRed < 18 )
-            {
-                _numStartingZombies = 4;
-            }
-            else // 18 or more players
-            {
-                _numStartingZombies = RoundUp( _iPlayerCountRed / STARTING_ZOMBIE_FAC );
+                SetPropInt( _activeWeapon, "m_iWeaponState", 0 );
             }
         }
 
-        local _szZombieNetNames  =  "";
-        local _zombieArr         =  GetRandomPlayers( _numStartingZombies );
+        // remove player conditions that will cause problems
+        // when switching to zombie
+        _nextPlayer.ClearProblematicConds();
 
-        if ( _zombieArr.len() == 0 )
-            return;
+        // reset all gamemode specific variables
+        _nextPlayer.ResetInfectionVars();
 
-        // ------------------------------------------ //
-        // convert the picked players to zombies      //
-        // ------------------------------------------ //
+        ChangeTeamSafe( _nextPlayer, TF_TEAM_BLUE, false );
 
-        for ( local i = 0; i < _zombieArr.len(); i++ )
+        if (bZombiesDontSwitchInPlace)
         {
-            local _id          =  GetPlayerUserID     ( _zombieArr[ i ] );
-            // local _nextPlayer  =  GetPlayerFromUserID ( _id ); why???
-            local _nextPlayer = _zombieArr[ i ]
+            if (_nextPlayer.GetPlayerClass() == TF_CLASS_PYRO)
+                _sc.m_iFlags = _sc.m_iFlags | ZBIT_PYRO_DONT_EXPLODE;
 
-            // printl(_nextPlayer)
-
-            if ( _nextPlayer == null )
-                continue;
-
-            local _sc = _nextPlayer.GetScriptScope();
-
-            // if (!_sc) return
-
-            // ------------------------------------------- //
-            // make sure heavy doesn't get stuck in t-pose //
-            // ------------------------------------------- //
-
-            if ( _nextPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS )
-            {
-                local _activeWeapon = _nextPlayer.GetActiveWeapon()
-                if ( _activeWeapon && _activeWeapon.GetClassname() == "tf_weapon_minigun" )
-                {
-                    SetPropInt( _activeWeapon, "m_iWeaponState", 0 );
-                }
-            }
-
-            // remove player conditions that will cause problems
-            // when switching to zombie
-            _nextPlayer.ClearProblematicConds();
-
-            // reset all gamemode specific variables
-            _nextPlayer.ResetInfectionVars();
-
-            ChangeTeamSafe( _nextPlayer, TF_TEAM_BLUE, false );
-
-            if (bZombiesDontSwitchInPlace)
-            {
-                if (_nextPlayer.GetPlayerClass() == TF_CLASS_PYRO)
-                    _sc.m_iFlags = _sc.m_iFlags | ZBIT_PYRO_DONT_EXPLODE;
-
-                _nextPlayer.TakeDamage(INT_MAX, DMG_GENERIC, null );
-            }
-
-            // remove all of the player's existing items
-            _nextPlayer.RemovePlayerWearables();
-
-            // add the zombie cosmetics/skin modifications
-            _nextPlayer.GiveZombieCosmetics();
-            // _nextPlayer.GiveZombieFXWearable();
-
-            _nextPlayer.SetEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
-            SendGlobalGameEvent( "post_inventory_application", { userid = GetPlayerUserID(_nextPlayer) });
-            _nextPlayer.RemoveEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
-
-            // add the pending zombie flag
-            // the actual zombie conversion is handled in the player's think script
-            _sc.m_iFlags <- ( ( _sc.m_iFlags | ZBIT_PENDING_ZOMBIE ) );
-
-            // don't delay zombie conversion when the player is alive.
-            _nextPlayer.SetNextActTime ( ZOMBIE_BECOME_ZOMBIE, INSTANT );
-            _nextPlayer.SetNextActTime ( ZOMBIE_ABILITY_CAST, 0.1 );
-
-            // ------------------------------------------- //
-            // build string for chat notification          //
-            // ------------------------------------------- //
-
-            if ( i == 0 ) // first player in the message
-            {
-                _szZombieNetNames = "\x07FF3F3F" + NetName( _nextPlayer ) + "\x07FBECCB";
-            }
-            else if ( i ==  ( _zombieArr.len() - 1 ) ) // last player in the message
-            {
-                if ( _zombieArr.len() > 1 )
-                {
-                    _szZombieNetNames += ( "\x07FBECCB " + STRING_UI_AND + " \x07FF3F3F" );
-                }
-                else
-                {
-                    _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" );
-                }
-
-                _szZombieNetNames += ( NetName( _nextPlayer ) + "\x07FBECCB" );
-            }
-            else // players in the middle get commas
-            {
-                _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" + NetName( _nextPlayer ) + "\x07FBECCB" );
-            }
+            _nextPlayer.TakeDamage(INT_MAX, DMG_GENERIC, null );
         }
 
-        local _szFirstInfectedAnnounceMSG = "";
+        // remove all of the player's existing items
+        _nextPlayer.RemovePlayerWearables();
 
-        if ( _zombieArr.len() > 1 ) // set the first infected announce message
-        {
-            _szFirstInfectedAnnounceMSG = format( _szZombieNetNames +
-                                                STRING_UI_CHAT_FIRST_WAVE_MSG_PLURAL );
-        }
-        else
-        {
-            _szFirstInfectedAnnounceMSG = format( _szZombieNetNames +
-                                                STRING_UI_CHAT_FIRST_WAVE_MSG );
-        }
+        // add the zombie cosmetics/skin modifications
+        _nextPlayer.GiveZombieCosmetics();
+        // _nextPlayer.GiveZombieFXWearable();
 
-        local _hNextRespawnRoom = null;
-        while ( _hNextRespawnRoom = Entities.FindByClassname( _hNextRespawnRoom, "func_respawnroom" ) )
+        _nextPlayer.SetEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
+        SendGlobalGameEvent( "post_inventory_application", { userid = GetPlayerUserID(_nextPlayer) });
+        _nextPlayer.RemoveEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
+
+        // add the pending zombie flag
+        // the actual zombie conversion is handled in the player's think script
+        _sc.m_iFlags <- ( ( _sc.m_iFlags | ZBIT_PENDING_ZOMBIE ) );
+
+        // don't delay zombie conversion when the player is alive.
+        _nextPlayer.SetNextActTime ( ZOMBIE_BECOME_ZOMBIE, INSTANT );
+        _nextPlayer.SetNextActTime ( ZOMBIE_ABILITY_CAST, 0.1 );
+
+        // ------------------------------------------- //
+        // build string for chat notification          //
+        // ------------------------------------------- //
+
+        if ( i == 0 ) // first player in the message
         {
-            if ( _hNextRespawnRoom && _hNextRespawnRoom.GetTeam() == TF_TEAM_RED )
+            _szZombieNetNames = "\x07FF3F3F" + NetName( _nextPlayer ) + "\x07FBECCB";
+        }
+        else if ( i ==  ( _zombieArr.len() - 1 ) ) // last player in the message
+        {
+            if ( _zombieArr.len() > 1 )
             {
-                EntFireByHandle( _hNextRespawnRoom, "SetInactive", "", -1, null, null );
+                _szZombieNetNames += ( "\x07FBECCB " + STRING_UI_AND + " \x07FF3F3F" );
             }
+            else
+            {
+                _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" );
+            }
+
+            _szZombieNetNames += ( NetName( _nextPlayer ) + "\x07FBECCB" );
         }
-
-        PlayGlobalBell( false );
-
-        // show the first infected announce message to all players
-        PrintToChat( _szFirstInfectedAnnounceMSG );
+        else // players in the middle get commas
+        {
+            _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" + NetName( _nextPlayer ) + "\x07FBECCB" );
+        }
     }
+
+    local _szFirstInfectedAnnounceMSG = "";
+
+    if ( _zombieArr.len() > 1 ) // set the first infected announce message
+    {
+        _szFirstInfectedAnnounceMSG = format( _szZombieNetNames +
+                                            STRING_UI_CHAT_FIRST_WAVE_MSG_PLURAL );
+    }
+    else
+    {
+        _szFirstInfectedAnnounceMSG = format( _szZombieNetNames +
+                                            STRING_UI_CHAT_FIRST_WAVE_MSG );
+    }
+
+    local _hNextRespawnRoom = null;
+    while ( _hNextRespawnRoom = Entities.FindByClassname( _hNextRespawnRoom, "func_respawnroom" ) )
+    {
+        if ( _hNextRespawnRoom && _hNextRespawnRoom.GetTeam() == TF_TEAM_RED )
+        {
+            EntFireByHandle( _hNextRespawnRoom, "SetInactive", "", -1, null, null );
+        }
+    }
+
+    PlayGlobalBell( false );
+
+    // show the first infected announce message to all players
+    PrintToChat( _szFirstInfectedAnnounceMSG );
+
 }, EVENT_WRAPPER_MAIN );
 
 PZI_EVENT("teamplay_broadcast_audio", "Infection_BroadcastAudio", function(params) {
@@ -492,10 +459,8 @@ PZI_EVENT("teamplay_restart_round", "Infection_RestartRound", function(params) {
 
     foreach ( _hNextPlayer in GetAllPlayers() )
     {
-        if ( _hNextPlayer == null )
+        if ( !_hNextPlayer || !_hNextPlayer.IsValid() )
             continue;
-
-        local _id = GetPlayerUserID( _hNextPlayer );
 
         _hNextPlayer.ResetInfectionVars();
         _hNextPlayer.ClearZombieEntities();
@@ -742,6 +707,7 @@ PZI_EVENT("player_death", "Infection_PlayerDeath", function(params) {
 }, EVENT_WRAPPER_MAIN );
 
 PZI_EVENT("OnTakeDamage", "Infection_OnTakeDamage", function(params) {
+
     if ( params.const_entity == null || params.inflictor == null || params.attacker == null )
         return;
 

@@ -7,90 +7,83 @@
 // think scripts                                                                           //
 // --------------------------------------------------------------------------------------- //
 
-function PlayerThink()
-{
-    local scope = self.GetScriptScope()
+function PZI_PlayerThink() {
 
-    if (self.GetFlags() & FL_NOTARGET)
-        return;
+    if ( !self.IsAlive() || self.GetFlags() & FL_NOTARGET )
+        return
 
-    if ( !self.IsAlive() )
-        return; // no need to think when we're dead
-
-    if ( self.GetPlayerClass() == 0 )
+    else if ( !self.GetPlayerClass() ) 
     {
         self.SetPlayerClass( TF_CLASS_SCOUT );
         self.ForceRegenerateAndRespawn();
-    };
+        return
+    }
 
     // make sure we always have crits as last man standing
-    if ( scope.m_bLastManStanding && !self.InCond( TF_COND_CRITBOOSTED ) && self.GetTeam() == TF_TEAM_RED )
-    {
-        self.AddCond( TF_COND_CRITBOOSTED );
-    };
+    else if ( self.GetTeam() == TF_TEAM_RED ) {
 
-    // make sure we always have mini-crits as one of the last three
-    if ( scope.m_bLastThree && !self.InCond( TF_COND_OFFENSEBUFF ) && self.GetTeam() == TF_TEAM_RED )
-    {
-        self.AddCond( TF_COND_OFFENSEBUFF );
-    };
+        if ( m_bLastThree )
+            self.AddCond( TF_COND_OFFENSEBUFF )
 
+        else if ( m_bLastManStanding ) 
+            self.AddCond( TF_COND_CRITBOOSTED )
+    }
     // spy garbage
-    if ( self.GetPlayerClass() == TF_CLASS_SPY )
-    {
-        if ( self.GetTeam() == TF_TEAM_RED )
-        {
-            // --------------------------------------------------------------------- //
-            // spoofing disguises for zombie players                                 //
-            // --------------------------------------------------------------------- //
-            // here we use romevision so we can let red players disguise as zombies  //
-            // and be seen correctly as zombies on the pov of other zombies.         //
-            // as far as i can figure out, the "m_Shared.m_nModelIndexOverrides" 3 is//
-            // the index of the model the player will be seen as by enemy players    //
-            // in romevision specifically. so we set that to the appropriate zombie  //
-            // model index if the player is disguised as a zombie.                   //
-            // --------------------------------------------------------------------- //
-            if ( self.InCond( TF_COND_DISGUISED ) )
-            {
-                local _iDisguiseClass = GetPropInt     ( self, "m_Shared.m_nDisguiseClass" );
-                local _iDisguiseTeam  = GetPropInt     ( self, "m_Shared.m_nDisguiseTeam" );
+    // if ( self.GetPlayerClass() == TF_CLASS_SPY )
+    // {
+    //     if ( self.GetTeam() == TF_TEAM_RED )
+    //     {
+    //         // --------------------------------------------------------------------- //
+    //         // spoofing disguises for zombie players                                 //
+    //         // --------------------------------------------------------------------- //
+    //         // here we use romevision so we can let red players disguise as zombies  //
+    //         // and be seen correctly as zombies on the pov of other zombies.         //
+    //         // as far as i can figure out, the "m_Shared.m_nModelIndexOverrides" 3 is//
+    //         // the index of the model the player will be seen as by enemy players    //
+    //         // in romevision specifically. so we set that to the appropriate zombie  //
+    //         // model index if the player is disguised as a zombie.                   //
+    //         // --------------------------------------------------------------------- //
+    //         if ( self.InCond( TF_COND_DISGUISED ) )
+    //         {
+    //             local _iDisguiseClass = GetPropInt     ( self, "m_Shared.m_nDisguiseClass" );
+    //             local _iDisguiseTeam  = GetPropInt     ( self, "m_Shared.m_nDisguiseTeam" );
 
-                if (_iDisguiseTeam == TF_TEAM_BLUE && GetPropIntArray( self, "m_nModelIndexOverrides", 3 ) != idxArrZombiePlayerModels[ _iDisguiseClass ] )
-                {
-                    SetPropIntArray( self, "m_nModelIndexOverrides", idxArrZombiePlayerModels[ _iDisguiseClass ], 3 );
-                }
-            }
-            else
-            {
-                if ( GetPropIntArray( self, "m_nModelIndexOverrides", 3 ) != 0 )
-                {
-                    SetPropIntArray( self, "m_nModelIndexOverrides", 0, 3 );
-                }
-            }
-        }
+    //             if (_iDisguiseTeam == TF_TEAM_BLUE && GetPropIntArray( self, "m_nModelIndexOverrides", 3 ) != idxArrZombiePlayerModels[ _iDisguiseClass ] )
+    //             {
+    //                 SetPropIntArray( self, "m_nModelIndexOverrides", idxArrZombiePlayerModels[ _iDisguiseClass ], 3 );
+    //             }
+    //         }
+    //         else
+    //         {
+    //             if ( GetPropIntArray( self, "m_nModelIndexOverrides", 3 ) != 0 )
+    //             {
+    //                 SetPropIntArray( self, "m_nModelIndexOverrides", 0, 3 );
+    //             }
+    //         }
+    //     }
 
         // for blue spies we set their model to the regular spy model when they're invisible
         // this prevents them from emitting a bunch of particles
-        if ( self.GetTeam() == TF_TEAM_BLUE )
-        {
-            if ( self.IsFullyInvisible() )
-            {
-                if ( !( m_iFlags & ZBIT_PARTICLE_HACK ) )
-                {
-                    self.SetCustomModelWithClassAnimations( "models/player/spy.mdl" );
-                    m_iFlags = ( m_iFlags | ZBIT_PARTICLE_HACK );
-                }
-            }
-            else
-            {
-                if ( m_iFlags & ( ZBIT_PARTICLE_HACK ) )
-                {
-                    self.SetCustomModelWithClassAnimations( "models/player/spy_infected.mdl" );
-                    m_iFlags = ( m_iFlags & ~ZBIT_PARTICLE_HACK );
-                };
-            }
-        }
-    }
+        // if ( self.GetTeam() == TF_TEAM_BLUE )
+        // {
+        //     if ( self.IsFullyInvisible() )
+        //     {
+        //         if ( !( m_iFlags & ZBIT_PARTICLE_HACK ) )
+        //         {
+        //             self.SetCustomModelWithClassAnimations( "models/player/spy.mdl" );
+        //             m_iFlags = ( m_iFlags | ZBIT_PARTICLE_HACK );
+        //         }
+        //     }
+        //     else
+        //     {
+        //         if ( m_iFlags & ( ZBIT_PARTICLE_HACK ) )
+        //         {
+        //             self.SetCustomModelWithClassAnimations( "models/player/spy_infected.mdl" );
+        //             m_iFlags = ( m_iFlags & ~ZBIT_PARTICLE_HACK );
+        //         };
+        //     }
+        // }
+    // }
 
 
     if ( m_iFlags != 0 || m_iFlags == ( ZBIT_SURVIVOR ) )
@@ -885,17 +878,24 @@ function SniperSpitThink()
         // if the percent of hits that came back empty is lower than the failure threshold
         if ( ( ( _iTimesHitEmpty.tofloat() / _iNumChecks ) * 100.0 ) <= SNIPER_SPIT_MIN_SURFACE_PERCENT )
         {
-            local _hPfxEnt = SpawnEntityFromTable( "info_particle_system",
+            foreach ( i, vector in [ Vector(), Vector( 40, 40, 0 ), Vector( -40, 40, 0 ), Vector( 40, -40, 0 ), Vector( -40, -40, 0 ) ] ) 
             {
-                effect_name  = FX_SPIT_SPLAT,
-                start_active = "1",
-                origin       = m_vecSpitZone,
-            } );
+                foreach ( effect in [ FX_SPIT_SPLAT /*, FX_SPIT_IMPACT */ ] ) 
+                {
+                    SpawnEntityFromTable( "info_particle_system",
+                    {
+                        targetname   = format( "__pzi_spit_impact_%d_%d", m_hOwner.entindex(), i )
+                        effect_name  = effect
+                        start_active = 1
+                        origin       = m_vecSpitZone + vector
+                    })
+                }
+            }
 
             // long delay to avoid weird flipping bug
-            EntFireByHandle( _hPfxEnt, "Kill", "", 15, null, null )
+            EntFire( format( "__pzi_spit_impact_%d_*", m_hOwner.entindex() ), "Kill", "", 15 )
 
-            DispatchParticleEffect( FX_SPIT_IMPACT, m_vecSpitZone, Vector( 0, 0, 0 ) );
+            // DispatchParticleEffect( FX_SPIT_IMPACT, m_vecSpitZone, Vector( 0, 0, 0 ) );
 
             EmitSoundOn( SFX_SPIT_SPLATTER, self );
             m_iState <- SPIT_STATE_ZONE;
@@ -1008,7 +1008,7 @@ function SniperSpitThink()
     }
     else if ( m_iState == SPIT_STATE_REJECTED ) // spit couldn't deploy zone, burst harmlessly and die
     {
-        DispatchParticleEffect( FX_SPIT_IMPACT, self.GetOrigin(), Vector( 0, 0, 0 ) );
+        // DispatchParticleEffect( FX_SPIT_IMPACT, self.GetOrigin(), Vector( 0, 0, 0 ) );
 
         EmitSoundOn( SFX_SPIT_MISS, self );
         m_hPfx.Destroy();
@@ -1282,6 +1282,9 @@ function GameStateThink()
     }
     else if ( _iNumBluPlayers < 1 && ::bGameStarted )
     {
+
+        if ( !_iNumBluPlayers ) return;
+
         // no zombies, humans win
         local _hGameWin = SpawnEntityFromTable( "game_round_win",
         {

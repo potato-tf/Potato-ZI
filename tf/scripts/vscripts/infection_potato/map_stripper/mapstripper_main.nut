@@ -1,9 +1,36 @@
 // Strip all logic from all maps to replace with ZI logic
+Convars.SetValue( "mp_autoteambalance", 0 )
+Convars.SetValue( "mp_scrambleteams_auto", 0 )
+Convars.SetValue( "mp_teams_unbalance_limit", 0 )
+Convars.SetValue( "mp_tournament", 0 )
 
-Convars.SetValue("mp_autoteambalance", 0)
-Convars.SetValue("mp_scrambleteams_auto", 0)
-Convars.SetValue("mp_teams_unbalance_limit", 0)
-Convars.SetValue("mp_tournament", 0)
+local spawns = {}
+
+for (local spawn; spawn = FindByClassname( spawn, "info_player_teamspawn" ); ) {
+
+    // SetPropInt( spawn, "m_iTeamNum", TEAM_UNASSIGNED )
+
+    if ( spawn.GetName() == "" )
+        SetPropString( spawn, "m_iName", format( "spawn_%d", spawn.entindex() ) )
+
+    spawns[ spawn.GetName() ] <- spawn
+}
+
+// global respawn time override
+local respawn = SpawnEntityFromTable( "trigger_player_respawn_override", {
+    targetname = "__pzi_respawnoverride"
+    RespawnTime = 3
+    RespawnName = spawns.keys()[ RandomInt( 0, spawns.len() - 1 ) ]
+})
+respawn.SetSize(Vector(-1, -1, -1), Vector(1, 1, 1))
+
+printl( respawn )
+respawn.ValidateScriptScope()
+local respawn_scope = respawn.GetScriptScope()
+
+// fix null activator crash
+respawn_scope.InputStartTouch <- PZI_Util.TouchCrashFix
+respawn_scope.Inputstarttouch <- PZI_Util.TouchCrashFix
 
 local logic_ents = {
  
@@ -11,7 +38,6 @@ local logic_ents = {
     tf_logic_arena                   = "Arena"
     tf_logic_medieval                = "Medieval"
     tf_logic_bounty_mode             = "Bounty"
-    tf_logic_competitive             = "Comp"
     tf_logic_hybrid_ctf_cp           = "CTF/CP"
     tf_logic_mann_vs_machine         = "MvM"
     tf_logic_multiple_escort         = "PLR"
@@ -49,6 +75,70 @@ local function GetGamemode() {
 
 local GAMEMODE = GetGamemode()
 
+local gamemode_funcs = {
+
+    function PL() {
+
+        // delete payload cart and tracks
+        for ( local watcher; watcher = FindByClassname( watcher, "team_train_watcher" ); ) {
+
+            local start  = FindByName( null, GetPropString( watcher, "m_iszStartNode" ) )
+            local next   = GetPropEntity( start, "p_pnext" )
+            local tracks = { start = next }
+
+            while ( next = GetPropEntity( next, "p_pnext" ) ) {
+
+                tracks[ next ] <- null
+
+                local altpath = GetPropEntity( next, "m_paltpath" )
+                if ( altpath = FindByName( null, GetPropString( next, "m_altName" ) ) || altpath )
+                    tracks[ next ] = altpath
+            }
+
+            foreach ( track1, track2 in tracks )
+                PZI_Util.EntShredder[ track1 ] <- track2
+
+            EntFire( GetPropString( watcher, "m_iszTrain" ), "KillHierarchy" )
+        }
+    }
+
+    function MvM() {
+
+        foreach( ent in [ "func_capturezone", "item_teamflag", "info_populator", "tf_logic_mann_vs_machine" ] )
+            EntFire( ent, "Kill" )
+            
+        SpawnEntityFromTable( "team_round_timer", {
+
+            targetname          = "__pzi_timer",
+            auto_countdown      = 1
+            max_length          = 720
+            reset_time          = 1
+            setup_length        = 60
+            show_in_hud         = 1
+            show_time_remaining = 1
+            start_paused        = 0
+            timer_length        = 480
+            StartDisabled       = 0
+        })
+
+        EntFire( "__pzi_timer", "Resume", "", 1 )
+    }
+
+    function PD() {
+
+        EntFire( "func_capturezone", "Kill" )
+
+        PZI_EVENT( "player_death", "PZI_MapStripper_PlayerDeath", function ( params ) {
+
+            EntFire( "item_teamflag", "Kill" )
+        })
+    }
+}
+gamemode_funcs.PLR <- gamemode_funcs.PL
+gamemode_funcs.CTF <- gamemode_funcs.MvM
+
+
+// disable gamemode logic
 local gamemode_props = [
 
     "m_bIsInTraining"
@@ -71,62 +161,12 @@ local gamemode_props = [
 foreach (prop in gamemode_props)
     SetPropBool(PZI_Util.GameRules, prop, false)
 
-local gamemode_funcs = {
-
-    function PL() {
-
-        // delete payload cart and tracks
-        for ( local watcher; watcher = FindByClassname(watcher, "team_train_watcher"); ) {
-
-            local start  = FindByName( null, GetPropString( watcher, "m_iszStartNode" ) )
-            local next   = GetPropEntity( start, "p_pnext" )
-            local tracks = { start = next }
-
-            while ( next = GetPropEntity( next, "p_pnext" ) ) {
-
-                tracks[ next ] <- null
-
-                local altpath = GetPropEntity( next, "m_paltpath" )
-                if ( altpath = FindByName( null, GetPropString( next, "m_altName" ) ) || altpath )
-                    tracks[ next ] <- altpath
-            }
-
-            foreach ( track1, track2 in tracks )
-                PZI_Util.EntShredder[ track1 ] <- track2
-
-            EntFire( GetPropString( watcher, "m_iszTrain" ), "KillHierarchy" )
-        }
-    }
-
-    function MvM() {
-
-        foreach( ent in [ "func_capturezone", "item_teamflag", "info_populator", "tf_logic_mann_vs_machine" ] )
-            EntFire( ent, "Kill" )
-    }
-
-    function CTF() {
-
-        foreach( ent in [ "func_capturezone", "item_teamflag" ] )
-            EntFire( ent, "Kill" )
-    }
-
-    function PD() {
-
-        EntFire( "func_capturezone", "Kill" )
-
-        PZI_EVENT( "player_death", "PZI_MapStripper_PlayerDeath", function ( params ) {
-
-            EntFire( "item_teamflag", "Kill" )
-        })
-    }
-}
-gamemode_funcs.PLR <- gamemode_funcs.PL
-
-try { IncludeScript( format("infection_potato/map_strippers/%s", MAPNAME) ) } catch ( e ) {}
+try { IncludeScript( format("infection_potato/map_stripper/%s", MAPNAME) ) } catch ( e ) {}
 
 PZI_EVENT( "teamplay_round_start", "PZI_MapStripper_RoundStart", function ( params ) {
     
-    gamemode_funcs[ GAMEMODE ]()
+    if ( GAMEMODE in gamemode_funcs )
+        gamemode_funcs[ GAMEMODE ]()
 
     // Disables most huds
     SetPropInt( PZI_Util.GameRules, "m_nHudType", 2 )
@@ -135,10 +175,13 @@ PZI_EVENT( "teamplay_round_start", "PZI_MapStripper_RoundStart", function ( para
     for ( local tcp; tcp = FindByClassname( null, "team_control_point_master" ); )
     {
         SetPropFloat( tcp, "m_flCustomPositionX", 1.0 )
+        SetPropFloat( tcp, "m_flCustomPositionY", 1.0 )
         tcp.AcceptInput( "RoundSpawn", "", null, null )
+        local tcp_scope = PZI_Util.GetEntScope( tcp )
+        tcp_scope.InputSetWinner <- @() false
+        tcp_scope.Inputsetwinner <- @() false
         break
     }
-
     // disable control points
 	EntFire( "team_control_point", "Disable" )
 	EntFire( "team_control_point", "HideModel" )
@@ -152,5 +195,25 @@ PZI_EVENT( "teamplay_setup_finished", "PZI_MapStripper_SetupFinished", function 
 
     EntFire( "func_respawnroom", "Disable" )
     EntFire( "func_respawnroom", "SetInactive" )
+    EntFire( "func_regenerate", "Kill" )
+
+    // open all doors near respawn rooms
+    for (local respawnroom; respawnroom = FindByClassname( respawnroom, "func_respawnroom*" ); ) {
+
+        for (local door; door = FindByClassnameWithin( door, "func_door*", respawnroom.GetCenter(), 1024 ); ) {
+
+            door.AcceptInput( "Open", null, null, null )
+            EntFireByHandle( door, "Kill", null, 0.1, null, null )
+        }
+    }
+
 })
 
+PZI_EVENT( "player_spawn", "PZI_MapStripper_PlayerSpawn", function ( params ) {
+
+    local player = GetPlayerFromUserID(params.userid)
+    EntFire("__pzi_respawnoverride", "StartTouch", "!activator", -1, player )
+
+    // random spawn points
+    EntFire("__pzi_respawnoverride", "SetRespawnName", spawns.keys()[ RandomInt( 0, spawns.len() - 1 ) ], -1, player )
+})

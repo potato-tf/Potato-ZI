@@ -1,5 +1,49 @@
+/*****************************************************************************************************************************************
+ *                                                     GAME EVENT CALLBACK WRAPPER                                                       *
+ *                                                                                                                                       *
+ * - SM-style event hooking                                                                                                              *
+ * - Allows for the same game event to be hooked multiple times in the same file more cleanly                                            *
+ * - Configurable call ordering of events, regardless of file include order                                                              *
+ * - Dynamically adding/removing hooks at runtime, automatically handles re-collection                                                   *
+ *                                                                                                                                       *
+ *****************************************************************************************************************************************/
+
+/**********************************************************************************************************************
+ *                                                   HOW IT WORKS                                                     *
+ *                                                                                                                    *
+ * internally, __CollectGameEventCallbacks appends a given scope (your table of OnGameEvent_ functions) to an array   *
+ * then the game calls every function for a given event in the order they are collected when that event is triggered. *
+ * You can see how this works by typing "script __DumpScope(0, GameEventCallbacks)" in console.                       *
+ *                                                                                                                    *
+ * This wrapper effectively stuffs an array of functions into this GameEventCallbacks array.                          *
+ * Which functions get called in which order is handled by this script instead of vscript_server.nut.                 *
+ **********************************************************************************************************************/
+
+// TODO: Performance benchmarks.
+// We use this to dynamically add/remove events at potentially critical times (large piles of bot spawns mostly)
+// So far I haven't seen any PERF WARNINGS in console using this, some bot tags may yell on bot/player spawn.
+
 PZI_CREATE_SCOPE( "__pzi_eventwrapper", "PZI_Events" )
 
+/**************************************************************************************************************
+ * If MAX_EVENT_FUNCTABLES is 8 and you try to do                                                             *
+ *                                                                                                            *
+ *     PZI_EVENT( "player_death", "PlayerDeath", @(params) printl(params.userid), 10 )                        *
+ *                                                                                                            *
+ * you will get errors 				                                                                          *
+ *                                                                                                            *
+ * extensions can simply re-define this to whatever they want/need                                            *
+ * this is the amount of iterations the event wrapper will do to look for functions to call on a given event  *
+ * so don't set it to something unnecessarily high.                                                           *
+ **************************************************************************************************************/
+const MAX_EVENT_FUNCTABLES      = 8
+
+// allows us to mix and match event call ordering between files
+// rather than being constrained by file include order
+const EVENT_WRAPPER_MAIN  	    = 0
+const EVENT_WRAPPER_UTIL  	    = 1
+
+// internal tables
 PZI_Events.EventsPreCollect <- {}
 PZI_Events.CollectedEvents  <- {}
 
@@ -15,7 +59,7 @@ function PZI_Events::_OnDestroy() {
 
 function PZI_Events::AddRemoveEventHook( event, funcname, func = null, index = "unordered", manual_collect = false ) {
 
-    // remove hook
+    // REMOVE EVENT HOOK
     if ( !func ) {
 
         if ( event in EventsPreCollect ) {
@@ -73,6 +117,7 @@ function PZI_Events::AddRemoveEventHook( event, funcname, func = null, index = "
         return
     }
 
+    // ADD EVENT HOOK
     if ( !( event in EventsPreCollect ) )
 
         EventsPreCollect[ event ] <- {}
@@ -84,7 +129,7 @@ function PZI_Events::AddRemoveEventHook( event, funcname, func = null, index = "
     EventsPreCollect[ event ][ index ][ funcname ] <- func
 
     // we don't need this internally, feature for external scripts
-    // only here if someone wants to register events then collect them manually at a later time
+    // only here if someone wants to register events then collect them manually for slightly better load times
     if ( manual_collect ) return
 
     PZI_Events.CollectEvents()
@@ -92,18 +137,26 @@ function PZI_Events::AddRemoveEventHook( event, funcname, func = null, index = "
 
 function PZI_Events::CollectEvents() {
 
-    local old_table = {}
+    local merged_table = {
+
+        function _newslot(k, v) {
+
+            printl("test" + k + " : " + v)
+        }
+    }
     local old_table_name = format( "_PZI_Events_%s", TableId )
 
+    // start with the old table
     if ( old_table_name in CollectedEvents )
 
-        old_table = CollectedEvents[ old_table_name ]
+        merged_table = CollectedEvents[ old_table_name ]
 
+    // add the new table
     foreach ( event, new_table in EventsPreCollect ) {
 
         local call_order = array( MAX_EVENT_FUNCTABLES )
 
-        // set up call order
+        // set up call order for the new table
         foreach ( index, func_table in new_table )
 
             if ( index != "unordered" )
@@ -120,14 +173,14 @@ function PZI_Events::CollectEvents() {
 
             foreach ( name, func in tbl || {} )
 
-                if ( name in old_table && !( name in new_table ) )
+                if ( name in merged_table && !( name in new_table ) )
 
-                    delete old_table[ name ]
+                    delete merged_table[ name ]
 
         local event_string = event == "OnTakeDamage" ? "OnScriptHook_" : "OnGameEvent_"
 
         // set up hook table
-        old_table[ format( "%s%s", event_string, event ) ] <- function( params ) {
+        merged_table[ format( "%s%s", event_string, event ) ] <- function( params ) {
 
             foreach( i, tbl in call_order )
 
@@ -144,7 +197,7 @@ function PZI_Events::CollectEvents() {
     local new_table_name = format( "_PZI_Events_%s", new_id )
 
     // old events are copied to new table to preserve existing event hooks
-    CollectedEvents[ new_table_name ] <- old_table
+    CollectedEvents[ new_table_name ] <- merged_table
 
     // remove old table
     if ( old_table_name in CollectedEvents )
@@ -169,4 +222,5 @@ function PZI_Events::ClearEvents( index = "unordered" ) {
     PZI_Events.AddRemoveEventHook( "*", "*", null, index )
 }
 
+// cleaner shorthand naame
 ::PZI_EVENT <- PZI_Events.AddRemoveEventHook.bindenv( PZI_Events )

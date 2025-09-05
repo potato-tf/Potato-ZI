@@ -362,7 +362,7 @@ szEyeParticles <- [
     // "killstreak_eyes_trails01",
     // "killstreak_eyes_rays",
     "eye_powerup_red_lvl_3",
-    "eye_powerup_red_lvl_2",
+    "eye_powerup_red_lvl_2"
 ]
 
 const MDL_ZOMBIE_VIEW_MODEL_SCOUT          = "models/player/infection/v_models/v_infected_scout.mdl";
@@ -404,8 +404,8 @@ const FX_ZOMBIE_SPARKS               = "zombie_body_sparks";
 // const FX_ZOMBIE_EYEFLARE             = "zombie_eyeflare";
 // const FX_ZOMBIE_EYEFLARE             = "killstreak_t1_lvl2";
 const FX_ZOMBIE_EYEFLARE             = "killstreak_t7_lvl2";
-const FX_ZOMBIE_LIGHTNING            = "zombie_lightning";
-const FX_ZOMBIE_LIGHTNING_CONTROLLER = "zombie_lightning_controller";
+const FX_ZOMBIE_LIGHTNING            = "wrenchmotron_teleport_beam";
+const FX_ZOMBIE_LIGHTNING_CONTROLLER = "wrenchmotron_teleport_beam";
 
 const FX_ZOMBIE_SPAWN                = "zombie_spawn_parent";
 const FX_ZOMBIE_SPAWN_BURST          = "zombie_spawn_burst";
@@ -422,22 +422,33 @@ const FX_EMP_SPARK                   = "halloween_boss_axe_hit_sparks";
 // const FX_EMP_FLASH                   = "zombie_emp_flash";
 // const FX_EMP_BURST                   = "zombie_emp_burst";
 
-const FX_SPIT_SMOKE                 = "zombie_spit";
-const FX_SPIT_TRAIL                 = "zombie_spit_trail";
-const FX_SPIT_TRAIL2                = "zombie_spit_trail2";
-const FX_SPIT_IMPACT                = "zombie_spit_impact";
-const FX_SPIT_IMPACT_BITS           = "zombie_spit_impact_bits";
-const FX_SPIT_HIT_PLAYER            = "zombie_spit_impact_cloud";
-const FX_SPIT_IMPACT_GROUND         = "zombie_spit_impact_ground";
-const FX_SPIT_IMPACT_SMOKE          = "zombie_spit_impact_smoke";
-const FX_SPIT_IMPACT_SPLAT          = "zombie_spit_impact_splat";
-const FX_SPIT_IMPACT_SPURTS         = "zombie_spit_impact_spurts";
+// const FX_SPIT_SMOKE                 = "zombie_spit";
+// const FX_SPIT_TRAIL                 = "zombie_spit_trail";
+// const FX_SPIT_TRAIL2                = "zombie_spit_trail2";
+// const FX_SPIT_IMPACT                = "zombie_spit_impact";
+// const FX_SPIT_IMPACT_BITS           = "zombie_spit_impact_bits";
+// const FX_SPIT_HIT_PLAYER            = "zombie_spit_impact_cloud";
+// const FX_SPIT_IMPACT_GROUND         = "zombie_spit_impact_ground";
+// const FX_SPIT_IMPACT_SMOKE          = "zombie_spit_impact_smoke";
+// const FX_SPIT_IMPACT_SPLAT          = "zombie_spit_impact_splat";
+// const FX_SPIT_IMPACT_SPURTS         = "zombie_spit_impact_spurts";
+
+const FX_SPIT_SMOKE                 = "utaunt_spirit_festive_parent";
+const FX_SPIT_TRAIL                 = "unusual_robot_radioactive";
+const FX_SPIT_TRAIL2                = "unusual_robot_radioactive";
+const FX_SPIT_IMPACT                = "";
+const FX_SPIT_IMPACT_BITS           = "superrare_flies";
+// const FX_SPIT_HIT_PLAYER            = "unusual_robot_radioactive";
+// const FX_SPIT_IMPACT_GROUND         = "unusual_robot_radioactive";
+const FX_SPIT_IMPACT_SMOKE          = "unusual_bubbles_green";
+const FX_SPIT_IMPACT_SPLAT          = "utaunt_bubbles_glow_green_parent";
+const FX_SPIT_IMPACT_SPURTS         = "superrare_flies";
 
 const FX_EMITTER_FX                 = "zombie_screech";
 
 const FX_DEMOGUTS                   = "zombie_demoguts_parent";
-const FX_SPIT_SPLAT                 = "zombie_spit_impact_splat";
-const FX_SPIT_IMPACT                = "zombie_spit_impact";
+const FX_SPIT_SPLAT                 = "utaunt_bubbles_glow_green_parent";
+const FX_SPIT_IMPACT                = "utaunt_spirit_festive_parent";
 
 const FX_MEDIC_HEAL                 = "zombie_heal_parent";
 const FX_FIREBALL_FIREBALL          = "zombie_fireball_fireball";

@@ -1,3 +1,8 @@
+
+// check if we've already included this file
+if ( "MASK_SOLID_BRUSHONLY" in ROOT )
+    return
+
 ::ROOT  <- getroottable()
 ::CONST <- getconsttable()
 
@@ -5,7 +10,7 @@ CONST.setdelegate( { _newslot = @( k, v ) compilestring( "const " + k + "=" + ( 
 CONST.MAX_CLIENTS <- MaxClients().tointeger()
 CONST.MAPNAME <- GetMapName()
 
-// fold every class into the root table for performance
+// fold every class into the root table for performance/ease of writing
 foreach( _class in [ "NetProps", "Entities", "EntityOutputs", "NavMesh", "Convars" ] )
 	foreach( k, v in ROOT[_class].getclass() )
 		if ( !( k in ROOT ) && k != "IsValid" )
@@ -16,23 +21,6 @@ if ( !( "ConstantNamingConvention" in ROOT ) )
 	foreach( a, b in Constants )
 		foreach( k, v in b )
 			CONST[k] <- v != null ? v : 0
-
-/***********************************************************************************************************************
- * this is the amount of iterations the event wrapper will do to look for functions to call on a given event           *
- * so don't set it to something unnecessarily high.                                                                    *
- *                                                                                                                     *
- * If the limit is 8 and you try to do                                                                                 *
- * PZI_EVENT("player_death", "PlayerDeath", function() ..., 10)                                                        *
- * you will get errors 				                                                                                   *
- * extensions can simply re-define this to whatever they want/need                                                     *
- ***********************************************************************************************************************/
-const MAX_EVENT_FUNCTABLES      = 8
-
-// event call ordering
-// these ensure the core library has a consistent call ordering, regardless of include order.
-// any extensions included after the main file will have their own separate GameEventCallbacks entry with its own configurable ordering
-const EVENT_WRAPPER_MAIN  	    = 0
-const EVENT_WRAPPER_UTIL  	    = 1
 
 // String caches
 const STRING_NETPROP_ITEMDEF 	  	    = "m_AttributeManager.m_Item.m_iItemDefinitionIndex"
@@ -46,11 +34,6 @@ const STRING_NETPROP_MODELINDEX   	    = "m_nModelIndex"
 const STRING_NETPROP_POPNAME    		= "m_iszMvMPopfileName"
 const STRING_NETPROP_MDLINDEX_OVERRIDES = "m_nModelIndexOverrides"
 
-// Logging
-const PZI_LOG_DEBUG   = "[PZI DEBUG] "
-const PZI_LOG_WARNING = "[PZI WARNING] "
-const PZI_LOG_ERROR   = "[PZI ERROR] "
-const PZI_LOG_FATAL   = "[PZI FATAL ERROR] "
 
 // Single tick interval
 const SINGLE_TICK = 0.015
@@ -63,6 +46,12 @@ const TF_COLOR_BLUE    = "99CCFF"
 const TF_COLOR_SPEC    = "CCCCCC"
 const TF_COLOR_DEFAULT = "FBECCB"
 
+// Logging
+CONST.PZI_LOG_DEBUG   <- format( "\x07%s[PZI DEBUG]\x07%s ", CONST.COLOR_LIME, CONST.TF_COLOR_DEFAULT )
+CONST.PZI_LOG_WARNING <- format( "\x07%s[PZI WARNING]\x07%s ", CONST.COLOR_YELLOW, CONST.TF_COLOR_DEFAULT )
+CONST.PZI_LOG_ERROR   <- format( "\x07FF0000[PZI ERROR]\x07%s ", CONST.TF_COLOR_DEFAULT )
+CONST.PZI_LOG_FATAL   <- format( "\x07FF0000[PZI FATAL]\x07%s ", CONST.TF_COLOR_DEFAULT )
+
 const INT_COLOR_WHITE = 16777215
 
 // redefine crit/uber conds so we don't end up using different conds all over the place
@@ -70,15 +59,15 @@ const INT_COLOR_WHITE = 16777215
 const COND_CRITBOOST  = 39 //TF_COND_CRITBOOSTED_CTF_CAPTURE
 const COND_UBERCHARGE = 57 //TF_COND_INVULNERABLE_CARD_EFFECT
 
-// CONST.COLOR_END <- "\x07"
-// CONST.COLOR_DEFAULT <- "\x07FBECCB"
-// CONST.COLOR_BLUE <- "\x07FF3F3F"
-// CONST.COLOR_RED <- "\x07FF3F3F"
+// CONST.COLOR_END       <- "\x07"
+// CONST.COLOR_DEFAULT   <- "\x07FBECCB"
+// CONST.COLOR_BLUE      <- "\x07FF3F3F"
+// CONST.COLOR_RED 	  <- "\x07FF3F3F"
 // CONST.COLOR_SPECTATOR <- "\x07CCCCCC"
 // CONST.COLOR_NAVY_BLUE <- "\x071337AD"
-// CONST.COLOR_DEEP_RED <- "\x07FF0000"
-// CONST.COLOR_LIME <- "\x0722FF22"
-// CONST.COLOR_YELLOW <- "\x07FFFF66"
+// CONST.COLOR_DEEP_RED  <- "\x07FF0000"
+// CONST.COLOR_LIME 	  <- "\x0722FF22"
+// CONST.COLOR_YELLOW 	  <- "\x07FFFF66"
 
 //m_nModelIndexOverrides
 const VISION_MODE_NONE      = 0
@@ -640,12 +629,13 @@ const INT_MAX   = 2147483647
 // now re-fold the entire constant table into the root table
 // this is done in a separate loop so our custom constants are also available in the root table
 // check a random constant to see if we've already re-scoped them to root
+// if we modify this file and want to fold a new constant just run `script delete STEP_HEIGHT` first
 if ( !( "STEP_HEIGHT" in ROOT ) )
 	foreach( k, v in CONST )
 		ROOT[k] <- v
 
 // Content masks
-// These are defined after the folding step so we can use the constants we just defined
+// These are defined after the folding step so we can use the new constants
 CONST.MASK_OPAQUE      	   <- ( CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_OPAQUE )
 CONST.MASK_PLAYERSOLID 	   <- ( CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_PLAYERCLIP|CONTENTS_WINDOW|CONTENTS_MONSTER|CONTENTS_GRATE )
 CONST.MASK_SOLID_BRUSHONLY <- ( CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_WINDOW|CONTENTS_GRATE )

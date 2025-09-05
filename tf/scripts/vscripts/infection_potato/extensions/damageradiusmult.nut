@@ -10,7 +10,7 @@ PZI_EVENT("player_spawn", "DamageRadiusMult_OnPlayerSpawn", function(params) {
 
     if (player.GetTeam() != TF_TEAM_RED) return
 
-    PlayerScope <- player.GetScriptScope()
+    local scope = player.GetScriptScope()
     local dmg_mult = DMG_MULT_MIN
     local cooldown_time = 0.0
 
@@ -24,11 +24,11 @@ PZI_EVENT("player_spawn", "DamageRadiusMult_OnPlayerSpawn", function(params) {
     }
 
     // scope.DmgMult <- dmg_mult > DMG_MULT_MAX ? DMG_MULT_MAX : dmg_mult
-    PlayerScope.DmgMult <- dmg_mult
+    scope.DmgMult <- dmg_mult
 
-    function PlayerScope::ThinkTable::DamageRadiusMult() {
+    function DamageRadiusMult() {
 
-        if ( Time() < cooldown_time )
+        if ( !bGameStarted || Time() < cooldown_time )
             return
 
         local _dmg_mult = DMG_MULT_MIN
@@ -42,12 +42,13 @@ PZI_EVENT("player_spawn", "DamageRadiusMult_OnPlayerSpawn", function(params) {
                 _dmg_mult += DMG_MULT_PER_PLAYER
         }
 
-        ClientPrint( player, HUD_PRINTCENTER, "Damage multiplier: " + _dmg_mult )
+        // ClientPrint( player, HUD_PRINTCENTER, "Damage multiplier: " + _dmg_mult )
         // DmgMult <- _dmg_mult > DMG_MULT_MAX ? DMG_MULT_MAX : _dmg_mult
         DmgMult = _dmg_mult
 
         cooldown_time = Time() + UPDATE_INTERVAL
     }
+    scope.ThinkTable.DamageRadiusMult <- DamageRadiusMult
 })
 
 PZI_EVENT( "OnTakeDamage", "DamageRadiusMult_OnTakeDamage", function(params) {

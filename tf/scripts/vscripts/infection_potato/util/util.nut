@@ -39,7 +39,7 @@ PZI_Util.EntTable <- {
 
 		if ( typeof key != "instance" || !( key instanceof CBaseEntity ) )
 			Assert( false, format( "Invalid entity key: %s", key.tostring() ) )
-		
+
 		if ( !value ) {
 
 			value = {
@@ -261,11 +261,18 @@ function PZI_Util::_OnDestroy() {
 	ResetConvars( false )
 
 	foreach( i, ent in EntShredder.keys() ) {
+
 		if (ent && ent.IsValid()) {
+
 			SetPropBool( ent, STRING_NETPROP_PURGESTRINGS, true )
 			EntFireByHandle( ent, "Kill", "", i * 0.1, null, null )
 		}
 	}
+
+	foreach( str1, str2 in GameStrings )
+		foreach( str in [str1, str2] )
+			if ( str && typeof str == "string" && str.len() )
+				PurgeGameString( str, true )
 }
 
 function PZI_Util::EntityManager() {
@@ -277,22 +284,27 @@ function PZI_Util::EntityManager() {
 			if ( ent && typeof ent == "instance" && ent.IsValid() ) {
 
 				SetPropBool( ent, STRING_NETPROP_PURGESTRINGS, true )
-				EntFireByHandle( ent, "Kill", "", -1, null, null )
+				EntFireByHandle( ent, "Kill", "", SINGLE_TICK, null, null )
 			}
 
 			if ( ent in EntShredder )
 				delete EntShredder[ent]
 		}
 
-		if ( EntShredder.len() < ( MAX_EDICTS / 8 ) )
+		if ( EntShredder.len() && EntShredder.len() < ( MAX_EDICTS / 8 ) )
 			yield ent1
 	}
 
 	foreach( str1, str2 in (clone GameStrings) ) {
 
-		foreach( str in [str1, str2] )
+		foreach( str in [str1, str2] ) {
+
 			if ( str && typeof str == "string" && str.len() )
-				( PurgeGameString( str, true ), delete GameStrings[str] )
+				PurgeGameString( str, true )
+
+			if ( str in GameStrings )
+				delete GameStrings[str]
+		}
 
 		yield str1
 	}
@@ -305,20 +317,21 @@ local gen = null
 function PZI_Util::ThinkTable::EntityManagerThink() {
 
 	if ( entmanager_cooldown && Time() < entmanager_cooldown )
-		return
+		return -1
 
 	if ( !(EntShredder.len() + GameStrings.len()) ) {
 		entmanager_cooldown = Time() + 0.5
-		return
+		return -1
 	}
 
-	if ( !gen || gen.getstatus() == "dead" ) 
+	if ( !gen || gen.getstatus() == "dead" )
 		gen = EntityManager()
 
 	local result = resume gen
-	if ( result )
-		printf( "ents%d, strings %d\n", EntShredder.len(), GameStrings.len() )
+	// if ( result )
+		// printf( "ents %d, strings %d\n", EntShredder.len(), GameStrings.len() )
 	entmanager_cooldown = 0.0
+	return -1
 }
 
 function PZI_Util::GetEntScope( ent ) {
@@ -347,6 +360,14 @@ function PZI_Util::PurgeGameString( str, urgent = false, str2 = null ) {
 		SetTargetname( tempent, str )
 		SetPropBool( tempent, STRING_NETPROP_PURGESTRINGS, true )
 		tempent.Kill()
+
+		if ( str2 ) {
+
+			local tempent = CreateByClassname( "logic_autosave" )
+			SetTargetname( tempent, str2 )
+			SetPropBool( tempent, STRING_NETPROP_PURGESTRINGS, true )
+			tempent.Kill()
+		}
 		return
 	}
 
@@ -411,20 +432,20 @@ PZI_Util.MonsterResource   <- FindByClassname( null, "monster_resource" )
 PZI_Util.MvMLogicEnt 	   <- FindByClassname( null, "tf_logic_mann_vs_machine" )
 PZI_Util.MvMStatsEnt 	   <- FindByClassname( null, "tf_mann_vs_machine_stats" )
 PZI_Util.PlayerManager 	   <- FindByClassname( null, "tf_player_manager" )
-PZI_Util.TriggerHurt 	   <- PZI_Util.SpawnEnt( "trigger_hurt", "__pzi_triggerhurt" )
-PZI_Util.ClientCommand 	   <- PZI_Util.SpawnEnt( "point_clientcommand", "__pzi_clientcommand" )
+PZI_Util.TriggerHurt 	   <- PZI_Util.SpawnEnt( "trigger_hurt", "__pzi_triggerhurt", false )
+PZI_Util.ClientCommand 	   <- PZI_Util.SpawnEnt( "point_clientcommand", "__pzi_clientcommand", false )
 PZI_Util.GameRoundWin 	   <- PZI_Util.SpawnEnt( "game_round_win", "__pzi_roundwin", false, "TeamNum", TF_TEAM_PVE_INVADERS, "force_map_reset", 1 )
-PZI_Util.RespawnOverride   <- PZI_Util.SpawnEnt( "trigger_player_respawn_override", "__pzi_respawnoverride" )
+PZI_Util.RespawnOverride   <- PZI_Util.SpawnEnt( "trigger_player_respawn_override", "__pzi_respawnoverride", false )
 PZI_Util.TriggerParticle   <- PZI_Util.SpawnEnt( "trigger_particle", "__pzi_triggerparticle", false, "attachment_type", 4 )
 
 PZI_Util.CommentaryNode	   <- @() FindByName( null, "__pzi_hide_fcvar_notify" ) ||
 								PZI_Util.SpawnEnt( "point_commentary_node", "__pzi_hide_fcvar_notify", true, "commentaryfile", " ", "commentaryfilenohdr", " " )
 
 PZI_Util.PopInterface 	   <- FindByClassname( null, "point_populator_interface" ) ||
-								PZI_Util.SpawnEnt( "point_populator_interface", "__pzi_pop_interface" )
+								PZI_Util.SpawnEnt( "point_populator_interface", "__pzi_pop_interface", false )
 
 PZI_Util.NavInterface 	   <- FindByClassname( null, "tf_point_nav_interface" ) ||
-								PZI_Util.SpawnEnt( "tf_point_nav_interface", "__pzi_nav_interface" )
+								PZI_Util.SpawnEnt( "tf_point_nav_interface", "__pzi_nav_interface", false )
 
 PZI_Util.IsInSetup 	       <- false
 PZI_Util.CurrentWaveNum    <- GetPropInt( PZI_Util.ObjectiveResource, "m_nMannVsMachineWaveCount" )
@@ -753,7 +774,7 @@ function PZI_Util::GiveWearableItem( player, item_id, model = null ) {
 	SetTargetname( wearable, format( "__pzi_util_wearable_%d", wearable.entindex() ) )
 	SetPropBool( wearable, STRING_NETPROP_PURGESTRINGS, true )
 
-	if ( model ) 
+	if ( model )
 		wearable.SetModelSimple( model )
 
 	// avoid infinite loops from post_inventory_application hooks
@@ -828,7 +849,10 @@ function PZI_Util::DoExplanation( message, print_color = COLOR_YELLOW, message_p
 			SetPropString( txtent, "m_iszMessage", "" )
 			txtent.AcceptInput( "Display", "", null, null )
 
-			strarray.apply( @( str, i ) PurgeGameString( str, false, i+1 in strarray ? strarray[i+1] : null ) )
+			foreach( i, str in strarray )
+				if ( !(i % 2) )
+					GameStrings[ str ] <- strarray[i+1]
+
 			txtent.Kill()
 			return
 		}
@@ -837,12 +861,12 @@ function PZI_Util::DoExplanation( message, print_color = COLOR_YELLOW, message_p
 		//make text display slightly longer depending on string length
 		local delaybetweendisplays = text_print_time
 		if ( delaybetweendisplays == -1 ) {
-			delaybetweendisplays = s.len() / 10
-			if ( delaybetweendisplays < 2 ) delaybetweendisplays = 2; else if ( delaybetweendisplays > 12 ) delaybetweendisplays = 12
+			delaybetweendisplays = Clamp( s.len() / 10, 2, 12 )
 		}
 
 		// allow for pauses in the announcement
 		if ( startswith( s, "PAUSE" ) ) {
+
 			local pause = split( s, " " )[1].tofloat()
 		//	  DoEntFire( "player", "SetScriptOverlayMaterial", "", -1, player, player )
 			SetPropString( txtent, "m_iszMessage", "" )
@@ -856,23 +880,21 @@ function PZI_Util::DoExplanation( message, print_color = COLOR_YELLOW, message_p
 			return 0.033
 		}
 
-		// lol
+		// calculate the game_text x position based on string length
 		function calculate_x( str ) {
-			local len = str.len()
-			local t = 1 - ( len.tofloat() / 48 )
+
+			local t = 1 - ( str.len().tofloat() / 48 )
 			local x = 1 * ( 1 - t )
 			x = ( 1 - ( x / 3 ) ) / 2.1
-			// if ( x > 0.5 ) x = 0.5 else if ( x < 0.28 ) x = 0.28
+			// x = Clamp( x, 0.28, 0.5 )
 			return x
 		}
 
 		SetPropFloat( txtent, "m_textParms.x", calculate_x( s ) )
-		txtent.KeyValueFromFloat( "x", calculate_x( s ) )
-
+		// txtent.KeyValueFromFloat( "x", calculate_x( s ) )
 		SetPropString( txtent, "m_iszMessage", s )
-
 		SetPropInt( txtent, "m_textParms.holdTime", delaybetweendisplays )
-		txtent.KeyValueFromInt( "holdtime", delaybetweendisplays )
+		// txtent.KeyValueFromInt( "holdtime", delaybetweendisplays )
 
 		txtent.AcceptInput( "Display", "", null, null )
 		if ( sync_chat_with_game_text )
@@ -1045,7 +1067,7 @@ function PZI_Util::PointScriptTemplate( targetname = null, onspawn = null ) {
 
 function PZI_Util::AttachParticle( ent, particle, attachment_name ) {
 
-	local trigger_particle = PZI_Util.TriggerParticle
+	local trigger_particle = PZI_Util.TriggerParticle || null
 
 	if ( !trigger_particle || !trigger_particle.IsValid() ) {
 
@@ -1053,8 +1075,8 @@ function PZI_Util::AttachParticle( ent, particle, attachment_name ) {
 		trigger_particle = PZI_Util.TriggerParticle
 	}
 
-	trigger_particle.KeyValueFromString( "particle_name", particle )
-	trigger_particle.KeyValueFromString( "attachment_name", attachment_name )
+	SetPropString( trigger_particle, "m_iszParticleName", particle )
+	SetPropString( trigger_particle, "m_iszAttachmentName", attachment_name )
 	trigger_particle.AcceptInput( "StartTouch", "!activator", ent, ent )
 }
 
@@ -2494,6 +2516,12 @@ PZI_EVENT( "teamplay_setup_finished", "UtilSetupStatus", function ( params ) { P
 
 PZI_EVENT( "teamplay_round_start", "UtilRoundStart", function ( params ) {
 
+	PZI_Util.TriggerHurt 	   <- PZI_Util.SpawnEnt( "trigger_hurt", "__pzi_triggerhurt", false )
+	PZI_Util.ClientCommand 	   <- PZI_Util.SpawnEnt( "point_clientcommand", "__pzi_clientcommand", false )
+	PZI_Util.GameRoundWin 	   <- PZI_Util.SpawnEnt( "game_round_win", "__pzi_roundwin", false, "TeamNum", TF_TEAM_PVE_INVADERS, "force_map_reset", 1 )
+	PZI_Util.RespawnOverride   <- PZI_Util.SpawnEnt( "trigger_player_respawn_override", "__pzi_respawnoverride", false )
+	PZI_Util.TriggerParticle   <- PZI_Util.SpawnEnt( "trigger_particle", "__pzi_triggerparticle", false, "attachment_type", 4 )
+
 	PZI_Util.IsInSetup = true
 	SetPropBool( PZI_Util.GameRules, "m_bIsInTraining", false )
 	PZI_Util.ResetConvars()
@@ -2501,6 +2529,8 @@ PZI_EVENT( "teamplay_round_start", "UtilRoundStart", function ( params ) {
 	foreach ( wearable in PZI_Util.Wearables )
 		if ( wearable && wearable.IsValid() )
 			wearable.Kill()
+
+	PZI_Util.Wearables.clear()
 
 }, EVENT_WRAPPER_UTIL)
 
@@ -2539,20 +2569,25 @@ PZI_EVENT( "player_disconnect", "UtilPlayerDisconnect", function ( params ) {
 
 PZI_EVENT( "player_team", "UtilPlayerTeam", function( params ) {
 
+	local player = GetPlayerFromUserID( params.userid )
+
+	if ( !( player in PZI_Util.PlayerTable ) )
+		PZI_Util.PlayerTable[ player ] <- params.userid
+
 	local wearables = PZI_Util.Wearables
-	if ( params.userid in wearables ) {
+	if ( params.userid in wearables && wearables[ params.userid ].IsValid() ) {
 
 		EntFireByHandle( wearables[ params.userid ], "Kill", "", -1, null, null )
 		delete wearables[ params.userid ]
 	}
-	
+
 }, EVENT_WRAPPER_UTIL)
 
 PZI_EVENT( "post_inventory_application", "UtilPostInventoryApplication", function( params ) {
 
 	local player = GetPlayerFromUserID( params.userid )
 
-	if ( player.IsEFlagSet( EFL_IS_BEING_LIFTED_BY_BARNACLE ) )
+	if ( !player || !player.IsValid() || player.IsEFlagSet( EFL_IS_BEING_LIFTED_BY_BARNACLE ) )
 		return
 
 	local bot_table    = PZI_Util.BotTable
@@ -2564,7 +2599,7 @@ PZI_EVENT( "post_inventory_application", "UtilPostInventoryApplication", functio
 
 		for ( local i = 1, player; i <= MAX_CLIENTS; player = PlayerInstanceFromIndex( i ), i++ ) {
 
-			if ( !player ) continue
+			if ( !player || !player.IsValid() ) continue
 
 			local scope = PZI_Util.GetEntScope( player )
 			local userid = PZI_Util.GetPlayerUserID( player )

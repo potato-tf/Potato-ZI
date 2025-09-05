@@ -535,14 +535,8 @@ PZI_EVENT("teamplay_round_start", "PZI_TeamplayRoundStart", function(params) {
 // 	}
 // }
 
-local script_entity = FindByName(null, "__potatozi_entity");
-if (!script_entity)
-	script_entity = SpawnEntityFromTable("move_rope", {targetname="__potatozi_entity"});
+function PZI_PotatoZI::ThinkTable::PotatoZIThink() {
 
-script_entity.ValidateScriptScope();
-local script_entity_scope = script_entity.GetScriptScope();
-
-script_entity_scope.Think <- function() {
 	local tickcount = Time() / 0.015;
 
 	// Pause the setup timer if there's only one person
@@ -583,17 +577,12 @@ script_entity_scope.Think <- function() {
 
 	return -1;
 };
-AddThinkToEnt(script_entity, "Think");
-
-script_entity_scope.InputKill <- function() { if (caller != script_entity) return false };
-script_entity_scope.Inputkill <- script_entity_scope.InputKill;
 
 // Late load
 if (TF_GAMERULES)
 {
-	for (local i = 1; i <= MAX_CLIENTS; ++i)
+	for (local i = 1, player; i <= MAX_CLIENTS; player = PlayerInstanceFromIndex(i), i++)
 	{
-		local player = PlayerInstanceFromIndex(i);
 		if (!player) continue;
 
 		PZI_PotatoZI.Players[player] <- {};

@@ -83,13 +83,11 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
 
 	if ( !ent || !ent.IsValid() ) {
 
-		ent = CreateByClassname( preserved ? "entity_saucer" : "logic_autosave" )
+		ent = CreateByClassname( "logic_autosave" )
 		SetPropString( ent, STRING_NETPROP_NAME, name )
 		ent.ValidateScriptScope()
 	}
 
-	ent.DisableDraw()
-	ent.SetCollisionGroup( COLLISION_GROUP_IN_VEHICLE )
 	SetPropBool( ent, STRING_NETPROP_PURGESTRINGS, true )
 	__pzi_active_scopes[ ent ] <- namespace || name
 
@@ -146,15 +144,8 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
 
 				if ( k == id ) {
 
-					if ( _OnDestroy ) {
-
-						local entity = EntIndexToHScript( index )
-						local scope  = entity.GetScriptScope()
-						scope.self   <- entity
-
-                        // run _OnDestroy
+					if ( _OnDestroy ) 
 						_OnDestroy()
-					}
 
                     // delete root references to ourself
 					if ( namespace in ROOT )
@@ -194,6 +185,10 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
 
 		AddThinkToEnt( ent, think_func )
 	}
+
+	// don't spawn an actual move_rope to save an edict
+	if ( preserved )
+		SetPropString( ent, "m_iClassname", "move_rope" )
 
 	return { Entity = ent, Scope = ent_scope }
 }

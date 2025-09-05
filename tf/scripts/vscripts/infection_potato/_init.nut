@@ -27,7 +27,7 @@ if ( "InfectionLoaded" in getroottable() )
 ::bZombiesDontSwitchInPlace     <- true;
 
 const GAMEMODE_NAME =  "Potato Zombie Infection";
-const VERSION       =  "v0.1.0 - 28/08/2025";
+const PZI_VERSION   =  "v0.1.0 - 09/05/2025";
 
 ::INFECTION_CONVARS <-
 {
@@ -212,5 +212,5 @@ arrZombieFXWearable <-
 PrecacheResources();
 
 printl( "_init.nut Complete." )
-printl( GAMEMODE_NAME + "\n" + VERSION )
-InfectionLoaded <- true;
+printl( GAMEMODE_NAME + "\n" + PZI_VERSION )
+// InfectionLoaded <- true;

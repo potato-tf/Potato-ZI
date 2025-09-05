@@ -18,31 +18,42 @@ Convars.SetValue( "mp_restartgame", 3 )
 ClientPrint( null, 3, "[PZI] GAMEMODE RELOADED, RESTARTING..." )
 ClientPrint( null, 4, "[PZI] GAMEMODE RELOADED, RESTARTING..." )
 EntFire( "player", "RunScriptCode", "self.AddFlag( FL_FROZEN ); AddThinkToEnt(self, null); self.TerminateScriptScope()" )
-EntFire( "player", "RunScriptCode", "self.RemoveFlag( FL_FROZEN )", 3 )
+EntFire( "player", "RunScriptCode", "self.RemoveFlag( FL_FROZEN )", 4 )
+
+if ( "PZI_Util" in ROOT )
+    PZI_Util.GameStrings[ "self.AddFlag( FL_FROZEN ); AddThinkToEnt(self, null); self.TerminateScriptScope()" ] <- "self.RemoveFlag( FL_FROZEN )"
 
 try { delete ::PZI_CREATE_SCOPE } catch(e) {}
 
-local function Include( script ) { try { IncludeScript(script, ROOT) } catch(e) { printl(e); ClientPrint( null, 3, e ) } }
+local function Include( script ) { try { IncludeScript(format("%s", script), ROOT) } catch(e) { printl(e); ClientPrint( null, 3, e ) } }
 
 // load core files
 local include = [
 
     { "infection_potato/util/" : [ "constants", "itemdef_constants", "item_map", "create_scope", "event_wrapper", "util" ] }
-    { "infection_potato/"      : [ "strings", "const", "infection" ] }
+    { "infection_potato/"      : [ "strings", "const", "infection" ] } // bug with util ents being deleted too early
     { "infection_potato/map_stripper/" : [ "mapstripper_main" ] }
 
-].extend( PZI_ACTIVE_EXTENSIONS )
+].extend( PZI_ACTIVE_EXTENSIONS ) // load extensions after
 
 local function IncludeGen( include ) {
 
     foreach ( inc in include )
+
         foreach ( dir, files in inc || {} )
+
             foreach ( i, file in files || [""] ) {
+
                 Include( format( "%s%s", dir, file ) )
+
                 if ( "PZI_Util" in ROOT )
+
                     PZI_Util.PurgeGameString( format( "%s%s", dir, file ) )
+
                 yield file
+
             }
+    EntFire( "BigNet", "RunScriptCode", "IncludeScript(`infection_potato/util/util`)", 0.1 )
 }
 
 local gen = IncludeGen( include )

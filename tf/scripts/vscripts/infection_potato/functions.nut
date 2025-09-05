@@ -55,23 +55,14 @@ function IsPlayerAlive ( _hPlayer )
 
 function PlayerCount ( _team = -1 )
 {
-    local _playerCount   = 0;
-    local _targTeamCount = 0;
+    local playerCount   = 0;
+    // local targetTeamCount = 0;
 
-    for ( local i = 1; i <= MaxPlayers; i++ )
-    {
-        local _player = PlayerInstanceFromIndex( i );
+    for ( local i = 1, player; i <= MaxPlayers; player = PlayerInstanceFromIndex( i ), i++ )
+        if ( player && (player.GetTeam() == _team || _team == -1) )
+            playerCount++;
 
-        if ( _player != null )
-        {
-            if ( _player.GetTeam() == _team || _team == -1 )
-            {
-                _playerCount++;
-            };
-        };
-    };
-
-    return _playerCount;
+    return playerCount
 };
 
 function PlayGlobalBell ( _bForce )
@@ -89,70 +80,28 @@ function PlayGlobalBell ( _bForce )
     flTimeLastBell <- Time();
 };
 
+// damage is multiplied by _flDmgMult for each player in range
 function DemomanExplosionPreCheck (_vecLocation, _flDmg, _flDmgMult, _flRange, _hInflictor, _flForceMultiplier = 0.0, _flUpwardForce = 0.0, _iTeamnum = TF_TEAM_BLUE)
 {
-    local _buildableArr    =  [ ];
-    local _buildable       =  null;
-    local _buildableCount  =  0;
-    local _finalDmg        =  _flDmg;
+    local _finalDmg = _flDmg.tofloat() / _flDmgMult.tofloat(); // divide once first to effectively skip the first player
 
-    while ( _buildable = FindByClassnameWithin( _buildable, "obj_*", _vecLocation, DEMOMAN_CHARGE_RADIUS ) )
+    for ( local _buildable, i = 0; _buildable = FindByClassnameWithin( _buildable, "obj_*", _vecLocation, DEMOMAN_CHARGE_RADIUS ); i++ )
     {
-        if ( _buildable != null )
-        {
-            _buildableArr.append( _buildable );
-            _buildableCount++;
-        };
+        if ( GetPropInt( _buildable, "m_iObjectType" ) == 3 ) // skip sappers
+            continue
 
-        if ( _buildableArr.len() >= 3 )
-            break;
+        if ( i >= 3 )
+            break
+        
+        _buildable.TakeDamage( 999, DMG_BLAST, _hInflictor );
     };
 
-    if ( _buildableCount == 0 )
-    {
-        local _skipFirstPlayer = false
-        for (local _player; _player = FindByClassnameWithin(_player, "player", _vecLocation, _flRange);)
-        {
-            if (_player.GetTeam() != TF_TEAM_RED)
-                continue
-
-            if (_skipFirstPlayer)
-                _finalDmg *= _flDmgMult
-
-            _skipFirstPlayer = true
-        }
-
-        printl("Final damage: " + _finalDmg)
-        CreateExplosion( _vecLocation,
-                         _finalDmg,
-                         _flRange,
-                         _hInflictor );
-        return;
-    };
-
-    local _vecNearestBuildingOrigin = Entities.FindByClassnameNearest( "obj_*", _vecLocation, ( DEMOMAN_CHARGE_RADIUS ) ).GetOrigin();
-
-    foreach ( i, _buildable in _buildableArr )
-    {
-        local _buildable = _buildableArr[ i ];
-
-        if ( _buildable.GetClassname() == "obj_sentrygun"  ||
-             _buildable.GetClassname() == "obj_teleporter" ||
-             _buildable.GetClassname() == "obj_dispenser" )
-        {
-            _buildable.TakeDamage( 999, DMG_BLAST, _hInflictor );
-        };
-    };
-    local _skipFirstPlayer = false
     for (local _player; _player = FindByClassnameWithin(_player, "player", _vecLocation, _flRange);)
     {
         if (_player.GetTeam() != TF_TEAM_RED)
             continue
 
-        if (_skipFirstPlayer)
-            _finalDmg *= _flDmgMult
-
-        _skipFirstPlayer = true
+        _finalDmg *= _flDmgMult
     }
 
     printl("Final damage: " + _finalDmg)
@@ -221,26 +170,20 @@ function CreateExplosion (_vecLocation, _flDmg, _flRange, _hInflictor, _flForceM
     return;
 };
 
-function GetAllPlayers()
+function GetAllPlayers( team = null )
 {
-    for ( local i = 1; i <= MaxPlayers; i++ )
-    {
-        local _player = PlayerInstanceFromIndex( i );
+    for ( local i = 1, player; i <= MaxPlayers; player = PlayerInstanceFromIndex( i ), i++ )
+        if ( player && ( team == null || player.GetTeam() == team ) )
+            yield player
 
-        if ( _player != null )
-        {
-            yield _player;
-        };
-    };
-
-    return;
+    return
 };
 
-function GetRandomPlayers ( _howMany = 1 )
+function GetRandomPlayers( _howMany = 1, team = null )
 {
     local _playerArr = [];
 
-    foreach ( _hPlayer in GetAllPlayers() )
+    foreach ( _hPlayer in GetAllPlayers( team ) )
     {
         if ( _hPlayer != null /* &&  ( _hPlayer.GetFlags() & FL_FAKECLIENT ) == 0 */  )
             _playerArr.append( _hPlayer );
@@ -351,7 +294,7 @@ function ShouldZombiesWin ( _hPlayer )
             {
                 if ( _hNextPlayer.GetTeam() == TF_TEAM_RED && GetPropInt( _hNextPlayer, "m_lifeState" ) == ALIVE )
                 {
-                    if ( _hNextPlayer == null || _hNextPlayer == _hPlayer )
+                    if ( !_hNextPlayer || _hNextPlayer == _hPlayer )
                         continue;
 
                     ClientPrint( null, HUD_PRINTTALK, format( STRING_UI_CHAT_LAST_SURV_GREEN, NetName( _hNextPlayer ), STRING_UI_CRITS ) );
@@ -374,7 +317,7 @@ function ShouldZombiesWin ( _hPlayer )
             {
                 if ( _hNextPlayer.GetTeam() == TF_TEAM_RED && GetPropInt( _hNextPlayer, "m_lifeState" ) == ALIVE )
                 {
-                    if ( _hNextPlayer == null )
+                    if ( !_hNextPlayer )
                         continue;
 
                     _hNextPlayer.GetScriptScope().m_bLastThree <- true;
@@ -644,11 +587,15 @@ function CTFPlayer_SpawnEffect()
 
 function CTFPlayer_GiveZombieCosmetics()
 {
-    local wearable = PZI_Util.GiveWearableItem( this, 8000, arrZombieCosmeticModelStr[ this.GetPlayerClass() ] )
+    local wearable = PZI_Util.GiveWearableItem( this, arrZombieCosmeticIDX[ this.GetPlayerClass() ], arrZombieCosmeticModelStr[ this.GetPlayerClass() ] )
+    SetPropBool( this, "m_bForcedSkin", true )
+    SetPropInt( this, "m_nForcedSkin", this.GetSkin() + 4 )
+    SetPropInt( this, "m_iPlayerSkinOverride", 1 )
     PZI_Util.SetTargetname( wearable, format( "__pzi_zombie_cosmetic_%d", this.entindex() ) )
     this.GetScriptScope().m_hZombieWearable <- wearable 
 }
 
+// doesn't apply to ragdolls
 function CTFPlayer_GiveZombieCosmetics_OLD()
 {
     local _iClassnum = this.GetPlayerClass();
@@ -1383,8 +1330,7 @@ function CTFPlayer_ResetInfectionVars()
     if (!("ThinkTable" in _sc))
         _sc.ThinkTable <- {}
 
-    // AddThinkToEnt( this, "PlayerThink" );
-    _sc.ThinkTable.PlayerThink <- ::PlayerThink
+    _sc.ThinkTable.PZI_PlayerThink <- ::PZI_PlayerThink
 
     return true;
 };
