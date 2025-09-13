@@ -9,73 +9,73 @@
 /////////////////////////////////////////////////////////////////////////////////////////////
 // ZombieEngie EMP Grenade Ability |------------------------------------------------------ //
 /////////////////////////////////////////////////////////////////////////////////////////////
-ENGIE_EMP_LIFETIME               <- 3.5;   // How long the EMP lasts for once thrown       //
+const ENGIE_EMP_LIFETIME               = 3.5;   // How long the EMP lasts for once thrown  //
 // --------------------------------------------------------------------------------------- //
-ENGIE_EMP_BUILDING_DISABLE_TIME  <- 6.5;   // how long is a hit buildable disabled         //
-ENGIE_EMP_BUILDING_DISABLE_RANGE <- 500;   // range from grenade explode to disable        //
-ENGIE_EMP_BUILDING_FLAT_DMG      <- 110;   // how much damage is dealt to buildables       //
+const ENGIE_EMP_BUILDING_DISABLE_TIME  = 6.5;   // how long is a hit buildable disabled    //
+const ENGIE_EMP_BUILDING_DISABLE_RANGE = 500;   // range from grenade explode to disable   //
+const ENGIE_EMP_BUILDING_FLAT_DMG      = 110;   // how much damage is dealt to buildables  //
 // --------------------------------------------------------------------------------------- //
-ENGIE_EMP_THROW_DIST_FROM_EYES   <- -20;   // distance from eyes to spawn grenade          //
-ENGIE_EMP_THROW_FORCE            <- 1500;  // initial force to apply to nade               //
+const ENGIE_EMP_THROW_DIST_FROM_EYES   = -20;   // distance from eyes to spawn grenade     //
+const ENGIE_EMP_THROW_FORCE            = 1500;  // initial force to apply to nade          //
 // --------------------------------------------------------------------------------------- //
-ENGIE_EMP_INITIAL_FLASH_RATE     <- 0.85;  // initial delay between each flash             //
-ENGIE_EMP_FLASH_RATE_DECAY_FAC   <- 0.7;   // amnt delay reduced between flashes           //
+const ENGIE_EMP_INITIAL_FLASH_RATE     = 0.85;  // initial delay between each flash        //
+const ENGIE_EMP_FLASH_RATE_DECAY_FAC   = 0.7;   // amnt delay reduced between flashes      //
 // --------------------------------------------------------------------------------------- //
-ENGIE_EMP_SCREENSHAKE_AMP        <- 500;   // amplitude of grenade screenshake             //
-ENGIE_EMP_SCREENSHAKE_FREQ       <- 500;   // frequency of grenade screenshake             //
-ENGIE_EMP_SCREENSHAKE_DUR        <- 1;     // duration of grenade screenshake              //
-ENGIE_EMP_SCREENSHAKE_RAD        <- 1000;  // duration of grenade screenshake              //
-ENGIE_EMP_MINIROOT_LEN           <- 0.25;  //                                              //
-ENGIE_EMP_FIRST_HIT_RANGE        <- 88;    //                                              //
-ENGIE_EMP_FIRST_HIT_DMG_PERCENT  <- 0.25;  //                                              //
+const ENGIE_EMP_SCREENSHAKE_AMP        = 500;   // amplitude of grenade screenshake        //
+const ENGIE_EMP_SCREENSHAKE_FREQ       = 500;   // frequency of grenade screenshake        //
+const ENGIE_EMP_SCREENSHAKE_DUR        = 1;     // duration of grenade screenshake         //
+const ENGIE_EMP_SCREENSHAKE_RAD        = 1000;  // duration of grenade screenshake         //
+const ENGIE_EMP_MINIROOT_LEN           = 0.25;  //                                         //
+const ENGIE_EMP_FIRST_HIT_RANGE        = 88;    //                                         //
+const ENGIE_EMP_FIRST_HIT_DMG_PERCENT  = 0.25;  //                                         //
 // --------------------------------------------------------------------------------------- //
 /////////////////////////////////////////////////////////////////////////////////////////////
 // ZombieSniper Spit Ability |------------------------------------------------------------ //
 /////////////////////////////////////////////////////////////////////////////////////////////
-SNIPER_SPIT_THROW_DIST           <- 50;    // distance from eyes to spawn spit ball        //
-SNIPER_SPIT_THROW_FORCE          <- 2000;  // initial force to apply to spit ball          //
-SNIPER_SPIT_HIT_PLAYER_Z_DIST    <- 300;   // initial force to apply to spit ball          //
-SNIPER_SPIT_HIT_WORLD_Z_DIST     <- 100;   // initial force to apply to spit ball          //
+const SNIPER_SPIT_THROW_DIST           = 50;    // distance from eyes to spawn spit ball   //
+const SNIPER_SPIT_THROW_FORCE          = 2000;  // initial force to apply to spit ball     //
+const SNIPER_SPIT_HIT_PLAYER_Z_DIST    = 300;   // initial force to apply to spit ball     //
+const SNIPER_SPIT_HIT_WORLD_Z_DIST     = 100;   // initial force to apply to spit ball     //
 // --------------------------------------------------------------------------------------- //
-SNIPER_SPIT_MASS                 <- 0.1;   // spit ball mass (for base physprop)           //
+const SNIPER_SPIT_MASS                 = 0.1;   // spit ball mass (for base physprop)      //
 // --------------------------------------------------------------------------------------- //
-SNIPER_SPIT_ZONE_DAMAGE          <- 25.0;  // damage per tick from spit zone               //
-SNIPER_SPIT_POP_DAMAGE           <- 45.0;  // dmg to players in zone when first pop        //
-SNIPER_SPIT_MIN_SURFACE_PERCENT  <- 75;    // min surface hit % for spit zone to form      //
-SNIPER_SPIT_HITBOX_SIZE          <- 5;     // size in hu of spitball hitbox                //
+const SNIPER_SPIT_ZONE_DAMAGE          = 25.0;  // damage per tick from spit zone          //
+const SNIPER_SPIT_POP_DAMAGE           = 45.0;  // dmg to players in zone when first pop   //
+const SNIPER_SPIT_MIN_SURFACE_PERCENT  = 75;    // min surface hit % for spit zone to form //
+const SNIPER_SPIT_HITBOX_SIZE          = 5;     // size in hu of spitball hitbox           //
 // --------------------------------------------------------------------------------------- //
-SNIPER_SPIT_OVERLOAD_START_TIME  <- 3.5;   // how many seconds til overload                //
-SNIPER_SPIT_LIFETIME             <- 2.5;   // how many seconds til overload                //
-SNIPER_SPIT_MAX_CHANNEL_TIME     <- 5;     // max time spitball can be held for            //
-SPIT_ZONE_LIFETIME               <- 5;     // how many seconds the zone stays down         //
-SPIT_ZONE_RADIUS                 <- 130;   // hammer units radius of spit zone damage      //
+const SNIPER_SPIT_OVERLOAD_START_TIME  = 3.5;   // how many seconds til overload           //
+const SNIPER_SPIT_LIFETIME             = 2.5;   // how many seconds til overload           //
+const SNIPER_SPIT_MAX_CHANNEL_TIME     = 5;     // max time spitball can be held for       //
+const SPIT_ZONE_LIFETIME               = 5;     // how many seconds the zone stays down    //
+const SPIT_ZONE_RADIUS                 = 130;   // hammer units radius of spit zone damage //
 // --------------------------------------------------------------------------------------- //
 /////////////////////////////////////////////////////////////////////////////////////////////
 // ZombieSpy Reveal Ability |------------------------------------------------------------- //
 /////////////////////////////////////////////////////////////////////////////////////////////
-SPY_REVEAL_RANGE                 <- 1000;  // Maximum distance for player to be hit        //
-SPY_REVEAL_LENGTH                <- 20;    // how long players are revealed for (sec)      //
-SPY_RECLOAK_TIME                 <- 3;     // how long before spy becomes cloaked again    //
+const SPY_REVEAL_RANGE               = 1000;  // Maximum distance for player to be hit     //
+const SPY_REVEAL_LENGTH              = 20;    // how long players are revealed for (sec)   //
+const SPY_RECLOAK_TIME               = 3;     // how long before spy becomes cloaked again //
 // --------------------------------------------------------------------------------------- //
 /////////////////////////////////////////////////////////////////////////////////////////////
 // ZombieMedic Heal Ability |------------------------------------------------------------- //
 /////////////////////////////////////////////////////////////////////////////////////////////
-MEDIC_HEAL_RANGE                 <- 275;   // Maximum distance for player to be hit        //
-MEDIC_HEAL_RATE                  <- 0.5;   // time in sec between each heal tick           //
+const MEDIC_HEAL_RANGE                 = 275;   // Maximum distance for player to be hit   //
+const MEDIC_HEAL_RATE                  = 0.5;   // time in sec between each heal tick      //
 /////////////////////////////////////////////////////////////////////////////////////////////
 // ZombieDemo Charge Ability |------------------------------------------------------------ //
 /////////////////////////////////////////////////////////////////////////////////////////////
-// DEMOMAN_CHARGE_DAMAGE              <- 275;   //                                         //
-DEMOMAN_CHARGE_BASE_DAMAGE            <- 100;   //                                         //
-DEMOMAN_CHARGE_DAMAGE_PER_PLAYER_MULT <- 1.35;  //                                         //
-DEMOMAN_CHARGE_RADIUS                 <- 200;   //                                         //
-DEMOMAN_CHARGE_INVULN_TIME            <- 1.4;   //                                         //
-DEMOMAN_CHARGE_FORCE                  <- 650;  //                                         //
-DEMOMAN_CHARGE_FORCE_UPWARD_MULT      <- 1.5;   //                                         //
+// DEMOMAN_CHARGE_DAMAGE              = 275;   //                                          //
+const DEMOMAN_CHARGE_BASE_DAMAGE            = 100;   //                                    //
+const DEMOMAN_CHARGE_DAMAGE_PER_PLAYER_MULT = 1.35;  //                                    //
+const DEMOMAN_CHARGE_RADIUS                 = 200;   //                                    //
+const DEMOMAN_CHARGE_INVULN_TIME            = 1.4;   //                                    //
+const DEMOMAN_CHARGE_FORCE                  = 650;  //                                     //
+const DEMOMAN_CHARGE_FORCE_UPWARD_MULT      = 1.5;   //                                    //
 /////////////////////////////////////////////////////////////////////////////////////////////
 // generic zombie stuff      |------------------------------------------------------------ //
 /////////////////////////////////////////////////////////////////////////////////////////////
-ZOMBIE_BOOST_SPEED_DEBUFF        <- 0.85;  //                                              //
+const ZOMBIE_BOOST_SPEED_DEBUFF        = 0.85;  //                                         //
 // --------------------------------------------------------------------------------------- //
 /////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -164,7 +164,7 @@ class CSpyReveal extends CZombieAbility
         local _arrPlayersInRange  = [];
 
         // get all of the players in range
-        while ( _hPlayer = Entities.FindByClassnameWithin( _hPlayer, "player", this.m_hAbilityOwner.GetOrigin(), ( SPY_REVEAL_RANGE ) ) )
+        while ( _hPlayer = FindByClassnameWithin( _hPlayer, "player", this.m_hAbilityOwner.GetOrigin(), ( SPY_REVEAL_RANGE ) ) )
         {
             // red (survivor) team only
             if ( _hPlayer != null && _hPlayer.GetTeam() != TF_TEAM_BLUE )
@@ -173,11 +173,12 @@ class CSpyReveal extends CZombieAbility
             };
         };
 
-        if ( _arrPlayersInRange.len() == 0 )
+        if ( !_arrPlayersInRange.len() )
             return;
 
         // apply reveal effect
-        for ( local i = 0; i < _arrPlayersInRange.len(); i++ )
+        local _arrPlayersInRange_len = _arrPlayersInRange.len()
+        for ( local i = 0; i < _arrPlayersInRange_len; i++ )
         {
             local _hNextPlayer = _arrPlayersInRange[ i ];
 
@@ -298,7 +299,7 @@ class CMedicHeal extends CZombieAbility
         local _arrPlayersInRange  = [];
 
         // get all of the players in range
-        while ( _hPlayer = Entities.FindByClassnameWithin( _hPlayer, "player", this.m_hAbilityOwner.GetOrigin(), MEDIC_HEAL_RANGE ) )
+        while ( _hPlayer = FindByClassnameWithin( _hPlayer, "player", this.m_hAbilityOwner.GetOrigin(), MEDIC_HEAL_RANGE ) )
         {
             // blue (zombie) team only
             if ( _hPlayer != null && _hPlayer.GetTeam() == TF_TEAM_BLUE && _hPlayer != this.m_hAbilityOwner )
@@ -307,11 +308,12 @@ class CMedicHeal extends CZombieAbility
             };
         };
 
-        if ( _arrPlayersInRange.len() == 0 )
+        if ( !_arrPlayersInRange.len() )
             return;
 
         // apply heal effect
-        for ( local i = 0; i < _arrPlayersInRange.len(); i++ )
+        local _arrPlayersInRange_len = _arrPlayersInRange.len()
+        for ( local i = 0; i < _arrPlayersInRange_len; i++ )
         {
             local _hNextPlayer   =  _arrPlayersInRange[ i ];
             local _angPlayer     =  _hNextPlayer.GetLocalAngles();
@@ -352,7 +354,7 @@ class CSniperSpitball extends CZombieAbility
 
         local _d = this.m_hAbilityOwner.GetScriptScope();
 
-        if ( ( _d.m_iFlags & ZBIT_SNIPER_CHARGING_SPIT ) != 0 )
+        if ( ( _d.m_iFlags & ZBIT_SNIPER_CHARGING_SPIT ) )
             return;
 
         local _hPlayerVM = GetPropEntity( this.m_hAbilityOwner, "m_hViewModel" );
@@ -386,7 +388,7 @@ class CSniperSpitball extends CZombieAbility
         local _vecThrow  =  ( ( _vecFwd * _iThrowForce ) + _vecPlayerVel );
 
         local _angPos    =  ( this.m_hAbilityOwner.EyePosition() + ( _vecFwd * _iDist ) );
-        local _spitEnt   =  Entities.CreateByClassname( "prop_physics_override" );
+        local _spitEnt   =  CreateByClassname( "prop_physics_override" );
 
         if ( _bPlayerDead )
         {
@@ -507,7 +509,7 @@ class CEngineerSapperNade extends CZombieAbility
         local _vecFwd        =  m_hAbilityOwner.EyeAngles().Forward();
         local _vecThrow      =  ( ( _vecFwd * _iThrowForce ) + _vecPlayerVel );
         local _angPos        =  ( m_hAbilityOwner.EyePosition() + ( _vecFwd * _iDist ) );
-        local _nadeEnt       =  Entities.CreateByClassname( "prop_physics_override" );
+        local _nadeEnt       =  CreateByClassname( "prop_physics_override" );
 
         SetPropFloat( _d.m_hZombieWep, "m_flNextPrimaryAttack", FLT_MAX );
 
@@ -797,7 +799,7 @@ class CPyroBlast extends CZombieAbility
         AddThinkToEnt          ( _BallOfFlames, "PyroFireballThink" );
         _BallOfFlames.SetOwner ( this.m_hAbilityOwner );
 
-        local _dummyFlamer = Entities.CreateByClassname( "tf_weapon_flamethrower" );
+        local _dummyFlamer = CreateByClassname( "tf_weapon_flamethrower" );
 
         SetPropInt  ( _dummyFlamer, "m_AttributeManager.m_Item.m_iItemDefinitionIndex", 21 );
         SetPropBool ( _dummyFlamer, "m_bValidatedAttachedEntity", true );
@@ -821,3 +823,5 @@ class CPyroBlast extends CZombieAbility
         return;
     };
 }
+
+CZombieAbility.m_arrClassAbilities <- [ null, CScoutPassive, CSniperSpitball, CSoldierJump, CDemoCharge, CMedicHeal, CHeavyPassive, CPyroBlast, CSpyReveal, CEngineerSapperNade, CScoutPassive ]

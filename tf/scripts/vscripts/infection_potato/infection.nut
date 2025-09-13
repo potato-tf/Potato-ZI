@@ -271,6 +271,7 @@ PZI_EVENT("player_spawn", "Infection_PlayerSpawn", function(params) {
 
         // add the zombie cosmetics/skin modifications
         _hPlayer.GiveZombieCosmetics();
+        // _hPlayer.GiveZombieEyeParticles();
         // _hPlayer.GiveZombieFXWearable();
 
         _hPlayer.SetEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
@@ -294,24 +295,24 @@ PZI_EVENT("teamplay_setup_finished", "Infection_SetupFinished", function(params)
     ::bGameStarted <- true;
 
     local _iPlayerCountRed    = PlayerCount( TF_TEAM_RED );
-    local _numStartingZombies = (_iPlayerCountRed / STARTING_ZOMBIE_FAC) || 1;
+    local _numStartingZombies = ( _iPlayerCountRed / STARTING_ZOMBIE_FAC ) || 1;
 
     // -------------------------------------------------- //
     // select players to become zombies                   //
     // -------------------------------------------------- //
+
+    SetValue( "mp_humans_must_join_team", "blue" )
 
     if ( ( _iPlayerCountRed <= 1 ) && ( DEBUG_MODE < 1 ) )
     {
 
         local _hGameWin = SpawnEntityFromTable( "game_round_win",
         {
-            win_reason      = "0",
-            force_map_reset = "1",
-            TeamNum         = "2", // TF_TEAM_RED
-            switch_teams    = "0"
+            force_map_reset = true
+            TeamNum         = TF_TEAM_RED
+            switch_teams    = false
         });
-
-        EntFireByHandle( _hGameWin, "RoundWin", "", 0, null, null );
+        _hGameWin.AcceptInput( "RoundWin", null, null, null );
         ::bGameStarted <- false;
         return;
     }
@@ -324,8 +325,9 @@ PZI_EVENT("teamplay_setup_finished", "Infection_SetupFinished", function(params)
 
     local _szZombieNetNames  =  "";
     local _zombieArr         =  GetRandomPlayers( _numStartingZombies );
+    local _zombieArr_len     = _zombieArr.len();
 
-    if ( !_zombieArr.len() )
+    if ( !_zombieArr_len )
         return;
 
     // ------------------------------------------ //
@@ -361,12 +363,14 @@ PZI_EVENT("teamplay_setup_finished", "Infection_SetupFinished", function(params)
 
         ChangeTeamSafe( _nextPlayer, TF_TEAM_BLUE, false );
 
-        if (bZombiesDontSwitchInPlace)
+        if ( bZombiesDontSwitchInPlace )
         {
-            if (_nextPlayer.GetPlayerClass() == TF_CLASS_PYRO)
+            if ( _nextPlayer.GetPlayerClass() == TF_CLASS_PYRO )
                 _sc.m_iFlags = _sc.m_iFlags | ZBIT_PYRO_DONT_EXPLODE;
 
-            _nextPlayer.TakeDamage(INT_MAX, DMG_GENERIC, null );
+            _nextPlayer.TakeDamage( INT_MAX, DMG_GENERIC, null );
+            _nextPlayer.ForceRespawn();
+            return;
         }
 
         // remove all of the player's existing items
@@ -374,6 +378,7 @@ PZI_EVENT("teamplay_setup_finished", "Infection_SetupFinished", function(params)
 
         // add the zombie cosmetics/skin modifications
         _nextPlayer.GiveZombieCosmetics();
+        // _nextPlayer.GiveZombieEyeParticles();
         // _nextPlayer.GiveZombieFXWearable();
 
         _nextPlayer.SetEFlags(EFL_IS_BEING_LIFTED_BY_BARNACLE)
@@ -392,13 +397,13 @@ PZI_EVENT("teamplay_setup_finished", "Infection_SetupFinished", function(params)
         // build string for chat notification          //
         // ------------------------------------------- //
 
-        if ( i == 0 ) // first player in the message
+        if ( !i ) // first player in the message
         {
             _szZombieNetNames = "\x07FF3F3F" + NetName( _nextPlayer ) + "\x07FBECCB";
         }
-        else if ( i ==  ( _zombieArr.len() - 1 ) ) // last player in the message
+        else if ( i == _zombieArr_len - 1 ) // last player in the message
         {
-            if ( _zombieArr.len() > 1 )
+            if ( _zombieArr_len > 1 )
             {
                 _szZombieNetNames += ( "\x07FBECCB " + STRING_UI_AND + " \x07FF3F3F" );
             }
@@ -417,7 +422,7 @@ PZI_EVENT("teamplay_setup_finished", "Infection_SetupFinished", function(params)
 
     local _szFirstInfectedAnnounceMSG = "";
 
-    if ( _zombieArr.len() > 1 ) // set the first infected announce message
+    if ( _zombieArr_len > 1 ) // set the first infected announce message
     {
         _szFirstInfectedAnnounceMSG = format( _szZombieNetNames +
                                             STRING_UI_CHAT_FIRST_WAVE_MSG_PLURAL );
@@ -429,7 +434,7 @@ PZI_EVENT("teamplay_setup_finished", "Infection_SetupFinished", function(params)
     }
 
     local _hNextRespawnRoom = null;
-    while ( _hNextRespawnRoom = Entities.FindByClassname( _hNextRespawnRoom, "func_respawnroom" ) )
+    while ( _hNextRespawnRoom = FindByClassname( _hNextRespawnRoom, "func_respawnroom" ) )
     {
         if ( _hNextRespawnRoom && _hNextRespawnRoom.GetTeam() == TF_TEAM_RED )
         {
@@ -449,6 +454,7 @@ PZI_EVENT("teamplay_broadcast_audio", "Infection_BroadcastAudio", function(param
 }, EVENT_WRAPPER_MAIN );
 
 PZI_EVENT("teamplay_restart_round", "Infection_RestartRound", function(params) {
+
     ::bGameStarted <- false;
 
     local _hNextPlayer = null;
@@ -456,6 +462,7 @@ PZI_EVENT("teamplay_restart_round", "Infection_RestartRound", function(params) {
     // --------------------------- //
     // set all players to survivor //
     // --------------------------- //
+    SetValue( "mp_humans_must_join_team", "red" )
 
     foreach ( _hNextPlayer in GetAllPlayers() )
     {
@@ -470,7 +477,7 @@ PZI_EVENT("teamplay_restart_round", "Infection_RestartRound", function(params) {
     }
 
     local _hGameTextEntity = null;
-    while ( _hGameTextEntity = Entities.FindByClassname( _hGameTextEntity, "game_text" ) )
+    while ( _hGameTextEntity = FindByClassname( _hGameTextEntity, "game_text" ) )
     {
         _hGameTextEntity.Destroy();
     }
@@ -512,7 +519,7 @@ PZI_EVENT("player_death", "Infection_PlayerDeath", function(params) {
         {
             // if the player isn't an engineer, we want to cull the kit instead
             local _hDroppedAmmo = null;
-            while ( _hDroppedAmmo = Entities.FindByClassname( _hDroppedAmmo, "tf_ammo_pack" ) )
+            while ( _hDroppedAmmo = FindByClassname( _hDroppedAmmo, "tf_ammo_pack" ) )
             {
                 if ( _hDroppedAmmo.GetOwner() == _hPlayer )
                     _hDroppedAmmo.Destroy();
@@ -535,7 +542,7 @@ PZI_EVENT("player_death", "Infection_PlayerDeath", function(params) {
 
             if (!::bNoPyroExplosionMod && !(_sc.m_iFlags & ZBIT_PYRO_DONT_EXPLODE))
             {
-                while ( _hNextPlayer = Entities.FindByClassnameWithin( _hNextPlayer, "player", _hPlayer.GetOrigin(), 125 ) )
+                while ( _hNextPlayer = FindByClassnameWithin( _hNextPlayer, "player", _hPlayer.GetOrigin(), 125 ) )
                 {
                     if ( _hNextPlayer != null && _hNextPlayer.GetTeam() == TF_TEAM_RED && _hNextPlayer != _hPlayer )
                     {
@@ -547,7 +554,7 @@ PZI_EVENT("player_death", "Infection_PlayerDeath", function(params) {
                 _hKillicon.Destroy();
 
                 EmitSoundOn            ( SFX_PYRO_FIREBOMB, _hPlayer );
-                DispatchParticleEffect ( "fireSmokeExplosion_track", _hPlayer.GetLocalOrigin(), Vector( 0, 0, 0 ) );
+                PZI_Util.DispatchEffect ( _hPlayer, "fireSmokeExplosion_track" );
             }
 
         }
@@ -675,7 +682,7 @@ PZI_EVENT("player_death", "Infection_PlayerDeath", function(params) {
 
         PlayGlobalBell( false );
 
-        local _hRoundTimer = Entities.FindByClassname( null, "team_round_timer" );
+        local _hRoundTimer = FindByClassname( null, "team_round_timer" );
 
         // no round timer on the level, let's make one
         if ( _hRoundTimer == null )
@@ -877,7 +884,7 @@ PZI_EVENT("OnTakeDamage", "Infection_OnTakeDamage", function(params) {
                     SetPropInt( _hWeapon, STRING_NETPROP_ITEMDEF, 444 ); // mantreads, obviously
 
                     ScreenShake            ( _hGroundEnt.GetOrigin(), 12.5, 145.0, 1.0, 490, 0, false );
-                    DispatchParticleEffect ( FX_TF_STOMP_TEXT, _hVictim.GetOrigin(), Vector( 0, 0, 0 ) );
+                    PZI_Util.DispatchEffect ( _hVictim, FX_TF_STOMP_TEXT );
 
                     _hGroundEnt.TakeDamageCustom( _hVictim, _hVictim, _hWeapon,
                                                 Vector( 0, 0, 0 ), _hVictim.GetOrigin(),
@@ -971,8 +978,8 @@ PZI_EVENT("OnTakeDamage", "Infection_OnTakeDamage", function(params) {
 
             _hIgniteTrigger.SetAbsOrigin  ( _hVictim.GetCenter() );
 
-            EntFireByHandle ( _hIgniteTrigger, "StartTouch", "", -1, _hVictim, _hVictim );
-            EntFireByHandle ( _hIgniteTrigger, "Kill", "", 0.01, null, null );
+            EntFireByHandle ( _hIgniteTrigger, "StartTouch", null, -1, _hVictim, _hVictim );
+            EntFireByHandle ( _hIgniteTrigger, "Kill", null, 0.01, null, null );
         }
 
         // ----------------------------------------------------------- //

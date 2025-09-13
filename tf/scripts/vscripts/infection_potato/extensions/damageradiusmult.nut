@@ -1,7 +1,10 @@
-local DMG_MULT_RADIUS = 256
-local DMG_MULT_MIN = 0.5
-local DMG_MULT_MAX = 2.5
-local DMG_MULT_PER_PLAYER = 0.25
+// damage multiplier based on nearby teammates
+// intended to encourage less campy gameplay with smaller, separate parties roaming the map
+
+local DMG_MULT_RADIUS = 256 // radius for damage multiplier
+local DMG_MULT_MIN = 0.75 // dmg resistance for solo-runners
+local DMG_MULT_MAX = 1.75 // dmg vulnerability for groups
+local DMG_MULT_PER_PLAYER = 0.15 // dmg vulnerability for each additional nearby teammate
 local UPDATE_INTERVAL = 1.0
 
 PZI_EVENT("player_spawn", "DamageRadiusMult_OnPlayerSpawn", function(params) {

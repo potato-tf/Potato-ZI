@@ -3,34 +3,21 @@ Convars.SetValue( "mp_autoteambalance", 0 )
 Convars.SetValue( "mp_scrambleteams_auto", 0 )
 Convars.SetValue( "mp_teams_unbalance_limit", 0 )
 Convars.SetValue( "mp_tournament", 0 )
+Convars.SetValue( "mp_respawnwavetime", 2 )
 
-local spawns = {}
+local spawns = []
 
 for (local spawn; spawn = FindByClassname( spawn, "info_player_teamspawn" ); ) {
 
     // SetPropInt( spawn, "m_iTeamNum", TEAM_UNASSIGNED )
 
     if ( spawn.GetName() == "" )
-        SetPropString( spawn, "m_iName", format( "spawn_%d", spawn.entindex() ) )
+        SetPropString( spawn, "m_iName", format( "teamspawn_%d", spawn.entindex() ) )
 
-    spawns[ spawn.GetName() ] <- spawn
+    spawns.append( spawn.GetName() )
 }
 
-// global respawn time override
-local respawn = SpawnEntityFromTable( "trigger_player_respawn_override", {
-    targetname = "__pzi_respawnoverride"
-    RespawnTime = 3
-    RespawnName = spawns.keys()[ RandomInt( 0, spawns.len() - 1 ) ]
-})
-respawn.SetSize(Vector(-1, -1, -1), Vector(1, 1, 1))
-
-printl( respawn )
-respawn.ValidateScriptScope()
-local respawn_scope = respawn.GetScriptScope()
-
-// fix null activator crash
-respawn_scope.InputStartTouch <- PZI_Util.TouchCrashFix
-respawn_scope.Inputstarttouch <- PZI_Util.TouchCrashFix
+local spawns_len = spawns.len()
 
 local logic_ents = {
  
@@ -56,19 +43,17 @@ local function GetGamemode() {
     while ( ent = FindByClassname( ent, "team_train_watcher" ) )
         return "PL"
 
-    while ( ent = FindByClassname( ent, "func_powerupvolume" ) )
-        return "Mannpower"
-
-    while ( ent = FindByClassname( ent, "tf_weapon_grapplinghook" ) )
-        for ( local spawner; spawner = FindByClassname( spawner, "info_powerup_spawn" ); )
-            return "Mannpower"
-
     while ( ent = FindByClassname( ent, "func_passtime*" ) )
         return "PASS"
 
-    while ( ent = FindByClassname( ent, "item_teamflag" ) )
+    while ( ent = FindByClassname( ent, "item_teamflag" ) ) {
+
+        for ( local spawner; spawner = FindByClassname( spawner, "info_powerup_spawn" ); )
+            return "Mannpower"
+
         for ( local cap; cap = FindByClassname( cap, "func_capturezone" ); )
             return "CTF"
+    }
 
     return split( MAPNAME, "_" )[0].toupper()
 }
@@ -98,7 +83,7 @@ local gamemode_funcs = {
             foreach ( track1, track2 in tracks )
                 PZI_Util.EntShredder[ track1 ] <- track2
 
-            EntFire( GetPropString( watcher, "m_iszTrain" ), "KillHierarchy" )
+            EntFire( GetPropString( watcher, "m_iszTrain" ), "Kill" )
         }
     }
 
@@ -106,22 +91,6 @@ local gamemode_funcs = {
 
         foreach( ent in [ "func_capturezone", "item_teamflag", "info_populator", "tf_logic_mann_vs_machine" ] )
             EntFire( ent, "Kill" )
-            
-        SpawnEntityFromTable( "team_round_timer", {
-
-            targetname          = "__pzi_timer",
-            auto_countdown      = 1
-            max_length          = 720
-            reset_time          = 1
-            setup_length        = 60
-            show_in_hud         = 1
-            show_time_remaining = 1
-            start_paused        = 0
-            timer_length        = 480
-            StartDisabled       = 0
-        })
-
-        EntFire( "__pzi_timer", "Resume", "", 1 )
     }
 
     function PD() {
@@ -134,6 +103,7 @@ local gamemode_funcs = {
         })
     }
 }
+gamemode_funcs.RD  <- gamemode_funcs.PD
 gamemode_funcs.PLR <- gamemode_funcs.PL
 gamemode_funcs.CTF <- gamemode_funcs.MvM
 
@@ -163,10 +133,33 @@ foreach (prop in gamemode_props)
 
 try { IncludeScript( format("infection_potato/map_stripper/%s", MAPNAME) ) } catch ( e ) {}
 
+local ents_to_kill = [ "team_round_timer", "game_round_win" ]
+
 PZI_EVENT( "teamplay_round_start", "PZI_MapStripper_RoundStart", function ( params ) {
     
     if ( GAMEMODE in gamemode_funcs )
         gamemode_funcs[ GAMEMODE ]()
+
+    foreach ( tokill in ents_to_kill )
+        for (local ent; ent = FindByClassname( ent, tokill ); )
+            EntFireByHandle( ent, "Kill", null, -1, null, null )
+
+    local timer = SpawnEntityFromTable( "team_round_timer", {
+
+        targetname          = "__pzi_timer",
+        auto_countdown      = 1
+        max_length          = 720
+        reset_time          = 1
+        setup_length        = 60
+        show_in_hud         = 1
+        show_time_remaining = 1
+        start_paused        = 0
+        timer_length        = 480
+        StartDisabled       = 0
+        "OnFinished#1"      : "__pzi_util,CallScriptFunction,RoundWin,1"
+    })
+
+    EntFire( "__pzi_timer", "Resume", null, 1 )
 
     // Disables most huds
     SetPropInt( PZI_Util.GameRules, "m_nHudType", 2 )
@@ -183,11 +176,9 @@ PZI_EVENT( "teamplay_round_start", "PZI_MapStripper_RoundStart", function ( para
         break
     }
     // disable control points
+    EntFire( "team_control_point", "SetLocked", "1" )
+    EntFire( "team_control_point", "HideModel" )
 	EntFire( "team_control_point", "Disable" )
-	EntFire( "team_control_point", "HideModel" )
-
-    PZI_Util.ScriptEntFireSafe( "*", "PZI_Util.GameStrings[ self.GetScriptId() ] <- null", 0.1 )
-    PZI_Util.GameStrings[ "PZI_Util.GameStrings[ self.GetScriptId() ] <- null" ] <- null
 
 })
 
@@ -212,8 +203,8 @@ PZI_EVENT( "teamplay_setup_finished", "PZI_MapStripper_SetupFinished", function 
 PZI_EVENT( "player_spawn", "PZI_MapStripper_PlayerSpawn", function ( params ) {
 
     local player = GetPlayerFromUserID(params.userid)
-    EntFire("__pzi_respawnoverride", "StartTouch", "!activator", -1, player )
+    EntFire("__pzi_respawnoverride", "StartTouch", null, -1, player )
 
     // random spawn points
-    EntFire("__pzi_respawnoverride", "SetRespawnName", spawns.keys()[ RandomInt( 0, spawns.len() - 1 ) ], -1, player )
+    EntFire("__pzi_respawnoverride", "SetRespawnName", spawns[ RandomInt( 0, spawns_len - 1 ) ], -1, player )
 })

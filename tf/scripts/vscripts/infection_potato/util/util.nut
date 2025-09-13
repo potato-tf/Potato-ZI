@@ -1,14 +1,16 @@
 // All Global Utility Functions go here
 
-PZI_CREATE_SCOPE( "__pzi_util", "PZI_Util", "PZI_UtilEnt", "PZI_UtilThink" )
+PZI_CREATE_SCOPE( "__pzi_util", "PZI_Util", null, "PZI_UtilThink" )
 
 PZI_Util.HumanTable  <- {} // player caching for faster player handle/userid lookups
-PZI_Util.BotTable 	 <- {}
+PZI_Util.ZombieTable <- {}
 PZI_Util.PlayerTable <- {}
+PZI_Util.BotTable 	 <- {}
 
 PZI_Util.HumanArray  <- [] // array variants
-PZI_Util.BotArray 	 <- []
+PZI_Util.ZombieArray <- []
 PZI_Util.PlayerArray <- []
+PZI_Util.BotArray 	 <- []
 
 PZI_Util.Wearables <- {} // wearables to delete on player spawn
 
@@ -74,7 +76,6 @@ PZI_Util.Slots   	 <- ["slot_primary", "slot_secondary", "slot_melee", "slot_uti
 PZI_Util.AllNavAreas <- {} // gets filled by GetAllAreas at the end of this file
 PZI_Util.ConVars     <- {} // convar tracking to revert to original values
 PZI_Util.EntShredder <- {} // entity shredder. One entity is deleted per think.
-PZI_Util.GameStrings <- {} // game string shredder. One game string is deleted per think.
 
 PZI_Util.ROBOT_ARM_PATHS <- [
 
@@ -268,11 +269,6 @@ function PZI_Util::_OnDestroy() {
 			EntFireByHandle( ent, "Kill", "", i * 0.1, null, null )
 		}
 	}
-
-	foreach( str1, str2 in GameStrings )
-		foreach( str in [str1, str2] )
-			if ( str && typeof str == "string" && str.len() )
-				PurgeGameString( str, true )
 }
 
 function PZI_Util::EntityManager() {
@@ -295,20 +291,6 @@ function PZI_Util::EntityManager() {
 			yield ent1
 	}
 
-	foreach( str1, str2 in (clone GameStrings) ) {
-
-		foreach( str in [str1, str2] ) {
-
-			if ( str && typeof str == "string" && str.len() )
-				PurgeGameString( str, true )
-
-			if ( str in GameStrings )
-				delete GameStrings[str]
-		}
-
-		yield str1
-	}
-
 	return null
 }
 
@@ -319,7 +301,7 @@ function PZI_Util::ThinkTable::EntityManagerThink() {
 	if ( entmanager_cooldown && Time() < entmanager_cooldown )
 		return -1
 
-	if ( !(EntShredder.len() + GameStrings.len()) ) {
+	if ( !EntShredder.len() ) {
 		entmanager_cooldown = Time() + 0.5
 		return -1
 	}
@@ -349,31 +331,31 @@ function PZI_Util::SetTargetname( ent, name ) {
 	SetPropString( ent, STRING_NETPROP_NAME, name )
 
 	if ( oldname != "" )
-		PurgeGameString( oldname )
+		PZI_GameStrings.StringTable[ oldname ] <- null
 }
 
-function PZI_Util::PurgeGameString( str, urgent = false, str2 = null ) {
+// function PZI_Util::PurgeGameString( str, urgent = false, str2 = null ) {
 
-	if ( urgent ) {
+// 	if ( urgent ) {
 
-		local tempent = CreateByClassname( "logic_autosave" )
-		SetTargetname( tempent, str )
-		SetPropBool( tempent, STRING_NETPROP_PURGESTRINGS, true )
-		tempent.Kill()
+// 		local tempent = CreateByClassname( "logic_autosave" )
+// 		SetTargetname( tempent, str )
+// 		SetPropBool( tempent, STRING_NETPROP_PURGESTRINGS, true )
+// 		tempent.Kill()
 
-		if ( str2 ) {
+// 		if ( str2 ) {
 
-			local tempent = CreateByClassname( "logic_autosave" )
-			SetTargetname( tempent, str2 )
-			SetPropBool( tempent, STRING_NETPROP_PURGESTRINGS, true )
-			tempent.Kill()
-		}
-		return
-	}
+// 			local tempent = CreateByClassname( "logic_autosave" )
+// 			SetTargetname( tempent, str2 )
+// 			SetPropBool( tempent, STRING_NETPROP_PURGESTRINGS, true )
+// 			tempent.Kill()
+// 		}
+// 		return
+// 	}
 
-	GameStrings[str] <- str2
-	// SpawnEnt( "logic_autosave", str, true )
-}
+// 	GameStrings[str] <- str2
+// 	// SpawnEnt( "logic_autosave", str, true )
+// }
 
 // spawn permanent ents or tempents that are automatically wiped out on map reset/fixed timer
 function PZI_Util::SpawnEnt( ... ) {
@@ -381,14 +363,16 @@ function PZI_Util::SpawnEnt( ... ) {
 	local classname = vargv[0]
 	local name = vargv[1]
 	local temp = 2 in vargv ? vargv[2] : false
-	local args = 3 in vargv ? vargv.slice( 3 ) : null
+	local args = 3 in vargv ? vargv.slice( 3 ) : []
 
 	local ent = CreateByClassname( classname )
 	SetTargetname( ent, name )
 
-	if ( args && args.len() ) {
+	local args_len = args.len()
 
-		for (local i = 0; i < args.len(); i += 2) {
+	if ( args && args_len ) {
+
+		for (local i = 0; i < args_len; i += 2) {
 
 			if ( !(i in args) || !(i + 1 in args) )
 				break
@@ -434,7 +418,6 @@ PZI_Util.MvMStatsEnt 	   <- FindByClassname( null, "tf_mann_vs_machine_stats" )
 PZI_Util.PlayerManager 	   <- FindByClassname( null, "tf_player_manager" )
 PZI_Util.TriggerHurt 	   <- PZI_Util.SpawnEnt( "trigger_hurt", "__pzi_triggerhurt", false )
 PZI_Util.ClientCommand 	   <- PZI_Util.SpawnEnt( "point_clientcommand", "__pzi_clientcommand", false )
-PZI_Util.GameRoundWin 	   <- PZI_Util.SpawnEnt( "game_round_win", "__pzi_roundwin", false, "TeamNum", TF_TEAM_PVE_INVADERS, "force_map_reset", 1 )
 PZI_Util.RespawnOverride   <- PZI_Util.SpawnEnt( "trigger_player_respawn_override", "__pzi_respawnoverride", false )
 PZI_Util.TriggerParticle   <- PZI_Util.SpawnEnt( "trigger_particle", "__pzi_triggerparticle", false, "attachment_type", 4 )
 
@@ -476,6 +459,7 @@ function PZI_Util::GetPlayerUserID( player ) 		{ return GetPropIntArray( PlayerM
 function PZI_Util::InUpgradeZone( player ) 		    { return GetPropBool( player, "m_Shared.m_bInUpgradeZone" ) }
 function PZI_Util::InButton( player, button ) 	    { return GetPropInt( player, "m_nButtons" ) & button }
 function PZI_Util::HasEffect( ent, value ) 		    { return GetPropInt( ent, "m_fEffects" ) == value }
+function PZI_Util::DispatchEffect( ent, effect ) 	{ if ( ent && effect ) DispatchParticleEffect( effect, typeof ent == "Vector" ? ent : ent.GetLocalOrigin(), typeof ent == "Vector" ? Vector() : ent.GetLocalAngles() + Vector() ) }
 
 function PZI_Util::ForceChangeClass( player, classindex = 1 ) {
 
@@ -831,7 +815,7 @@ function PZI_Util::DoExplanation( message, print_color = COLOR_YELLOW, message_p
 	local newlines = split( message, "|" )
 
 	foreach ( n in newlines )
-		if ( n.len() > 0 ) {
+		if ( n.len() ) {
 			strarray.append( n )
 			if ( !startswith( n, "PAUSE" ) && !sync_chat_with_game_text )
 				ClientPrint( null, 3, format( "\x07%s %s\x07%s %s", print_color, message_prefix, TF_COLOR_DEFAULT, n ) )
@@ -851,7 +835,7 @@ function PZI_Util::DoExplanation( message, print_color = COLOR_YELLOW, message_p
 
 			foreach( i, str in strarray )
 				if ( !(i % 2) )
-					GameStrings[ str ] <- strarray[i+1]
+					PZI_GameStrings.StringTable[ str ] <- strarray[i+1]
 
 			txtent.Kill()
 			return
@@ -1067,17 +1051,9 @@ function PZI_Util::PointScriptTemplate( targetname = null, onspawn = null ) {
 
 function PZI_Util::AttachParticle( ent, particle, attachment_name ) {
 
-	local trigger_particle = PZI_Util.TriggerParticle || null
-
-	if ( !trigger_particle || !trigger_particle.IsValid() ) {
-
-		PZI_Util.TriggerParticle <- PZI_Util.SpawnEnt( "trigger_particle", "__pzi_triggerparticle", false, "attachment_type", 4 )
-		trigger_particle = PZI_Util.TriggerParticle
-	}
-
-	SetPropString( trigger_particle, "m_iszParticleName", particle )
-	SetPropString( trigger_particle, "m_iszAttachmentName", attachment_name )
-	trigger_particle.AcceptInput( "StartTouch", "!activator", ent, ent )
+	SetPropString( TriggerParticle, "m_iszParticleName", particle )
+	SetPropString( TriggerParticle, "m_iszAttachmentName", attachment_name )
+	TriggerParticle.AcceptInput( "StartTouch", null, ent, ent )
 }
 
 //sets m_hOwnerEntity and m_hOwner to the same value
@@ -1099,7 +1075,7 @@ function PZI_Util::_SetOwner( ent, owner ) {
 	* Example usage:
 	*  PZI_Util.ShowAnnotation( {
 	*      text = `Defend the hatch!`
-	*      entity = Entities.FindByModel( null, `models/props_mvm/mann_hatch.mdl` )
+	*      entity = FindByModel( null, `models/props_mvm/mann_hatch.mdl` )
 	*      //pos = Vector( -64.0, -1984.0, 446.5 )
 	*      lifetime = 5.0
 	*      distance = true
@@ -1161,7 +1137,7 @@ function PZI_Util::ShowAnnotation( args = {} ) {
 		// Normal offset is normally 20x the input value, so we correct it here.
 		args.normal *= 0.05
 
-	if ( "players" in args && args.players.len() > 0 ) {
+	if ( "players" in args && args.players.len() ) {
 		// Create visibility bitfield from passed player handles.
 		args.visbit <- 0
 
@@ -1451,8 +1427,8 @@ function PZI_Util::Ignite( player, duration = 10.0, damage = 1 ) {
 			damage = damage
 			spawnflags = SF_TRIGGER_ALLOW_CLIENTS
 		})
-	EntFireByHandle( utilignite, "StartTouch", "", -1, player, player )
-	EntFireByHandle( utilignite, "EndTouch", "", SINGLE_TICK, player, player )
+	EntFireByHandle( utilignite, "StartTouch", null, -1, player, player )
+	EntFireByHandle( utilignite, "EndTouch", null, SINGLE_TICK, player, player )
 }
 
 function PZI_Util::ShowHudHint( text = "This is a hud hint", player = null, duration = 5.0 ) {
@@ -1465,10 +1441,10 @@ function PZI_Util::ShowHudHint( text = "This is a hud hint", player = null, dura
 	SetPropBool( hudhint, STRING_NETPROP_PURGESTRINGS, true )
 	hudhint.KeyValueFromString( "message", text )
 
-	hudhint.AcceptInput("ShowHudHint", "", player, player )
-	EntFireByHandle( hudhint, "HideHudHint", "", duration, player, player )
+	hudhint.AcceptInput("ShowHudHint", null, player, player )
+	EntFireByHandle( hudhint, "HideHudHint", null, duration, player, player )
 
-	PurgeGameString( "env_hudhint" )
+	PZI_GameStrings.PurgeGameString( "env_hudhint" )
 }
 
 function PZI_Util::SetEntityColor( entity, r, g, b, a ) {
@@ -1515,7 +1491,7 @@ function PZI_Util::ShowModelToPlayer( player, model = ["models/player/heavy.mdl"
 
 	// m_hBuilder is the player who the entity will be networked to only
 	SetPropEntity( proxy_entity, "m_hBuilder", player )
-	EntFireByHandle( proxy_entity, "Kill", "", duration, player, player )
+	EntFireByHandle( proxy_entity, "Kill", null, duration, player, player )
 	return proxy_entity
 }
 
@@ -1543,14 +1519,6 @@ function PZI_Util::InitEconItem( item, index ) {
 	SetPropInt( item, STRING_NETPROP_ITEMDEF, index )
 	SetPropBool( item, STRING_NETPROP_INIT, true )
 	SetPropBool( item, STRING_NETPROP_ATTACH, true )
-}
-
-function PZI_Util::SpawnEffect( player, effect ) {
-
-	local player_angle	   =  player.GetLocalAngles()
-	local player_angle_vec =  Vector( player_angle.x, player_angle.y, player_angle.z )
-
-	DispatchParticleEffect( effect, player.GetLocalOrigin(), player_angle_vec )
 }
 
 function PZI_Util::RemoveOutputAll( ent, output ) {
@@ -1618,7 +1586,7 @@ function PZI_Util::RemovePlayerWearables( player ) {
 	for ( local wearable = player.FirstMoveChild(); (wearable && wearable.GetClassname() == "tf_wearable"); wearable = wearable.NextMovePeer() ) {
 
 		SetPropBool( wearable, STRING_NETPROP_PURGESTRINGS, true )
-		EntFireByHandle( wearable, "Kill", "", -1, null, null )
+		EntFireByHandle( wearable, "Kill", null, -1, null, null )
 	}
 	return
 }
@@ -1643,7 +1611,7 @@ function PZI_Util::GiveWeapon( player, class_name, item_id ) {
 			return
 
 		SetPropBool( child, STRING_NETPROP_PURGESTRINGS, true )
-		EntFireByHandle( child, "Kill", "", -1, null, null )
+		EntFireByHandle( child, "Kill", null, -1, null, null )
 		// SetPropEntityArray( player, STRING_NETPROP_MYWEAPONS, null, slot )
 	}, true)
 
@@ -1856,6 +1824,20 @@ function PZI_Util::GetPlayerReadyCount() {
 	return ready
 }
 
+function PZI_Util::RoundWin( team = TF_TEAM_RED ) {
+
+	local round_win = SpawnEntityFromTable( "game_round_win", {
+
+		force_map_reset = true
+		TeamNum         = team
+		switch_teams    = false
+	})
+
+	round_win.AcceptInput( "RoundWin", null, null, null )
+
+	EntFireByHandle( round_win, "Kill", null, 3.0, null, null )
+}
+
 function PZI_Util::GetWeaponMaxAmmo( player, wep ) {
 
 	if ( wep == null ) return
@@ -1923,7 +1905,7 @@ function PZI_Util::TeleportNearVictim( ent, victim, attempt ) {
 		ambush_areas.push( area )
 	}
 
-	if ( ambush_areas.len() == 0 )
+	if ( !ambush_areas.len() )
 		return false
 
 	local max_tries = Min( 10, ambush_areas.len() )
@@ -2005,7 +1987,7 @@ function PZI_Util::ScriptEntFireSafe( target, code, delay = -1, activator = null
 
 	", allow_dead.tointeger(), code ), delay, activator, caller )
 
-	PurgeGameString(code)
+	PZI_GameStrings.StringTable[code] <- null
 }
 
 function PZI_Util::SetDestroyCallback( entity, callback ) {
@@ -2035,7 +2017,7 @@ function PZI_Util::SetDestroyCallback( entity, callback ) {
 					entity = EntIndexToHScript( index )
 					local scope = entity.GetScriptScope()
 					scope.self <- entity
-					PurgeGameString( id )
+					PZI_GameStrings.PurgeGameString( id )
 					scope.__pzi_util_destroy_callback()
 				}
 
@@ -2126,7 +2108,7 @@ function PZI_Util::ChangeLevel( mapname = "", delay = 1.0, mvm_cyclemissionfile 
 	// wait at scoreboard for this many seconds
 	SetValue( "mp_chattime", delay )
 
-	local intermission = Entities.CreateByClassname( "point_intermission" )
+	local intermission = CreateByClassname( "point_intermission" )
 
 	// for mvm, otherwise it'll ignore delay and switch to the next map in the missioncycle file
 	if ( !mvm_cyclemissionfile )
@@ -2321,13 +2303,17 @@ function PZI_Util::ValidatePlayerTables() {
 		if ( player in HumanTable )
 			delete HumanTable[ player ]
 
+		if ( player in ZombieTable )
+			delete ZombieTable[ player ]
+
 		if ( player in BotTable )
 			delete BotTable[ player ]
 	}
 
 	HumanArray  = HumanTable.keys()
-	BotArray    = BotTable.keys()
+	ZombieArray = ZombieTable.keys()
 	PlayerArray = PlayerTable.keys()
+	BotArray    = BotTable.keys()
 }
 
 function PZI_Util::KVStringToVectorOrQAngle( str, angles = false, startidx = 0 ) {
@@ -2509,7 +2495,7 @@ function PZI_Util::Clamp360Angle( ang ) {
 }
 
 function PZI_Util::CheckBitwise( num ) {
-	return ( num != 0 && ( ( num & ( num - 1 ) ) == 0 ) )
+	return num && !( num & ( num - 1 ) )
 }
 
 PZI_EVENT( "teamplay_setup_finished", "UtilSetupStatus", function ( params ) { PZI_Util.IsInSetup = false }, EVENT_WRAPPER_UTIL )
@@ -2518,7 +2504,6 @@ PZI_EVENT( "teamplay_round_start", "UtilRoundStart", function ( params ) {
 
 	PZI_Util.TriggerHurt 	   <- PZI_Util.SpawnEnt( "trigger_hurt", "__pzi_triggerhurt", false )
 	PZI_Util.ClientCommand 	   <- PZI_Util.SpawnEnt( "point_clientcommand", "__pzi_clientcommand", false )
-	PZI_Util.GameRoundWin 	   <- PZI_Util.SpawnEnt( "game_round_win", "__pzi_roundwin", false, "TeamNum", TF_TEAM_PVE_INVADERS, "force_map_reset", 1 )
 	PZI_Util.RespawnOverride   <- PZI_Util.SpawnEnt( "trigger_player_respawn_override", "__pzi_respawnoverride", false )
 	PZI_Util.TriggerParticle   <- PZI_Util.SpawnEnt( "trigger_particle", "__pzi_triggerparticle", false, "attachment_type", 4 )
 
@@ -2538,11 +2523,7 @@ PZI_EVENT( "player_activate", "UtilPlayerActivate", function ( params ) {
 
 	local player = GetPlayerFromUserID( params.userid )
 
-	if ( !player.IsBotOfType( TF_BOT_TYPE ) && !( player in PZI_Util.HumanTable ) )
-		PZI_Util.HumanTable[ player ] <- params.userid
-
-	else if ( !( player in PZI_Util.PlayerTable ) )
-		PZI_Util.PlayerTable[ player ] <- params.userid
+	PZI_Util.PlayerTable[ player ] <- params.userid
 
 	PZI_Util.ValidatePlayerTables()
 
@@ -2552,18 +2533,24 @@ PZI_EVENT( "player_disconnect", "UtilPlayerDisconnect", function ( params ) {
 
 	local player = GetPlayerFromUserID( params.userid )
 
-	local bot_table    = PZI_Util.BotTable
 	local human_table  = PZI_Util.HumanTable
+	local zombie_table = PZI_Util.ZombieTable
 	local player_table = PZI_Util.PlayerTable
+	local bot_table    = PZI_Util.BotTable
 
 	if ( player in human_table )
 		delete human_table[ player ]
 
-	if ( player in bot_table )
-		delete bot_table[ player ]
+	if ( player in zombie_table )
+		delete zombie_table[ player ]
 
 	if ( player in player_table )
 		delete player_table[ player ]
+
+	if ( player in bot_table )
+		delete bot_table[ player ]
+
+	PZI_Util.ValidatePlayerTables()
 
 }, EVENT_WRAPPER_UTIL)
 
@@ -2571,8 +2558,18 @@ PZI_EVENT( "player_team", "UtilPlayerTeam", function( params ) {
 
 	local player = GetPlayerFromUserID( params.userid )
 
-	if ( !( player in PZI_Util.PlayerTable ) )
+	if ( !( player in PZI_Util.PlayerTable ) ) {
+
 		PZI_Util.PlayerTable[ player ] <- params.userid
+
+		if ( player.IsBotOfType( TF_BOT_TYPE ) && !( player in PZI_Util.BotTable ) )
+			PZI_Util.BotTable[ player ] <- params.userid
+	}
+	
+	local tablename = params.team == TF_TEAM_RED ? "HumanTable" : "ZombieTable"
+
+	if ( !( player in PZI_Util[ tablename ] ) )
+		PZI_Util[ tablename ][ player ] <- params.userid
 
 	local wearables = PZI_Util.Wearables
 	if ( params.userid in wearables && wearables[ params.userid ].IsValid() ) {
@@ -2590,9 +2587,10 @@ PZI_EVENT( "post_inventory_application", "UtilPostInventoryApplication", functio
 	if ( !player || !player.IsValid() || player.IsEFlagSet( EFL_IS_BEING_LIFTED_BY_BARNACLE ) )
 		return
 
-	local bot_table    = PZI_Util.BotTable
 	local human_table  = PZI_Util.HumanTable
+	local zombie_table = PZI_Util.ZombieTable
 	local player_table = PZI_Util.PlayerTable
+	local bot_table    = PZI_Util.BotTable
 
 	// fill out player tables if empty
 	if ( !player_table.len() ) {
@@ -2606,8 +2604,12 @@ PZI_EVENT( "post_inventory_application", "UtilPostInventoryApplication", functio
 
 			if ( player.IsBotOfType( TF_BOT_TYPE ) )
 				bot_table[ player ] <- userid
-			else
+
+			else if ( player.GetTeam() == TF_TEAM_RED )
 				human_table[ player ] <- userid
+
+			else if ( player.GetTeam() == TF_TEAM_BLUE )
+				zombie_table[ player ] <- userid
 
 			player_table[ player ] <- userid
 		}
@@ -2616,18 +2618,24 @@ PZI_EVENT( "post_inventory_application", "UtilPostInventoryApplication", functio
 		return
 	}
 
-	if ( player.IsBotOfType( TF_BOT_TYPE ) )
-		bot_table[ player ] <- params.userid
+	local userid = params.userid
 
-	else if ( !( player in human_table ) )
-		human_table[ player ] <- params.userid
+	if ( player.IsBotOfType( TF_BOT_TYPE ) )
+		bot_table[ player ] <- userid
+
+	else if ( player.GetTeam() == TF_TEAM_RED )
+		human_table[ player ] <- userid
+
+	else if ( player.GetTeam() == TF_TEAM_BLUE )
+		zombie_table[ player ] <- userid
 
 	if ( !( player in player_table ) )
-		player_table[ player ] <- params.userid
+		player_table[ player ] <- userid
 
 	PZI_Util.HumanArray  = human_table.keys()
-	PZI_Util.BotArray    = bot_table.keys()
+	PZI_Util.ZombieArray = zombie_table.keys()
 	PZI_Util.PlayerArray = player_table.keys()
+	PZI_Util.BotArray    = bot_table.keys()
 
 }, EVENT_WRAPPER_UTIL)
 

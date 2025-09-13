@@ -59,7 +59,7 @@ function ChatCmdToggleDebug()
     };
 
     ClientPrint( null, HUD_PRINTTALK, "\x0870b04aFFDebug mode enabled." );
-    Entities.FindByClassname( null, "team_round_timer" ).Destroy();
+    FindByClassname( null, "team_round_timer" ).Destroy();
     ::DEBUG_MODE <- 5;
     DebugSFX( 4 );
     return;

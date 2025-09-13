@@ -13,9 +13,9 @@ if ( "InfectionLoaded" in getroottable() )
 ::DEBUG_MODE           <- 0;
 ::MaxPlayers           <- MaxClients().tointeger();
 ::bGameStarted         <- false;
-::TFPlayerManager      <- Entities.FindByClassname( null, "tf_player_manager" );
-::GameRules            <- Entities.FindByClassname( null, "tf_gamerules" );
-::worldspawn           <- Entities.FindByClassname( null, "worldspawn" );
+::TFPlayerManager      <- FindByClassname( null, "tf_player_manager" );
+::GameRules            <- FindByClassname( null, "tf_gamerules" );
+::worldspawn           <- FindByClassname( null, "worldspawn" );
 ::flTimeLastBell       <- 0.0;
 ::flTimeLastSpawnSFX   <- 0.0;
 ::PDLogic              <- null;
@@ -33,13 +33,13 @@ const PZI_VERSION   =  "v0.1.0 - 09/05/2025";
 {
     "mp_autoteambalance"                   : 0,
     "mp_teams_unbalance_limit"             : 0,
-    "mp_disable_respawn_times"             : 0,
+    "mp_disable_respawn_times"             : 1,
     "tf_classlimit"                        : 0,
     "mp_forcecamera"                       : 0,
     "sv_alltalk"                           : 1,
     "mp_scrableteams_auto"                 : 0,
     "mp_scrambleteams_auto_windifference"  : 0,
-    "mp_humans_must_join_team"             : "any",
+    "mp_humans_must_join_team"             : "red",
     "tf_weapon_criticals"                  : 1,
     "tf_forced_holiday"                    : 2,
     "tf_dropped_weapon_lifetime"           : 0,

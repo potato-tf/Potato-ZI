@@ -17,12 +17,12 @@ if ( GetPropInt( GameRules, "m_nHudType" ) !=  3 )
 
 function initPayload()
 {
-    local _payload   = Entities.FindByClassname( null, "func_tracktrain" );
+    local _payload   = FindByClassname( null, "func_tracktrain" );
     local _teamspawn;
 
     printl( "** You are running Zombie Infection on a Payload map. Initializing EXPERIMENTAL ZI_PL Logic **" );
 
-    while ( _teamspawn = Entities.FindByClassname( _teamspawn, "info_player_teamspawn" ) )
+    while ( _teamspawn = FindByClassname( _teamspawn, "info_player_teamspawn" ) )
     {
         if ( _teamspawn != null )
         {
@@ -39,7 +39,7 @@ function initPayload()
 
 function PayloadThink()
 {
-    local _payload   = Entities.FindByClassname( null, "func_tracktrain" );
+    local _payload   = FindByClassname( null, "func_tracktrain" );
 
     local _zCount = 0;
 
@@ -48,7 +48,8 @@ function PayloadThink()
         return ( a.GetLocalOrigin() - _payload.GetLocalOrigin() ).Length() - ( b.GetLocalOrigin() - _payload.GetLocalOrigin() ).Length();
     } );
 
-    for ( local i = 0; i < ZombieSpawns.len(); i++ )
+    local ZombieSpawns_len = ZombieSpawns.len()
+    for ( local i = 0; i < ZombieSpawns_len; i++ )
     {
         if ( _zCount < PL_NUM_ACTIVE_SPAWNS )
         {

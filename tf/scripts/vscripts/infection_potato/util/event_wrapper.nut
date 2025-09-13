@@ -137,13 +137,7 @@ function PZI_Events::AddRemoveEventHook( event, funcname, func = null, index = "
 
 function PZI_Events::CollectEvents() {
 
-    local merged_table = {
-
-        function _newslot(k, v) {
-
-            printl("test" + k + " : " + v)
-        }
-    }
+    local merged_table = {}
     local old_table_name = format( "_PZI_Events_%s", TableId )
 
     // start with the old table
@@ -219,7 +213,7 @@ function PZI_Events::ClearEvents( index = "unordered" ) {
         return
     }
 
-    PZI_Events.AddRemoveEventHook( "*", "*", null, index )
+    PZI_Events.AddRemoveEventHook( "*", "*", null, index, true )
 }
 
 // cleaner shorthand naame

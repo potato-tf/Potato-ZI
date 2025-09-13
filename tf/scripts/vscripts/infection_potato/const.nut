@@ -53,6 +53,7 @@ const ZHEAVY_DMG_MULTI                 = 2.2;   // Heavy    Zombie Damage Multip
 const ZPYRO_DMG_MULTI                  = 0.7;   // Pyro     Zombie Damage Multiplier       //
 const ZSPY_DMG_MULTI                   = 1;     // Spy      Zombie Damage Multiplier       //
 const ZENGINEER_DMG_MULTI              = 1;     // Engineer Zombie Damage Multiplier       //
+const ZOMBIE_PASSIVE_HEALING           = true;  // enable Zombie Passive Healing           //
 // --------------------------------------------------------------------------------------- //
 // Item Definition Index (IDX) for each class' Zombie weapon                               //
 // --------------------------------------------------------------------------------------- //
@@ -225,7 +226,7 @@ const MAX_SURVIVORS_FOR_ZOMBIE_WIN     = 0;     // if =  x red alive, zombies wi
 // Entity Think Function Rethink Times |-------------------------------------------------- //
 /////////////////////////////////////////////////////////////////////////////////////////////
 // --------------------------------------------------------------------------------------- //
-const PLAYER_RETHINK_TIME              = 0.0;   // How often the player thinks             //
+const PLAYER_RETHINK_TIME              = -1;   // How often the player thinks             //
 const ENGIE_EMP_RETHINK_TIME           = 0.01;  // How often the EMP grenade thinks        //
 const SNIPER_SPIT_RETHINK_TIME         = 0;     // How often the sniper spit thinks        //
 const SNIPER_SPIT_ZONE_RETHINK_TIME    = 0.5;   // How often the sniper spit ZONE thinks   //
@@ -407,7 +408,7 @@ const FX_ZOMBIE_EYEFLARE             = "killstreak_t7_lvl2";
 const FX_ZOMBIE_LIGHTNING            = "wrenchmotron_teleport_beam";
 const FX_ZOMBIE_LIGHTNING_CONTROLLER = "wrenchmotron_teleport_beam";
 
-const FX_ZOMBIE_SPAWN                = "zombie_spawn_parent";
+const FX_ZOMBIE_SPAWN                = "wrenchmotron_teleport_beam";
 const FX_ZOMBIE_SPAWN_BURST          = "zombie_spawn_burst";
 const FX_ZOMBIE_SPAWN_SMOKE          = "zombie_spawn_smoke";
 const FX_ZOMBIE_SPAWN_FLASH          = "zombie_spawn_flash";
@@ -436,7 +437,7 @@ const FX_EMP_SPARK                   = "halloween_boss_axe_hit_sparks";
 const FX_SPIT_SMOKE                 = "utaunt_spirit_festive_parent";
 const FX_SPIT_TRAIL                 = "unusual_robot_radioactive";
 const FX_SPIT_TRAIL2                = "unusual_robot_radioactive";
-const FX_SPIT_IMPACT                = "";
+const FX_SPIT_IMPACT                = false;
 const FX_SPIT_IMPACT_BITS           = "superrare_flies";
 // const FX_SPIT_HIT_PLAYER            = "unusual_robot_radioactive";
 // const FX_SPIT_IMPACT_GROUND         = "unusual_robot_radioactive";
@@ -451,11 +452,15 @@ const FX_SPIT_SPLAT                 = "utaunt_bubbles_glow_green_parent";
 const FX_SPIT_IMPACT                = "utaunt_spirit_festive_parent";
 
 const FX_MEDIC_HEAL                 = "zombie_heal_parent";
-const FX_FIREBALL_FIREBALL          = "zombie_fireball_fireball";
-const FX_FIREBALL_SMOKEBALL         = "zombie_fireball_smokeball";
+// const FX_FIREBALL_FIREBALL          = "zombie_fireball_fireball";
+// const FX_FIREBALL_SMOKEBALL         = "zombie_fireball_smokeball";
+// const FX_FIREBALL_SMOKEPUFF         = "zombie_fireball_smokepuff";
+// const FX_FIREBALL_TRAIL             = "zombie_fireball_trail";
+// const FX_ZOMBIE_FIREBALL            = "zombie_fireball";
+
+const FX_FIREBALL_TRAIL             = "projectile_fireball";
+const FX_FIREBALL_SMOKEBALL         = false;
 const FX_FIREBALL_SMOKEPUFF         = "zombie_fireball_smokepuff";
-const FX_FIREBALL_TRAIL             = "zombie_fireball_trail";
-const FX_ZOMBIE_FIREBALL            = "zombie_fireball";
 
 const FX_FLAMER               = "flamethrower_blue";
 const FX_TF_STOMP_TEXT        = "stomp_text";

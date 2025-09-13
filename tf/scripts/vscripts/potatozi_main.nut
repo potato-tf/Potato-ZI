@@ -20,8 +20,8 @@ ClientPrint( null, 4, "[PZI] GAMEMODE RELOADED, RESTARTING..." )
 EntFire( "player", "RunScriptCode", "self.AddFlag( FL_FROZEN ); AddThinkToEnt(self, null); self.TerminateScriptScope()" )
 EntFire( "player", "RunScriptCode", "self.RemoveFlag( FL_FROZEN )", 4 )
 
-if ( "PZI_Util" in ROOT )
-    PZI_Util.GameStrings[ "self.AddFlag( FL_FROZEN ); AddThinkToEnt(self, null); self.TerminateScriptScope()" ] <- "self.RemoveFlag( FL_FROZEN )"
+if ( "PZI_GameStrings" in ROOT )
+    PZI_GameStrings.StringTable[ "self.AddFlag( FL_FROZEN ); AddThinkToEnt(self, null); self.TerminateScriptScope()" ] <- "self.RemoveFlag( FL_FROZEN )"
 
 try { delete ::PZI_CREATE_SCOPE } catch(e) {}
 
@@ -30,7 +30,7 @@ local function Include( script ) { try { IncludeScript(format("%s", script), ROO
 // load core files
 local include = [
 
-    { "infection_potato/util/" : [ "constants", "itemdef_constants", "item_map", "create_scope", "event_wrapper", "util" ] }
+    { "infection_potato/util/" : [ "constants", "itemdef_constants", "item_map", "create_scope", "event_wrapper", "gamestrings", "util" ] }
     { "infection_potato/"      : [ "strings", "const", "infection" ] } // bug with util ents being deleted too early
     { "infection_potato/map_stripper/" : [ "mapstripper_main" ] }
 
@@ -46,14 +46,13 @@ local function IncludeGen( include ) {
 
                 Include( format( "%s%s", dir, file ) )
 
-                if ( "PZI_Util" in ROOT )
+                if ( "PZI_GameStrings" in ROOT )
 
-                    PZI_Util.PurgeGameString( format( "%s%s", dir, file ) )
+                    PZI_GameStrings.StringTable[ format( "%s%s", dir, file ) ] <- null
 
                 yield file
 
             }
-    EntFire( "BigNet", "RunScriptCode", "IncludeScript(`infection_potato/util/util`)", 0.1 )
 }
 
 local gen = IncludeGen( include )

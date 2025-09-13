@@ -86,7 +86,7 @@ function PZI_PlayerThink() {
     // }
 
 
-    if ( m_iFlags != 0 || m_iFlags == ( ZBIT_SURVIVOR ) )
+    if ( m_iFlags || m_iFlags == ( ZBIT_SURVIVOR ) )
     {
 
         // ------------------------------------------------------------------------------ //
@@ -120,7 +120,7 @@ function PZI_PlayerThink() {
                     local _me = self;
 
                     local _hExistingDispenser = null;
-                    while ( _hExistingDispenser = Entities.FindByClassname( _hExistingDispenser, "pd_dispenser" ) )
+                    while ( _hExistingDispenser = FindByClassname( _hExistingDispenser, "pd_dispenser" ) )
                     {
                         if ( _hExistingDispenser.GetOwner() == _me )
                         {
@@ -226,7 +226,7 @@ function PZI_PlayerThink() {
             local _flTimeWeaponIdle      =   GetPropFloat  ( m_hZombieWep, "m_flTimeWeaponIdle" );
             local _buttons               =   GetPropInt    ( self, "m_nButtons" );
             local _bCanCast              =   self.CanDoAct ( ZOMBIE_ABILITY_CAST );
-            local _bPressingAttack2      =   ( ( _buttons & IN_ATTACK2 ) != 0 );
+            local _bPressingAttack2      =   _buttons & IN_ATTACK2;
             local _iClassnum             =   self.GetPlayerClass();
             local _bDeathQueued          =   false;
 
@@ -365,6 +365,7 @@ function PZI_PlayerThink() {
 
                     if ( !_bCanCast || _bCanCast && m_szCurrentHUDString != STRING_UI_READY )
                     {
+                        m_fTimeNextClientPrint = Time()
                         self.BuildZombieHUDString()
                     };
 
@@ -383,6 +384,7 @@ function PZI_PlayerThink() {
                             m_hHUDTextAbilityName.KeyValueFromString ( "y", ( ZHUD_Y_POS - arrHUDTextClassYOffsets[ _iClassnum ] ).tostring() );
                             EntFireByHandle ( m_hHUDTextAbilityName, "Display", "", -1, self, self );
                             EntFireByHandle ( m_hHUDText,  "Display", "", -1, self, self );
+                            m_fTimeNextClientPrint = Time() + 1.0;
                         }
                         else
                         {
@@ -427,7 +429,7 @@ function PZI_PlayerThink() {
             // passive self healing                                                           //
             // ------------------------------------------------------------------------------ //
 
-            if (1 == 0 && m_fTimeLastHit < (Time() - 5.0) && !(m_iFlags & ZBIT_MUST_EXPLODE))
+            if ( ZOMBIE_PASSIVE_HEALING && m_fTimeLastHit < (Time() - 5.0) && !(m_iFlags & ZBIT_MUST_EXPLODE))
             {
                 if ( ( m_fTimeNextHealTick <= Time() ) && ( self.GetHealth() < self.GetMaxHealth() ) )
                 {
@@ -895,7 +897,8 @@ function SniperSpitThink()
             // long delay to avoid weird flipping bug
             EntFire( format( "__pzi_spit_impact_%d_*", m_hOwner.entindex() ), "Kill", "", 15 )
 
-            // DispatchParticleEffect( FX_SPIT_IMPACT, m_vecSpitZone, Vector( 0, 0, 0 ) );
+            if ( FX_SPIT_IMPACT )
+                PZI_Util.DispatchEffect( m_vecSpitZone, FX_SPIT_IMPACT );
 
             EmitSoundOn( SFX_SPIT_SPLATTER, self );
             m_iState <- SPIT_STATE_ZONE;
@@ -929,7 +932,7 @@ function SniperSpitThink()
         // for example, key "tf_pumpkin_bomb" has val "ignite" which will pop the pumpkin
         foreach( _szClass, _szInput in SNIPER_SPIT_ZONE_ENTS )
         {
-            while ( _hNextTargetEntity = Entities.FindByClassnameWithin( _hNextTargetEntity,
+            while ( _hNextTargetEntity = FindByClassnameWithin( _hNextTargetEntity,
                                                                          _szClass,
                                                                          m_vecSpitZone,
                                                                          SPIT_ZONE_RADIUS ) )
@@ -948,7 +951,7 @@ function SniperSpitThink()
         };
 
         // get all the players in the zone area
-        while ( _hNextPlayer = Entities.FindByClassnameWithin( _hNextPlayer, "player", m_vecSpitZone, SPIT_ZONE_RADIUS ) )
+        while ( _hNextPlayer = FindByClassnameWithin( _hNextPlayer, "player", m_vecSpitZone, SPIT_ZONE_RADIUS ) )
         {
             if ( _hNextPlayer != null && _hNextPlayer.GetTeam() != TF_TEAM_BLUE )
             {
@@ -957,7 +960,7 @@ function SniperSpitThink()
             };
         };
 
-        if ( typeof _arrPlayers == "array" && _arrPlayers.len() > 0 && _iPlayerCount != 0 )
+        if ( typeof _arrPlayers == "array" && _arrPlayers.len() && _iPlayerCount )
         {
             foreach ( _hNextPlayer in _arrPlayers )
             {
@@ -983,7 +986,7 @@ function SniperSpitThink()
 
                 local _vecPlayerOrigin = _hNextPlayer.GetOrigin();
 
-                if ( _hNextPlayer.GetScriptOverlayMaterial() == "" && GetPropInt( _hNextPlayer, "m_lifeState" ) == 0)
+                if ( _hNextPlayer.GetScriptOverlayMaterial() == "" && _hNextPlayer.IsAlive() )
                 {
                     _hNextPlayer.SetScriptOverlayMaterial( MAT_SPIT_OVERLAY );
                 }
@@ -999,7 +1002,7 @@ function SniperSpitThink()
 
                 _hKillIcon.Destroy();
 
-                DispatchParticleEffect  ( FX_SPIT_HIT_PLAYER, _vecPlayerOrigin, Vector( 0, 0, 0 ) );
+                PZI_Util.DispatchEffect  ( _hNextPlayer, FX_SPIT_HIT_PLAYER );
             };
         };
 
@@ -1008,7 +1011,8 @@ function SniperSpitThink()
     }
     else if ( m_iState == SPIT_STATE_REJECTED ) // spit couldn't deploy zone, burst harmlessly and die
     {
-        // DispatchParticleEffect( FX_SPIT_IMPACT, self.GetOrigin(), Vector( 0, 0, 0 ) );
+        if ( FX_SPIT_IMPACT )
+            PZI_Util.DispatchEffect( self, FX_SPIT_IMPACT );
 
         EmitSoundOn( SFX_SPIT_MISS, self );
         m_hPfx.Destroy();
@@ -1023,7 +1027,7 @@ function EngieEMPThink()
     if ( m_bMustFizzle )
     {
         SetPropInt             ( self, "m_takedamage", 0 );
-        DispatchParticleEffect ( FX_EMP_SPARK, self.GetOrigin(), self.GetAngles() );
+        PZI_Util.DispatchEffect ( self, FX_EMP_SPARK );
         EmitSoundOn            ( SFX_EMP_EXPLODE, self );
         self.Destroy();
         return -1;
@@ -1038,7 +1042,7 @@ function EngieEMPThink()
 
     TraceLineEx( _tblTraceLine)
 
-    if ( _tblTraceLine.plane_normal.z < 0.86602 && _tblTraceLine.plane_normal.z != 0 && _tblTraceLine.plane_normal.z != 1 )
+    if ( _tblTraceLine.plane_normal.z < 0.86602 && _tblTraceLine.plane_normal.z && _tblTraceLine.plane_normal.z != 1 )
     {
         self.SetPhysVelocity( self.GetPhysVelocity() * 0.65 );
     }
@@ -1081,7 +1085,7 @@ function EngieEMPThink()
         local _buildable       =  null;
         local _buildableCount  =  0;
 
-        while ( _buildable = Entities.FindByClassnameWithin( _buildable, "obj_*", self.GetOrigin(), ENGIE_EMP_FIRST_HIT_RANGE ) )
+        while ( _buildable = FindByClassnameWithin( _buildable, "obj_*", self.GetOrigin(), ENGIE_EMP_FIRST_HIT_RANGE ) )
         {
             if ( _buildable != null )
             {
@@ -1090,9 +1094,10 @@ function EngieEMPThink()
             };
         };
 
-        if ( _buildableCount != 0 )
+        if ( _buildableCount )
         {
-            for ( local i = 0; i < _buildableArr.len(); i++ )
+            local _buildableArr_len = _buildableArr.len()
+            for ( local i = 0; i < _buildableArr_len; i++ )
             {
                 local _buildable = _buildableArr[ i ];
 
@@ -1101,7 +1106,7 @@ function EngieEMPThink()
                      _buildable.GetClassname() == "obj_dispenser" )
                 {
                     // deal bonus damage to the first building hit
-                    local _vecNearestBuildingOrigin = Entities.FindByClassnameNearest( "obj_*", self.GetOrigin(), ENGIE_EMP_FIRST_HIT_RANGE ).GetOrigin();
+                    local _vecNearestBuildingOrigin = FindByClassnameNearest( "obj_*", self.GetOrigin(), ENGIE_EMP_FIRST_HIT_RANGE ).GetOrigin();
                     // _buildable.TakeDamage( 110, DMG_BLAST, m_hOwner ); // todo - const
 
                     m_fExplodeTime = 0.0; // explode now
@@ -1112,7 +1117,7 @@ function EngieEMPThink()
 
     if ( Time() >= m_fNextFlashTime ) // on flash
     {
-        DispatchParticleEffect ( FX_EMP_FLASH, self.GetOrigin(), self.GetAngles() );
+        PZI_Util.DispatchEffect ( self, FX_EMP_FLASH );
         EmitSoundOn            ( SFX_EMP_BEEP, self );
 
         m_fFlashRate         = ( m_fFlashRate * ENGIE_EMP_FLASH_RATE_DECAY_FAC );
@@ -1129,16 +1134,16 @@ function EngieEMPThink()
                      0,
                      true );
 
-        DispatchParticleEffect ( FX_EMP_BURST, self.GetOrigin(), self.GetAngles() );
-        DispatchParticleEffect ( FX_EMP_GIBS,  self.GetOrigin(), self.GetAngles() );
-        DispatchParticleEffect ( FX_EMP_SPARK, self.GetOrigin(), self.GetAngles() );
+        PZI_Util.DispatchEffect ( self, FX_EMP_BURST );
+        PZI_Util.DispatchEffect ( self, FX_EMP_GIBS );
+        PZI_Util.DispatchEffect ( self, FX_EMP_SPARK );
         EmitSoundOn            ( SFX_EMP_EXPLODE, self );
 
         local _buildableArr    =  [ ];
         local _buildable       =  null;
         local _buildableCount  =  0;
 
-        while ( _buildable = Entities.FindByClassnameWithin( _buildable, "obj_*", self.GetOrigin(), ENGIE_EMP_BUILDING_DISABLE_RANGE ) )
+        while ( _buildable = FindByClassnameWithin( _buildable, "obj_*", self.GetOrigin(), ENGIE_EMP_BUILDING_DISABLE_RANGE ) )
         {
             if ( _buildable != null )
             {
@@ -1153,7 +1158,8 @@ function EngieEMPThink()
             return;
         };
 
-        for ( local i = 0; i < _buildableArr.len(); i++ )
+        local _buildableArr_len = _buildableArr.len()
+        for ( local i = 0; i < _buildableArr_len; i++ )
         {
             local _buildable = _buildableArr[ i ];
 
@@ -1232,7 +1238,7 @@ function BuildableEMPThink()
     local _angAngles  =  self.GetAbsAngles();
     local _vecAngles  =  Vector( _angAngles.x, _angAngles.y, _angAngles.z );
 
-    DispatchParticleEffect( FX_EMP_ELECTRIC, self.GetOrigin() + Vector( 0, 0, 20 ), _vecAngles );
+    PZI_Util.DispatchEffect( self, FX_EMP_ELECTRIC );
 
     if ( Time() >= m_fReactivateTime )
     {
@@ -1259,16 +1265,14 @@ function KillMeThink()
 
 function ZombieWearableThink()
 {
-    if ( !IsPlayerAlive( this.GetOwner() ) )
+    if ( !this.GetOwner().IsAlive() )
     {
         SetPropInt( self, "m_nRenderMode", kRenderNone );
         return 1;
     }
-    else
-    {
-        SetPropInt( self, "m_nRenderMode", kRenderNormal );
-        return 5;
-    };
+
+    SetPropInt( self, "m_nRenderMode", kRenderNormal );
+    return 5;
 };
 
 function GameStateThink()
@@ -1288,13 +1292,12 @@ function GameStateThink()
         // no zombies, humans win
         local _hGameWin = SpawnEntityFromTable( "game_round_win",
         {
-            win_reason      = "0",
-            force_map_reset = "1",
-            TeamNum         = "2", // TF_TEAM_RED
-            switch_teams    = "0"
+            force_map_reset = true,
+            TeamNum         = TF_TEAM_RED, // TF_TEAM_RED
+            switch_teams    = false
         });
 
-        EntFireByHandle( _hGameWin, "RoundWin", "", 0, null, null );
+        _hGameWin.AcceptInput( "RoundWin", null, null, null );
         ::bGameStarted <- false;
         return FLT_MAX;
     };
@@ -1304,12 +1307,8 @@ function GameStateThink()
 
 function PyroFireballThink()
 {
-    local _vecOrigin  =  self.GetLocalOrigin()
-    local _angAngles  =  self.GetAbsAngles();
-    local _vecAngles  =  Vector( _angAngles.x, _angAngles.y, _angAngles.z );
-
-    DispatchParticleEffect( FX_FIREBALL_SMOKEBALL,  _vecOrigin, _vecAngles );
-    DispatchParticleEffect( FX_FIREBALL_TRAIL,      _vecOrigin, _vecAngles );
+    PZI_Util.DispatchEffect( self, FX_FIREBALL_SMOKEBALL );
+    PZI_Util.DispatchEffect( self, FX_FIREBALL_TRAIL );
 
     return 0.03;
 }

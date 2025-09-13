@@ -48,11 +48,6 @@ function GetPlayerUserID ( _hPlayer )
     return ( GetPropIntArray( TFPlayerManager, "m_iUserID", _hPlayer.entindex() ) );
 };
 
-function IsPlayerAlive ( _hPlayer )
-{
-    return ( GetPropInt( _hPlayer, "m_lifeState" ) == 0 );
-};
-
 function PlayerCount ( _team = -1 )
 {
     local playerCount   = 0;
@@ -170,9 +165,18 @@ function CreateExplosion (_vecLocation, _flDmg, _flRange, _hInflictor, _flForceM
     return;
 };
 
-function GetAllPlayers( team = null )
+function _GetAllPlayers( team = null )
 {
     for ( local i = 1, player; i <= MaxPlayers; player = PlayerInstanceFromIndex( i ), i++ )
+        if ( player && ( team == null || player.GetTeam() == team ) )
+            yield player
+
+    return
+};
+
+function GetAllPlayers( team = null )
+{
+    foreach ( player in PZI_Util.PlayerArray )
         if ( player && ( team == null || player.GetTeam() == team ) )
             yield player
 
@@ -254,14 +258,14 @@ function ShouldZombiesWin ( _hPlayer )
             // if the player is valid, on survivor (red) team, alive, and not the player who just died
             if ( ( _player != null ) &&
                  ( _player.GetTeam() == TF_TEAM_RED ) &&
-                 ( GetPropInt( _player, "m_lifeState" ) == ALIVE ) && _player != _hPlayer )
+                 ( _player.IsAlive() ) && _player != _hPlayer )
             {
                  _iValidSurvivors++;
             };
         };
     };
 
-    if ( _iValidPlayers == 0 ) // GetAllPlayers didn't find any players, should never happen
+    if ( !_iValidPlayers ) // GetAllPlayers didn't find any players, should never happen
     {
         return;
     };
@@ -276,15 +280,14 @@ function ShouldZombiesWin ( _hPlayer )
     {
         local _hGameWin = SpawnEntityFromTable( "game_round_win",
         {
-            win_reason      = "0",
-            force_map_reset = "1",
-            TeamNum         = "3", // TF_TEAM_BLUE
-            switch_teams    = "0"
+            force_map_reset = true,
+            TeamNum         = TF_TEAM_BLUE, // TF_TEAM_BLUE
+            switch_teams    = false
         } );
 
         // the zombies have won the round.
         ::bGameStarted <- false;
-        EntFireByHandle ( _hGameWin, "RoundWin", "", 0, null, null );
+        _hGameWin.AcceptInput( "RoundWin", null, null, null );
     }
     else
     {
@@ -292,7 +295,7 @@ function ShouldZombiesWin ( _hPlayer )
         {
             foreach( _hNextPlayer in GetAllPlayers() )
             {
-                if ( _hNextPlayer.GetTeam() == TF_TEAM_RED && GetPropInt( _hNextPlayer, "m_lifeState" ) == ALIVE )
+                if ( _hNextPlayer.GetTeam() == TF_TEAM_RED && _hNextPlayer.IsAlive() )
                 {
                     if ( !_hNextPlayer || _hNextPlayer == _hPlayer )
                         continue;
@@ -315,7 +318,7 @@ function ShouldZombiesWin ( _hPlayer )
         {
             foreach( _hNextPlayer in GetAllPlayers() )
             {
-                if ( _hNextPlayer.GetTeam() == TF_TEAM_RED && GetPropInt( _hNextPlayer, "m_lifeState" ) == ALIVE )
+                if ( _hNextPlayer.GetTeam() == TF_TEAM_RED && _hNextPlayer.IsAlive() )
                 {
                     if ( !_hNextPlayer )
                         continue;
@@ -480,7 +483,7 @@ function CTFPlayer_HasThisWeapon ( _WeaponIndentity, _bDeleteItemOnFind = false 
 function CTFPlayer_HasThisWearable ( _WearableClassname )
 {
     local _wearable = null;
-    while ( _wearable = Entities.FindByClassname( _wearable, "tf_wearable*" ) )
+    while ( _wearable = FindByClassname( _wearable, "tf_wearable*" ) )
     {
         if (  _wearable != null && _wearable.GetOwner() == this )
         {
@@ -516,71 +519,27 @@ function CTFPlayer_GiveZombieAbility()
 {
     local _sc = this.GetScriptScope();
 
-	// if (!_sc) return
-
     _sc.m_hZombieAbility <- null;
     _sc.m_fTimeNextCast  <- 0.0;
 
-    switch ( this.GetPlayerClass() )
-    {
-        case TF_CLASS_ENGINEER:
-            _sc.m_hZombieAbility <- CEngineerSapperNade( this );
-            break;
-        case TF_CLASS_SNIPER:
-            _sc.m_hZombieAbility <- CSniperSpitball( this );
-            break;
-        case TF_CLASS_SPY:
-            _sc.m_hZombieAbility <- CSpyReveal( this );
-            break;
-        case TF_CLASS_MEDIC:
-            _sc.m_hZombieAbility <- CMedicHeal( this );
-            break;
-        case TF_CLASS_HEAVYWEAPONS:
-            _sc.m_hZombieAbility <- CHeavyPassive( this );
-            break;
-        case TF_CLASS_PYRO:
-            _sc.m_hZombieAbility <- CPyroBlast( this );
-            break;
-        case TF_CLASS_SCOUT:
-            _sc.m_hZombieAbility <- CScoutPassive( this );
-            break;
-        case TF_CLASS_DEMOMAN:
-            _sc.m_hZombieAbility <- CDemoCharge( this );
-            break;
-        case TF_CLASS_SOLDIER:
-            _sc.m_hZombieAbility <- CSoldierJump( this );
-            break;
-        default:
-            _sc.m_hZombieAbility <- CHeavyPassive( this );
-            break;
-    };
+    _sc.m_hZombieAbility <- CZombieAbility.m_arrClassAbilities[ this.GetPlayerClass() ]( this )
 
     _sc.m_iCurrentAbilityType <- _sc.m_hZombieAbility.GetAbilityType();
 }
 
 function CTFPlayer_RemovePlayerWearables()
 {
-    local _wearable = null;
-    while ( _wearable = Entities.FindByClassname( _wearable, "tf_wearable*" ) )
-    {
-        if (  _wearable != null && _wearable.GetOwner() == this )
-        {
-            _wearable.Destroy();
-        };
-    };
-
-    return;
+    for ( local child = this.FirstMoveChild(); child && child instanceof CEconEntity; child = child.NextMovePeer() )
+        if ( child.GetClassname() == "tf_wearable" )
+            EntFireByHandle( child, "Kill", null, -1, null, null )
 };
 
 function CTFPlayer_SpawnEffect()
 {
-    local _angPlayer     =  this.GetLocalAngles();
-    local _vecAngPlayer  =  Vector( _angPlayer.x, _angPlayer.y, _angPlayer.z );
+    EmitSoundOn( "Halloween.spell_lightning_cast",   this );
+    EmitSoundOn( "Halloween.spell_lightning_impact", this );
 
-    EmitSoundOn            ( "Halloween.spell_lightning_cast",   this );
-    EmitSoundOn            ( "Halloween.spell_lightning_impact", this );
-
-    DispatchParticleEffect ( FX_ZOMBIE_SPAWN, this.GetLocalOrigin(), _vecAngPlayer );
+    PZI_Util.DispatchEffect( this, FX_ZOMBIE_SPAWN );
     return;
 };
 
@@ -588,11 +547,22 @@ function CTFPlayer_SpawnEffect()
 function CTFPlayer_GiveZombieCosmetics()
 {
     local wearable = PZI_Util.GiveWearableItem( this, arrZombieCosmeticIDX[ this.GetPlayerClass() ], arrZombieCosmeticModelStr[ this.GetPlayerClass() ] )
+
     SetPropBool( this, "m_bForcedSkin", true )
     SetPropInt( this, "m_nForcedSkin", this.GetSkin() + 4 )
     SetPropInt( this, "m_iPlayerSkinOverride", 1 )
     PZI_Util.SetTargetname( wearable, format( "__pzi_zombie_cosmetic_%d", this.entindex() ) )
-    this.GetScriptScope().m_hZombieWearable <- wearable 
+    this.GetScriptScope().m_hZombieWearable <- wearable
+}
+
+function CTFPlayer_GiveZombieEyeParticles()
+{
+    local eye_particle = szEyeParticles[RandomInt(0, szEyeParticles.len() - 1)]
+
+    if ( this.GetPlayerClass() != TF_CLASS_DEMOMAN )
+        PZI_Util.AttachParticle( this, eye_particle, "eyeglow_L" )
+
+    PZI_Util.AttachParticle( this, eye_particle, "eyeglow_R" )
 }
 
 // doesn't apply to ragdolls
@@ -609,13 +579,13 @@ function CTFPlayer_GiveZombieCosmetics_OLD()
     if ( "m_hZombieWearable" in _sc && _sc.m_hZombieWearable != null && _sc.m_hZombieWearable.IsValid() )
     _sc.m_hZombieWearable.Destroy();
 
-    local _zombieCosmetic  =  Entities.CreateByClassname( "tf_wearable" );
+    local _zombieCosmetic  =  CreateByClassname( "tf_wearable" );
     local _soulIDX         =  arrZombieCosmeticIDX[ this.GetPlayerClass() ];
 
     _zombieCosmetic.AddAttribute ( "player skin override", 1, -1 );
     SetPropInt                   ( this, "m_iPlayerSkinOverride", 1 );
 
-    Entities.DispatchSpawn       ( _zombieCosmetic );
+    DispatchSpawn       ( _zombieCosmetic );
     _zombieCosmetic.SetAbsOrigin ( this.GetLocalOrigin() );
     _zombieCosmetic.SetAbsAngles ( this.GetLocalAngles() );
 
@@ -645,9 +615,9 @@ function CTFPlayer_GiveZombieFXWearable()
     if ( _sc.m_hZombieFXWearable != null && _sc.m_hZombieFXWearable.IsValid() )
         _sc.m_hZombieFXWearable.Destroy();
 
-    local _zombieFXWearable = Entities.CreateByClassname( "tf_wearable" );
+    local _zombieFXWearable = CreateByClassname( "tf_wearable" );
 
-    Entities.DispatchSpawn         ( _zombieFXWearable );
+    DispatchSpawn         ( _zombieFXWearable );
     _zombieFXWearable.SetAbsOrigin ( this.GetLocalOrigin() );
     _zombieFXWearable.SetAbsAngles ( this.GetLocalAngles() );
 
@@ -732,7 +702,7 @@ function CTFPlayer_GiveZombieWeapon()
 
     local _playerClass  =  this.GetPlayerClass();
     local _hPlayerVM    =  GetPropEntity( this, "m_hViewModel" );
-    local _zombieWep    =  Entities.CreateByClassname( ZOMBIE_WEAPON_CLASSNAME[ _playerClass ] );
+    local _zombieWep    =  CreateByClassname( ZOMBIE_WEAPON_CLASSNAME[ _playerClass ] );
     local _idx          =  ZOMBIE_WEAPON_IDX[ _playerClass ];
 
     SetPropInt  ( _zombieWep, "m_AttributeManager.m_Item.m_iItemDefinitionIndex", _idx );
@@ -753,7 +723,7 @@ function CTFPlayer_GiveZombieWeapon()
 
     this.Weapon_Equip( _zombieWep );
 
-    local _zombieArms = Entities.CreateByClassname( "tf_wearable_vm" );
+    local _zombieArms = CreateByClassname( "tf_wearable_vm" );
 
     _zombieArms.SetAbsOrigin  ( this.GetLocalOrigin() );
     _zombieArms.SetAbsAngles  ( this.GetLocalAngles() );
@@ -794,7 +764,7 @@ function CTFPlayer_AddZombieAttribs()
 {
     local _iClassNum = this.GetPlayerClass();
 
-    if ( ZOMBIE_PLAYER_CONDS[ 0 ].len() > 0 )
+    if ( ZOMBIE_PLAYER_CONDS[ 0 ].len() )
     {
         foreach ( _cond in ZOMBIE_PLAYER_CONDS[ 0 ] ) // default conds
         {
@@ -802,7 +772,7 @@ function CTFPlayer_AddZombieAttribs()
         };
     };
 
-    if ( ZOMBIE_PLAYER_CONDS[ _iClassNum ].len() > 0 )
+    if ( ZOMBIE_PLAYER_CONDS[ _iClassNum ].len() )
     {
         foreach ( _cond in ZOMBIE_PLAYER_CONDS[ _iClassNum ] )  // class specific conds
         {
@@ -818,7 +788,7 @@ function CTFPlayer_AddZombieAttribs()
         };
     };
 
-    if ( ZOMBIE_PLAYER_ATTRIBS[ _iClassNum ].len() > 0 )
+    if ( ZOMBIE_PLAYER_ATTRIBS[ _iClassNum ].len() )
     {
         foreach ( _attrib in ZOMBIE_PLAYER_ATTRIBS[ _iClassNum ]  ) // class specific attribs
         {
@@ -833,7 +803,7 @@ function CTFPlayer_ClearZombieAttribs()
 {
     local _iClassNum = this.GetPlayerClass();
 
-    if ( ZOMBIE_PLAYER_CONDS[ 0 ].len() > 0 )
+    if ( ZOMBIE_PLAYER_CONDS[ 0 ].len() )
     {
         foreach ( _cond in ZOMBIE_PLAYER_CONDS[ 0 ] ) // default conds
         {
@@ -841,7 +811,7 @@ function CTFPlayer_ClearZombieAttribs()
         };
     };
 
-    if ( ZOMBIE_PLAYER_CONDS[ _iClassNum ].len() > 0 )
+    if ( ZOMBIE_PLAYER_CONDS[ _iClassNum ].len() )
     {
         foreach ( _cond in ZOMBIE_PLAYER_CONDS[ _iClassNum ] )  // class specific conds
         {
@@ -857,7 +827,7 @@ function CTFPlayer_ClearZombieAttribs()
         };
     };
 
-    if ( ZOMBIE_PLAYER_ATTRIBS[ _iClassNum ].len() > 0 )
+    if ( ZOMBIE_PLAYER_ATTRIBS[ _iClassNum ].len() )
     {
         foreach ( _attrib in ZOMBIE_PLAYER_ATTRIBS[ _iClassNum ]  ) // class specific attribs
         {
@@ -874,7 +844,7 @@ function CTFPlayer_AbilityStateToString()
 
 	// if (!_sc) return
 
-    if ( !IsPlayerAlive( this ) || _sc.m_fTimeNextCast == ACT_LOCKED )
+    if ( !this.IsAlive() || _sc.m_fTimeNextCast == ACT_LOCKED )
         return "off.vtf";
 
     local _bCanCast = ( _sc.m_fTimeNextCast <= Time() );
@@ -1109,7 +1079,7 @@ function CTFPlayer_ProcessEventQueue (  )
 
 	if (!_sc) return
 
-    if ( _sc.m_tblEventQueue.len() == 0 )
+    if ( !_sc.m_tblEventQueue.len() )
         return;
 
     local _nearestEvent     =  null;
