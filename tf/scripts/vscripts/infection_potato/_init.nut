@@ -1,36 +1,36 @@
 // --------------------------------------------------------------------------------------- //
 // Zombie Infection                                                                        //
 // --------------------------------------------------------------------------------------- //
-// All Code By: Harry Colquhoun (https://steamcommunity.com/profiles/76561198025795825)    //
-// Assets/Game Design by: Diva Dan (https://steamcommunity.com/profiles/76561198072146551) //
+// All Code By: Harry Colquhoun ( https://steamcommunity.com/profiles/76561198025795825 )    //
+// Assets/Game Design by: Diva Dan ( https://steamcommunity.com/profiles/76561198072146551 ) //
 // --------------------------------------------------------------------------------------- //
 // init script                                                                             //
 // --------------------------------------------------------------------------------------- //
 
 if ( "InfectionLoaded" in getroottable() )
-    return;
+    return
 
-::DEBUG_MODE           <- 0;
-::MaxPlayers           <- MaxClients().tointeger();
-::bGameStarted         <- false;
-::TFPlayerManager      <- FindByClassname( null, "tf_player_manager" );
-::GameRules            <- FindByClassname( null, "tf_gamerules" );
-::worldspawn           <- FindByClassname( null, "worldspawn" );
-::flTimeLastBell       <- 0.0;
-::flTimeLastSpawnSFX   <- 0.0;
-::PDLogic              <- null;
-::bSetupHasEnded       <- false;
-::bIsPayload           <- false;
+::DEBUG_MODE           <- 0
+::MaxPlayers           <- MaxClients().tointeger()
+::bGameStarted         <- false
+::TFPlayerManager      <- FindByClassname( null, "tf_player_manager" )
+::GameRules            <- FindByClassname( null, "tf_gamerules" )
+::worldspawn           <- FindByClassname( null, "worldspawn" )
+::flTimeLastBell       <- 0.0
+::flTimeLastSpawnSFX   <- 0.0
+::PDLogic              <- null
+::bSetupHasEnded       <- false
+::bIsPayload           <- false
 
-::bNewFirstWaveBehaviour <- false;
-::bNoPyroExplosionMod    <- false;
-::bZombiesDontSwitchInPlace     <- true;
+::bNewFirstWaveBehaviour <- false
+::bNoPyroExplosionMod    <- false
+::bZombiesDontSwitchInPlace     <- true
 
-const GAMEMODE_NAME =  "Potato Zombie Infection";
-const PZI_VERSION   =  "v0.1.0 - 09/05/2025";
+const GAMEMODE_NAME =  "Potato Zombie Infection"
+const PZI_VERSION   =  "v0.1.0 - 09/05/2025"
 
-::INFECTION_CONVARS <-
-{
+::INFECTION_CONVARS <- {
+
     "mp_autoteambalance"                   : 0,
     "mp_teams_unbalance_limit"             : 0,
     "mp_disable_respawn_times"             : 1,
@@ -59,43 +59,43 @@ const PZI_VERSION   =  "v0.1.0 - 09/05/2025";
     "mp_tournament_stopwatch"              : 0,
     "mp_tournament_redteamname"            : STRING_UI_TEAM_RED,
     "mp_tournament_blueteamname"           : STRING_UI_TEAM_BLUE,
-};
+}
 
-function SetInfectionConvars()
-{
-    foreach( _cvar, _value in INFECTION_CONVARS )
-    {
-        Convars.SetValue ( _cvar, _value );
-    };
-};
+function SetInfectionConvars() {
 
-SetInfectionConvars();
+    foreach( _cvar, _value in INFECTION_CONVARS ) {
+
+        Convars.SetValue ( _cvar, _value )
+    }
+}
+
+SetInfectionConvars()
 
 // engie nade
-PrecacheModel       ( MDL_WORLD_MODEL_ENGIE_NADE );
-PrecacheScriptSound ( "Building_Sentry.Damage" );
-PrecacheScriptSound ( "Halloween.PlayerEscapedUnderworld" );
-PrecacheScriptSound ( "Weapon_Grenade_Det_Pack.Timer" );
-PrecacheScriptSound ( "Weapon_GrenadeLauncher.DrumStop" );
-PrecacheScriptSound ( "Infection.EMP_Grenade_Explode" );
-PrecacheScriptSound ( "Infection.SniperSpitStart" );
-PrecacheScriptSound ( "Infection.SniperSpitEnd" );
-PrecacheScriptSound ( "Halloween.PumpkinExplode" );
-PrecacheScriptSound ( "Underwater.BulletImpact" );
-PrecacheScriptSound ( "Infection.SpyReveal" );
-PrecacheScriptSound ( "Powerup.PickUpRegeneration" );
-PrecacheScriptSound ( "DemoCharge.HitFlesh" );
-PrecacheScriptSound ( "Infection.SoldierPounce" );
-PrecacheScriptSound ( "Breakable.MatFlesh" );
-PrecacheScriptSound ( "Infection.DemoCharge" );
-PrecacheScriptSound ( "Infection.SoldierPounce" );
-PrecacheScriptSound ( "Infection.EngineerEMP" );
-PrecacheScriptSound ( "Infection.MedicZombieHeal" );
-PrecacheScriptSound ( "Infection.DemoChargeRamp" );
+PrecacheModel       ( MDL_WORLD_MODEL_ENGIE_NADE )
+PrecacheScriptSound ( "Building_Sentry.Damage" )
+PrecacheScriptSound ( "Halloween.PlayerEscapedUnderworld" )
+PrecacheScriptSound ( "Weapon_Grenade_Det_Pack.Timer" )
+PrecacheScriptSound ( "Weapon_GrenadeLauncher.DrumStop" )
+PrecacheScriptSound ( "Infection.EMP_Grenade_Explode" )
+PrecacheScriptSound ( "Infection.SniperSpitStart" )
+PrecacheScriptSound ( "Infection.SniperSpitEnd" )
+PrecacheScriptSound ( "Halloween.PumpkinExplode" )
+PrecacheScriptSound ( "Underwater.BulletImpact" )
+PrecacheScriptSound ( "Infection.SpyReveal" )
+PrecacheScriptSound ( "Powerup.PickUpRegeneration" )
+PrecacheScriptSound ( "DemoCharge.HitFlesh" )
+PrecacheScriptSound ( "Infection.SoldierPounce" )
+PrecacheScriptSound ( "Breakable.MatFlesh" )
+PrecacheScriptSound ( "Infection.DemoCharge" )
+PrecacheScriptSound ( "Infection.SoldierPounce" )
+PrecacheScriptSound ( "Infection.EngineerEMP" )
+PrecacheScriptSound ( "Infection.MedicZombieHeal" )
+PrecacheScriptSound ( "Infection.DemoChargeRamp" )
 
-PrecacheScriptSound ( "WeaponGrapplingHook.ImpactFlesh" );
-PrecacheScriptSound ( "Bounce.Flesh" );
-PrecacheScriptSound ( "Breakable.MatFlesh" );
+PrecacheScriptSound ( "WeaponGrapplingHook.ImpactFlesh" )
+PrecacheScriptSound ( "Bounce.Flesh" )
+PrecacheScriptSound ( "Breakable.MatFlesh" )
 
 arrZombieViewModelPath <-
 [
@@ -109,7 +109,7 @@ arrZombieViewModelPath <-
     MDL_ZOMBIE_VIEW_MODEL_PYRO,
     MDL_ZOMBIE_VIEW_MODEL_SPY,
     MDL_ZOMBIE_VIEW_MODEL_ENGINEER,
-];
+]
 
 arrZombieCosmeticIDX <-
 [
@@ -123,7 +123,7 @@ arrZombieCosmeticIDX <-
     5624, // pyro
     5623, // spy
     5621, // engineer
-];
+]
 
 arrTFClassDefaultArmPath <-
 [
@@ -137,7 +137,7 @@ arrTFClassDefaultArmPath <-
     "models/weapons/c_models/c_pyro_arms.mdl",
     "models/weapons/c_models/c_spy_arms.mdl",
     "models/weapons/c_models/c_engineer_arms.mdl",
-];
+]
 
 arrTFClassPlayerModels <-
 [
@@ -151,7 +151,7 @@ arrTFClassPlayerModels <-
     "models/player/pyro.mdl",
     "models/player/spy.mdl",
     "models/player/engineer.mdl",
-];
+]
 
 arrZombieArmVMPath <-
 [
@@ -165,7 +165,7 @@ arrZombieArmVMPath <-
     PrecacheModel( MDL_ZOMBIE_VIEW_MODEL_PYRO ),
     PrecacheModel( MDL_ZOMBIE_VIEW_MODEL_SPY ),
     PrecacheModel( MDL_ZOMBIE_VIEW_MODEL_ENGINEER ),
-];
+]
 
 arrZombieCosmeticModel <-
 [
@@ -179,7 +179,7 @@ arrZombieCosmeticModel <-
     PrecacheModel( MDL_ZOMBIE_PLAYER_MODEL_PYRO ),
     PrecacheModel( MDL_ZOMBIE_PLAYER_MODEL_SPY ),
     PrecacheModel( MDL_ZOMBIE_PLAYER_MODEL_ENGINEER ),
-];
+]
 
 arrZombieCosmeticModelStr <-
 [
@@ -193,7 +193,7 @@ arrZombieCosmeticModelStr <-
     MDL_ZOMBIE_PLAYER_MODEL_PYRO,
     MDL_ZOMBIE_PLAYER_MODEL_SPY,
     MDL_ZOMBIE_PLAYER_MODEL_ENGINEER,
-];
+]
 
 arrZombieFXWearable <-
 [
@@ -207,10 +207,10 @@ arrZombieFXWearable <-
     PrecacheModel( MDL_FX_WEARABLE_PYRO ),
     PrecacheModel( MDL_FX_WEARABLE_SPY ),
     PrecacheModel( MDL_FX_WEARABLE_ENGINEER ),
-];
+]
 
-PrecacheResources();
+PrecacheResources()
 
 printl( "_init.nut Complete." )
 printl( GAMEMODE_NAME + "\n" + PZI_VERSION )
-// InfectionLoaded <- true;
+// InfectionLoaded <- true

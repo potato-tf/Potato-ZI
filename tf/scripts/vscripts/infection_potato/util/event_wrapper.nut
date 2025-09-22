@@ -11,16 +11,16 @@
 /**********************************************************************************************************************
  *                                                   HOW IT WORKS                                                     *
  *                                                                                                                    *
- * internally, __CollectGameEventCallbacks appends a given scope (your table of OnGameEvent_ functions) to an array   *
+ * internally, __CollectGameEventCallbacks appends a given scope ( your table of OnGameEvent_ functions ) to an array   *
  * then the game calls every function for a given event in the order they are collected when that event is triggered. *
- * You can see how this works by typing "script __DumpScope(0, GameEventCallbacks)" in console.                       *
+ * You can see how this works by typing "script __DumpScope( 0, GameEventCallbacks )" in console.                       *
  *                                                                                                                    *
  * This wrapper effectively stuffs an array of functions into this GameEventCallbacks array.                          *
  * Which functions get called in which order is handled by this script instead of vscript_server.nut.                 *
  **********************************************************************************************************************/
 
 // TODO: Performance benchmarks.
-// We use this to dynamically add/remove events at potentially critical times (large piles of bot spawns mostly)
+// We use this to dynamically add/remove events at potentially critical times ( large piles of bot spawns mostly )
 // So far I haven't seen any PERF WARNINGS in console using this, some bot tags may yell on bot/player spawn.
 
 PZI_CREATE_SCOPE( "__pzi_eventwrapper", "PZI_Events" )
@@ -28,7 +28,7 @@ PZI_CREATE_SCOPE( "__pzi_eventwrapper", "PZI_Events" )
 /**************************************************************************************************************
  * If MAX_EVENT_FUNCTABLES is 8 and you try to do                                                             *
  *                                                                                                            *
- *     PZI_EVENT( "player_death", "PlayerDeath", @(params) printl(params.userid), 10 )                        *
+ *     PZI_EVENT( "player_death", "PlayerDeath", @( params ) printl( params.userid ), 10 )                        *
  *                                                                                                            *
  * you will get errors 				                                                                          *
  *                                                                                                            *
@@ -206,7 +206,7 @@ function PZI_Events::CollectEvents() {
 
 function PZI_Events::ClearEvents( index = "unordered" ) {
 
-    if (index == null || index == "*" ) {
+    if ( index == null || index == "*" ) {
 
         PZI_Events.EventsPreCollect <- {}
         PZI_Events.CollectedEvents  <- {}

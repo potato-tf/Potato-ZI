@@ -7,18 +7,18 @@ local DMG_MULT_MAX = 1.75 // dmg vulnerability for groups
 local DMG_MULT_PER_PLAYER = 0.15 // dmg vulnerability for each additional nearby teammate
 local UPDATE_INTERVAL = 1.0
 
-PZI_EVENT("player_spawn", "DamageRadiusMult_OnPlayerSpawn", function(params) {
+PZI_EVENT( "player_spawn", "DamageRadiusMult_OnPlayerSpawn", function( params ) {
 
-    local player = GetPlayerFromUserID(params.userid)
+    local player = GetPlayerFromUserID( params.userid )
 
-    if (player.GetTeam() != TF_TEAM_RED) return
+    if ( player.GetTeam() != TF_TEAM_RED ) return
 
     local scope = player.GetScriptScope()
     local dmg_mult = DMG_MULT_MIN
     local cooldown_time = 0.0
 
-    for (local survivor; survivor = FindByClassnameWithin(survivor, "player", player.GetOrigin(), DMG_MULT_RADIUS);)
-    {
+    for ( local survivor; survivor = FindByClassnameWithin( survivor, "player", player.GetOrigin(), DMG_MULT_RADIUS ); ) {
+
         if ( dmg_mult >= DMG_MULT_MAX )
             break
 
@@ -36,12 +36,12 @@ PZI_EVENT("player_spawn", "DamageRadiusMult_OnPlayerSpawn", function(params) {
 
         local _dmg_mult = DMG_MULT_MIN
 
-        for ( local survivor; survivor = FindByClassnameWithin( survivor, "player", player.GetOrigin(), DMG_MULT_RADIUS ); )
-        {
-            if (_dmg_mult >= DMG_MULT_MAX)
+        for ( local survivor; survivor = FindByClassnameWithin( survivor, "player", player.GetOrigin(), DMG_MULT_RADIUS ); ) {
+
+            if ( _dmg_mult >= DMG_MULT_MAX )
                 break
 
-            if (survivor.GetTeam() == TF_TEAM_RED && survivor != player)
+            if ( survivor.GetTeam() == TF_TEAM_RED && survivor != player )
                 _dmg_mult += DMG_MULT_PER_PLAYER
         }
 
@@ -52,14 +52,14 @@ PZI_EVENT("player_spawn", "DamageRadiusMult_OnPlayerSpawn", function(params) {
         cooldown_time = Time() + UPDATE_INTERVAL
     }
     scope.ThinkTable.DamageRadiusMult <- DamageRadiusMult
-})
+} )
 
-PZI_EVENT( "OnTakeDamage", "DamageRadiusMult_OnTakeDamage", function(params) {
+PZI_EVENT( "OnTakeDamage", "DamageRadiusMult_OnTakeDamage", function( params ) {
 
     local victim = params.const_entity
-    local victim_scope = PZI_Util.GetEntScope(victim)
+    local victim_scope = PZI_Util.GetEntScope( victim )
 
     if ( victim.IsPlayer() && victim.GetTeam() == TF_TEAM_RED && "DmgMult" in victim_scope )
         params.damage *= victim_scope.DmgMult
 
-})
+} )

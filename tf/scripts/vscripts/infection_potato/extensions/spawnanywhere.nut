@@ -20,44 +20,44 @@ const SUMMON_RADIUS = 512
 
 const PLAYER_HULL_HEIGHT = 82
 
-CONST.HIDEHUD_GHOST <- (HIDEHUD_CROSSHAIR|HIDEHUD_HEALTH|HIDEHUD_WEAPONSELECTION|HIDEHUD_METAL|HIDEHUD_BUILDING_STATUS|HIDEHUD_CLOAK_AND_FEIGN|HIDEHUD_PIPES_AND_CHARGE)
-CONST.TRACEMASK <- (CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_PLAYERCLIP|CONTENTS_WINDOW|CONTENTS_MONSTER|CONTENTS_GRATE)
+CONST.HIDEHUD_GHOST <- ( HIDEHUD_CROSSHAIR|HIDEHUD_HEALTH|HIDEHUD_WEAPONSELECTION|HIDEHUD_METAL|HIDEHUD_BUILDING_STATUS|HIDEHUD_CLOAK_AND_FEIGN|HIDEHUD_PIPES_AND_CHARGE )
+CONST.TRACEMASK <- ( CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_PLAYERCLIP|CONTENTS_WINDOW|CONTENTS_MONSTER|CONTENTS_GRATE )
 
 PrecacheModel( NEST_MODEL )
 PrecacheModel( SNIPER_SKELETON )
 
 PZI_SpawnAnywhere.ActiveNests <- {}
 
-function PZI_SpawnAnywhere::SetGhostMode(player) {
+function PZI_SpawnAnywhere::SetGhostMode( player ) {
 
-    local scope = PZI_Util.GetEntScope(player)
+    local scope = PZI_Util.GetEntScope( player )
 
-    SetPropInt(player, "m_nRenderMode", kRenderTransColor)
-    SetPropInt(player, "m_clrRender", 0)
+    SetPropInt( player, "m_nRenderMode", kRenderTransColor )
+    SetPropInt( player, "m_clrRender", 0 )
 
-    SetPropInt(player, "m_afButtonDisabled", IN_ATTACK2)
+    SetPropInt( player, "m_afButtonDisabled", IN_ATTACK2 )
 
     scope.m_iFlags <- ZBIT_PYRO_DONT_EXPLODE
 
     scope.playermodel <- player.GetModelName()
 
-    // player.SetPlayerClass(TF_CLASS_SCOUT)
-    // SetPropInt(player, "m_Shared.m_iDesiredPlayerClass", TF_CLASS_SCOUT)
+    // player.SetPlayerClass( TF_CLASS_SCOUT )
+    // SetPropInt( player, "m_Shared.m_iDesiredPlayerClass", TF_CLASS_SCOUT )
 
-    // player.SetScriptOverlayMaterial("colorcorrection/desaturated.vmt")
+    // player.SetScriptOverlayMaterial( "colorcorrection/desaturated.vmt" )
 
-    player.AddHudHideFlags(CONST.HIDEHUD_GHOST)
+    player.AddHudHideFlags( CONST.HIDEHUD_GHOST )
 
     for ( local child = player.FirstMoveChild(); child; child = child.NextMovePeer() )
         if ( child instanceof CEconEntity )
-            EntFireByHandle(child, "Kill", "", -1, null, null)
+            EntFireByHandle( child, "Kill", "", -1, null, null )
         else
             child.DisableDraw()
 
-    PZI_Util.ScriptEntFireSafe( player, "self.AddCustomAttribute(`dmg taken increased`, 0, -1)", -1 )
-    PZI_Util.ScriptEntFireSafe( player, "self.AddCustomAttribute(`move speed bonus`, 5, -1)", -1 )
-    PZI_Util.ScriptEntFireSafe( player, "self.AddCustomAttribute(`major increased jump height`, 3, -1)", -1 )
-    PZI_Util.ScriptEntFireSafe( player, "self.AddCustomAttribute(`voice pitch scale`, 0, -1)", -1 )
+    PZI_Util.ScriptEntFireSafe( player, "self.AddCustomAttribute( `dmg taken increased`, 0, -1 )", -1 )
+    PZI_Util.ScriptEntFireSafe( player, "self.AddCustomAttribute( `move speed bonus`, 5, -1 )", -1 )
+    PZI_Util.ScriptEntFireSafe( player, "self.AddCustomAttribute( `major increased jump height`, 3, -1 )", -1 )
+    PZI_Util.ScriptEntFireSafe( player, "self.AddCustomAttribute( `voice pitch scale`, 0, -1 )", -1 )
 
     player.SetCollisionGroup( COLLISION_GROUP_IN_VEHICLE )
     player.SetSolidFlags( FSOLID_NOT_SOLID )
@@ -66,7 +66,7 @@ function PZI_SpawnAnywhere::SetGhostMode(player) {
     player.AddFlag( FL_DONTTOUCH|FL_NOTARGET )
 }
 
-function PZI_SpawnAnywhere::BeginSummonSequence(player, origin) {
+function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
 
     local scope = player.GetScriptScope() || ( player.ValidateScriptScope(), player.GetScriptScope() )
 
@@ -74,67 +74,67 @@ function PZI_SpawnAnywhere::BeginSummonSequence(player, origin) {
         delete scope.ThinkTable.GhostThink
 
     //should already be invis but whatever
-    SetPropInt(player, "m_nRenderMode", kRenderTransColor)
-    SetPropInt(player, "m_clrRender", 0)
+    SetPropInt( player, "m_nRenderMode", kRenderTransColor )
+    SetPropInt( player, "m_clrRender", 0 )
 
-    player.SetAbsOrigin(origin + Vector(0, 0, 20))
+    player.SetAbsOrigin( origin + Vector( 0, 0, 20 ) )
 
-    SetPropInt(player, "m_afButtonForced", IN_DUCK)
-    SetPropBool(player, "m_Local.m_bDucked", true)
-    player.AddFlag(FL_DUCKING|FL_ATCONTROLS)
+    SetPropInt( player, "m_afButtonForced", IN_DUCK )
+    SetPropBool( player, "m_Local.m_bDucked", true )
+    player.AddFlag( FL_DUCKING|FL_ATCONTROLS )
 
-    player.SetAbsVelocity(Vector())
-    // player.AcceptInput("SetForcedTauntCam", "1", null, null)
-    player.AddCustomAttribute("no_jump", 1, -1)
+    player.SetAbsVelocity( Vector() )
+    player.AcceptInput( "SetForcedTauntCam", "1", null, null )
+    player.AddCustomAttribute( "no_jump", 1, -1 )
 
     scope.m_iFlags = scope.m_iFlags | ZBIT_PENDING_ZOMBIE
 
-    local dummy_skeleton = CreateByClassname("funCBaseFlex")
+    local dummy_skeleton = CreateByClassname( "funCBaseFlex" )
 
-    dummy_skeleton.SetModel(SNIPER_SKELETON)
-    dummy_skeleton.SetAbsOrigin(origin)
-    dummy_skeleton.SetAbsAngles(QAngle(0, player.EyeAngles().y, 0))
+    dummy_skeleton.SetModel( SNIPER_SKELETON )
+    dummy_skeleton.SetAbsOrigin( origin )
+    dummy_skeleton.SetAbsAngles( QAngle( 0, player.EyeAngles().y, 0 ) )
 
     dummy_skeleton.DispatchSpawn()
     dummy_skeleton.ValidateScriptScope()
 
-    SetPropInt(dummy_skeleton, "m_nRenderMode", kRenderTransColor)
-    SetPropInt(dummy_skeleton, "m_clrRender", 0)
+    SetPropInt( dummy_skeleton, "m_nRenderMode", kRenderTransColor )
+    SetPropInt( dummy_skeleton, "m_clrRender", 0 )
 
-    // dummy_skeleton.ResetSequence(dummy_skeleton.LookupSequence(format("spawn0%d", RandomInt(2, 7)))) //spawn01 is cursed
-    // dummy_skeleton.ResetSequence(dummy_skeleton.LookupSequence("spawn04"))
+    // dummy_skeleton.ResetSequence( dummy_skeleton.LookupSequence( format( "spawn0%d", RandomInt( 2, 7 ) ) ) ) //spawn01 is cursed
+    // dummy_skeleton.ResetSequence( dummy_skeleton.LookupSequence( "spawn04" ) )
 
-    local spawn_seq = RandomInt(3, 4)
-    local spawn_seq_name = format("spawn0%d", spawn_seq)
+    local spawn_seq = RandomInt( 3, 4 )
+    local spawn_seq_name = format( "spawn0%d", spawn_seq )
 
-    dummy_skeleton.ResetSequence(dummy_skeleton.LookupSequence(spawn_seq_name))
-    dummy_skeleton.SetPlaybackRate(SUMMON_ANIM_MULT)
+    dummy_skeleton.ResetSequence( dummy_skeleton.LookupSequence( spawn_seq_name ) )
+    dummy_skeleton.SetPlaybackRate( SUMMON_ANIM_MULT )
 
-    local dummy_player = CreateByClassname("funCBaseFlex")
+    local dummy_player = CreateByClassname( "funCBaseFlex" )
 
-    // dummy_player.SetModel(scope.playermodel)
-    dummy_player.SetModel(format("models/player/%s_infected.mdl", PZI_Util.Classes[player.GetPlayerClass()]))
-    dummy_player.SetAbsOrigin(origin)
-    dummy_player.SetSkin(player.GetSkin())
-    dummy_player.AcceptInput("SetParent", "!activator", dummy_skeleton, dummy_skeleton)
-    SetPropInt(dummy_player, "m_fEffects", EF_BONEMERGE|EF_BONEMERGE_FASTCULL)
+    // dummy_player.SetModel( scope.playermodel )
+    dummy_player.SetModel( format( "models/player/%s_infected.mdl", PZI_Util.Classes[player.GetPlayerClass()] ) )
+    dummy_player.SetAbsOrigin( origin )
+    dummy_player.SetSkin( player.GetSkin() )
+    dummy_player.AcceptInput( "SetParent", "!activator", dummy_skeleton, dummy_skeleton )
+    SetPropInt( dummy_player, "m_fEffects", EF_BONEMERGE|EF_BONEMERGE_FASTCULL )
     dummy_player.DispatchSpawn()
 
-    player.RemoveCustomAttribute("dmg taken increased")
-    player.SetHealth(1)
+    player.RemoveCustomAttribute( "dmg taken increased" )
+    player.SetHealth( 1 )
     player.RemoveHudHideFlags( CONST.HIDEHUD_GHOST )
     player.RemoveFlag( FL_NOTARGET|FL_DONTTOUCH )
     player.SetSolid( SOLID_BBOX )
     player.SetSolidFlags( 0 )
     player.SetCollisionGroup( COLLISION_GROUP_PLAYER )
 
-    PZI_Util.ScriptEntFireSafe( player, "self.AddCond(TF_COND_HALLOWEEN_QUICK_HEAL)", SUMMON_HEAL_DELAY )
+    PZI_Util.ScriptEntFireSafe( player, "self.AddCond( TF_COND_HALLOWEEN_QUICK_HEAL )", SUMMON_HEAL_DELAY )
 
     function SummonPreSpawn() {
 
-        if (player.GetHealth() >= player.GetMaxHealth() * SUMMON_MAX_OVERHEAL_MULT)
-        {
-            player.RemoveCond(TF_COND_HALLOWEEN_QUICK_HEAL)
+        if ( player.GetHealth() >= player.GetMaxHealth() * SUMMON_MAX_OVERHEAL_MULT ) {
+
+            player.RemoveCond( TF_COND_HALLOWEEN_QUICK_HEAL )
             delete this.ThinkTable.SummonPreSpawn
         }
     }
@@ -145,48 +145,48 @@ function PZI_SpawnAnywhere::BeginSummonSequence(player, origin) {
     local attrib = ZOMBIE_PLAYER_ATTRIBS[player.GetPlayerClass()]
     local lastattrib = attrib[attrib.len() - 1]
 
-    player.AddCustomAttribute(lastattrib[0], lastattrib[1], lastattrib[2])
+    player.AddCustomAttribute( lastattrib[0], lastattrib[1], lastattrib[2] )
 
     local dummy_scope = dummy_skeleton.GetScriptScope()
 
     function SpawnPlayer() {
 
-        if ( !player || !player.IsValid() || !player.IsAlive() )
-        {
+        if ( !player || !player.IsValid() || !player.IsAlive() ) {
+
             self.Kill()
             return
         }
 
         // animation finished, "spawn" player
-        if ( GetPropFloat( self, "m_flCycle" ) >= 0.99 )
-        {
-            SendGlobalGameEvent("hide_annotation", { id = player.entindex() })
+        if ( GetPropFloat( self, "m_flCycle" ) >= 0.99 ) {
 
-            player.RemoveFlag(FL_ATCONTROLS|FL_DUCKING)
-            SetPropInt(player, "m_afButtonForced", 0)
-            SetPropBool(player, "m_Local.m_bDucked", false)
+            SendGlobalGameEvent( "hide_annotation", { id = player.entindex() } )
 
-            SetPropInt(player, "m_nRenderMode", kRenderNormal)
-            SetPropInt(player, "m_clrRender", 0xFFFFFFFF)
-            // player.AcceptInput("SetForcedTauntCam", "0", null, null)
+            player.RemoveFlag( FL_ATCONTROLS|FL_DUCKING )
+            SetPropInt( player, "m_afButtonForced", 0 )
+            SetPropBool( player, "m_Local.m_bDucked", false )
 
-            player.RemoveCustomAttribute("no_jump")
-            player.RemoveCustomAttribute("move speed bonus")
-            player.RemoveCustomAttribute("major increased jump height")
-            player.RemoveCustomAttribute("voice pitch scale")
+            SetPropInt( player, "m_nRenderMode", kRenderNormal )
+            SetPropInt( player, "m_clrRender", 0xFFFFFFFF )
+            player.AcceptInput( "SetForcedTauntCam", "0", null, null )
 
-            for (local child = player.FirstMoveChild(); child; child = child.NextMovePeer())
+            player.RemoveCustomAttribute( "no_jump" )
+            player.RemoveCustomAttribute( "move speed bonus" )
+            player.RemoveCustomAttribute( "major increased jump height" )
+            player.RemoveCustomAttribute( "voice pitch scale" )
+
+            for ( local child = player.FirstMoveChild(); child; child = child.NextMovePeer() )
                 child.EnableDraw()
 
-            if (player.GetPlayerClass() == TF_CLASS_PYRO)
+            if ( player.GetPlayerClass() == TF_CLASS_PYRO )
                 scope.m_iFlags = scope.m_iFlags & ~ZBIT_PYRO_DONT_EXPLODE
 
-            SetPropInt(player, "m_afButtonDisabled", 0)
+            SetPropInt( player, "m_afButtonDisabled", 0 )
             player.GiveZombieCosmetics()
             player.GiveZombieEyeParticles()
             // PZI_Util.ScriptEntFireSafe( player, "self.GiveZombieCosmetics(); self.GiveZombieEyeParticles()" )
 
-            EntFireByHandle(self, "Kill", "", -1, null, null)
+            EntFireByHandle( self, "Kill", "", -1, null, null )
             return 10
         }
 
@@ -195,10 +195,10 @@ function PZI_SpawnAnywhere::BeginSummonSequence(player, origin) {
     }
 
     dummy_scope.SpawnPlayer <- SpawnPlayer
-    AddThinkToEnt(dummy_skeleton, "SpawnPlayer")
+    AddThinkToEnt( dummy_skeleton, "SpawnPlayer" )
 }
 
-function PZI_SpawnAnywhere::CreateNest(player, origin = null) {
+function PZI_SpawnAnywhere::CreateNest( player, origin = null ) {
 
     local nest = CreateByClassname( "tf_generic_bomb" )
 
@@ -227,7 +227,7 @@ function PZI_SpawnAnywhere::CreateNest(player, origin = null) {
 
     NestScope <- nest.GetScriptScope()
 
-    foreach (k, v in PZI_SpawnAnywhere.ActiveNests)
+    foreach ( k, v in PZI_SpawnAnywhere.ActiveNests )
         NestScope[k] <- v
 
     function NestScope::NestGenerator() {
@@ -270,34 +270,34 @@ function PZI_SpawnAnywhere::CreateNest(player, origin = null) {
 
     }
 
-    AddThinkToEnt(nest, "NestThink")
+    AddThinkToEnt( nest, "NestThink" )
 }
 
-PZI_EVENT("player_hurt", "SpawnAnywhere_RemoveQuickHeal", function(params) {
+PZI_EVENT( "player_hurt", "SpawnAnywhere_RemoveQuickHeal", function( params ) {
 
-    local player = GetPlayerFromUserID(params.userid)
+    local player = GetPlayerFromUserID( params.userid )
 
-    if (player.InCond(TF_COND_HALLOWEEN_QUICK_HEAL) && player.GetTeam() == TF_TEAM_BLUE)
-        player.RemoveCond(TF_COND_HALLOWEEN_QUICK_HEAL)
+    if ( player.InCond( TF_COND_HALLOWEEN_QUICK_HEAL ) && player.GetTeam() == TF_TEAM_BLUE )
+        player.RemoveCond( TF_COND_HALLOWEEN_QUICK_HEAL )
 
-})
+} )
 
-PZI_EVENT("player_activate", "SpawnAnywhere_PlayerActivate", function(params) { GetPlayerFromUserID(params.userid).ValidateScriptScope() })
-PZI_EVENT("player_team", "SpawnAnywhere_PlayerTeam", function(params) { GetPlayerFromUserID(params.userid).ValidateScriptScope() })
+PZI_EVENT( "player_activate", "SpawnAnywhere_PlayerActivate", function( params ) { GetPlayerFromUserID( params.userid ).ValidateScriptScope() } )
+PZI_EVENT( "player_team", "SpawnAnywhere_PlayerTeam", function( params ) { GetPlayerFromUserID( params.userid ).ValidateScriptScope() } )
 
-PZI_EVENT("player_spawn", "SpawnAnywhere_PlayerSpawn", function(params) {
+PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
 
-    local player = GetPlayerFromUserID(params.userid)
+    local player = GetPlayerFromUserID( params.userid )
 
     // make everyone non-solid
     // player.SetCollisionGroup( TFCOLLISION_GROUP_COMBATOBJECT )
 
     local scope = player.GetScriptScope() || ( player.ValidateScriptScope(), player.GetScriptScope() )
 
-    if ( GetPropInt(player, "m_nRenderMode") == kRenderTransColor ) {
+    if ( GetPropInt( player, "m_nRenderMode" ) == kRenderTransColor ) {
 
-        SetPropInt(player, "m_nRenderMode", kRenderNormal)
-        SetPropInt(player, "m_clrRender", 0xFFFFFFFF)
+        SetPropInt( player, "m_nRenderMode", kRenderNormal )
+        SetPropInt( player, "m_clrRender", 0xFFFFFFFF )
     }
 
     // BLU LOGIC BEYOND THIS POINT
@@ -313,7 +313,7 @@ PZI_EVENT("player_spawn", "SpawnAnywhere_PlayerSpawn", function(params) {
     PZI_SpawnAnywhere.SetGhostMode( player )
 
     // make bots behave like mvm spy bots
-    if ( IsPlayerABot(player) ) {
+    if ( IsPlayerABot( player ) ) {
 
         PZI_Util.ScriptEntFireSafe( player, @"
 
@@ -322,7 +322,7 @@ PZI_EVENT("player_spawn", "SpawnAnywhere_PlayerSpawn", function(params) {
 
         ", RandomFloat( 0.1, 1.2 ) ) // random delay to avoid predictable spawn waves
     }
-        
+
     PZI_Util.TeleportNearVictim( player, GetRandomPlayers( 1, TF_TEAM_RED )[0], 128 )
 
     local spawn_hint = CreateByClassname( "move_rope" )
@@ -331,13 +331,13 @@ PZI_EVENT("player_spawn", "SpawnAnywhere_PlayerSpawn", function(params) {
     spawn_hint.DispatchSpawn()
     SetPropBool( spawn_hint, STRING_NETPROP_PURGESTRINGS, true )
 
-    PZI_Util.ScriptEntFireSafe(spawn_hint, format(@"
+    PZI_Util.ScriptEntFireSafe( spawn_hint, format( @"
 
         local player_idx = %d
 
         local origin = self.GetOrigin()
-        
-        SendGlobalGameEvent(`show_annotation`, {
+
+        SendGlobalGameEvent( `show_annotation`, {
 
             text = `Spawn Here!`
             lifetime = -1
@@ -348,9 +348,9 @@ PZI_EVENT("player_spawn", "SpawnAnywhere_PlayerSpawn", function(params) {
             worldposY = origin.y
             worldposZ = origin.z
             id = player_idx
-        })
+        } )
 
-    ", player.entindex()), 0.5 )
+    ", player.entindex() ), 0.5 )
 
     function GhostThink() {
 
@@ -363,41 +363,41 @@ PZI_EVENT("player_spawn", "SpawnAnywhere_PlayerSpawn", function(params) {
             ignore = player
         }
 
-        TraceLineEx(nav_trace)
+        TraceLineEx( nav_trace )
 
         // no world geometry found
-        if (!nav_trace.hit) return
+        if ( !nav_trace.hit ) return
 
         tracepos = nav_trace.pos
 
         // trace too far away
         if ( ( player.GetOrigin() - tracepos ).Length2D() > MAX_SPAWN_DISTANCE ) return
 
-        local nav_area = GetNearestNavArea(tracepos, NEAREST_NAV_RADIUS, false, true)
+        local nav_area = GetNearestNavArea( tracepos, NEAREST_NAV_RADIUS, false, true )
 
         // not a valid area
-        if (!nav_area || !nav_area.IsFlat() || PZI_Util.IsPointInTrigger( nav_area.GetCenter() + Vector( 0, 0, 64 ), "trigger_hurt" )) return
+        if ( !nav_area || !nav_area.IsFlat() || PZI_Util.IsPointInTrigger( nav_area.GetCenter() + Vector( 0, 0, 64 ), "trigger_hurt" ) ) return
 
         // smooth movement for the annotation instead of snapping
-        // spawn_hint.KeyValueFromVector("origin", hull_trace.pos + Vector(0, 0, 20))
+        // spawn_hint.KeyValueFromVector( "origin", hull_trace.pos + Vector( 0, 0, 20 ) )
 
         // check if we can fit here
         local hull_trace = {
 
             start   = nav_trace.pos
             end     = nav_trace.pos
-            hullmin = Vector(-24, -24, 20)
-            hullmax = Vector(24, 24, 84)
+            hullmin = Vector( -24, -24, 20 )
+            hullmax = Vector( 24, 24, 84 )
             mask    = CONST.TRACEMASK
             ignore  = player
         }
 
-        TraceHull(hull_trace)
+        TraceHull( hull_trace )
 
         spawn_area = hull_trace.hit ? null : nav_area
 
         if ( spawn_area )
-            spawn_hint.KeyValueFromVector("origin", spawn_area.GetCenter() + Vector(0, 0, 20))
+            spawn_hint.KeyValueFromVector( "origin", spawn_area.GetCenter() + Vector( 0, 0, 20 ) )
 
         // DebugDrawBox( nav_area.GetCenter(), hull_trace.hullmin, hull_trace.hullmax, spawn_area ? 0 : 255, spawn_area ? 255 : 0, 0, 255, 0.1 )
 
@@ -411,7 +411,7 @@ PZI_EVENT("player_spawn", "SpawnAnywhere_PlayerSpawn", function(params) {
 
                 for ( local survivor; survivor = FindByClassnameWithin( survivor, "player", tracepos, SUMMON_RADIUS ); )
                     if ( survivor.GetTeam() == TF_TEAM_RED )
-                        return ClientPrint(player, HUD_PRINTTALK, "Too close to a survivor!")
+                        return ClientPrint( player, HUD_PRINTTALK, "Too close to a survivor!" )
 
                 PZI_SpawnAnywhere.BeginSummonSequence( player, spawn_area.GetCenter() )
             }
@@ -420,56 +420,56 @@ PZI_EVENT("player_spawn", "SpawnAnywhere_PlayerSpawn", function(params) {
             // loop through active nests and find the one with the most players nearby
             else if ( buttons & IN_ATTACK2 && PZI_SpawnAnywhere.ActiveNests.len() ) {
 
-                spawn_nests = PZI_SpawnAnywhere.ActiveNests.keys().filter( @(nest) PZI_SpawnAnywhere.ActiveNests[nest].last_takedamage < Time() - 2.0 )
+                spawn_nests = PZI_SpawnAnywhere.ActiveNests.keys().filter( @( nest ) PZI_SpawnAnywhere.ActiveNests[nest].last_takedamage < Time() - 2.0 )
 
                 if ( !spawn_nests.len() ) return
 
-                PZI_SpawnAnywhere.BeginSummonSequence(player, spawn_nests.sort(@(a, b) a.nearby_players > b.nearby_players)[0].nest_origin)
+                PZI_SpawnAnywhere.BeginSummonSequence( player, spawn_nests.sort( @( a, b ) a.nearby_players > b.nearby_players )[0].nest_origin )
 
                 return
             }
         }
     }
     scope.ThinkTable.GhostThink <- GhostThink
-})
+} )
 
-PZI_EVENT("player_death", "SpawnAnywhere_PlayerDeath", function(params) {
+PZI_EVENT( "player_death", "SpawnAnywhere_PlayerDeath", function( params ) {
 
-    local player = GetPlayerFromUserID(params.userid)
+    local player = GetPlayerFromUserID( params.userid )
 
-    if (player.GetTeam() == TF_TEAM_BLUE)
-    {
-        player.RemoveFlag(FL_ATCONTROLS|FL_DUCKING|FL_DONTTOUCH|FL_NOTARGET)
-        player.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null)
-        AddThinkToEnt(player, null)
+    if ( player.GetTeam() == TF_TEAM_BLUE ) {
+
+        player.RemoveFlag( FL_ATCONTROLS|FL_DUCKING|FL_DONTTOUCH|FL_NOTARGET )
+        player.AcceptInput( "DispatchEffect", "ParticleEffectStop", null, null )
+        AddThinkToEnt( player, null )
     }
-})
+} )
 
 
 
-// local spawn_hint_teleporter = CreateByClassname("obj_teleporter")
-// spawn_hint_teleporter.KeyValueFromString("targetname", hint_teleporter_name)
+// local spawn_hint_teleporter = CreateByClassname( "obj_teleporter" )
+// spawn_hint_teleporter.KeyValueFromString( "targetname", hint_teleporter_name )
 
 // spawn_hint_teleporter.DispatchSpawn()
-// spawn_hint_teleporter.AddEFlags(EFL_NO_THINK_FUNCTION)
+// spawn_hint_teleporter.AddEFlags( EFL_NO_THINK_FUNCTION )
 
-// spawn_hint_teleporter.SetSolid(SOLID_NONE)
-// spawn_hint_teleporter.SetSolidFlags(FSOLID_NOT_SOLID)
+// spawn_hint_teleporter.SetSolid( SOLID_NONE )
+// spawn_hint_teleporter.SetSolidFlags( FSOLID_NOT_SOLID )
 // spawn_hint_teleporter.DisableDraw()
 
-// // spawn_hint_teleporter.SetModel("models/player/heavy.mdl")
-// SetPropBool(spawn_hint_teleporter, "m_bPlacing", true)
-// SetPropInt(spawn_hint_teleporter, "m_fObjectFlags", 2)
-// SetPropEntity(spawn_hint_teleporter, "m_hBuilder", player)
+// // spawn_hint_teleporter.SetModel( "models/player/heavy.mdl" )
+// SetPropBool( spawn_hint_teleporter, "m_bPlacing", true )
+// SetPropInt( spawn_hint_teleporter, "m_fObjectFlags", 2 )
+// SetPropEntity( spawn_hint_teleporter, "m_hBuilder", player )
 
-// // SetPropString(spawn_hint_teleporter, "m_iClassname", "__no_distance_text_hack")
-// spawn_hint_teleporter.KeyValueFromString("classname", "__no_distance_text_hack")
+// // SetPropString( spawn_hint_teleporter, "m_iClassname", "__no_distance_text_hack" )
+// spawn_hint_teleporter.KeyValueFromString( "classname", "__no_distance_text_hack" )
 
-// local spawn_hint_text = CreateByClassname("point_worldtext")
+// local spawn_hint_text = CreateByClassname( "point_worldtext" )
 
-// spawn_hint_text.KeyValueFromString("targetname", format("spawn_hint_text%d", player.entindex()))
-// spawn_hint_text.KeyValueFromString("message", "Press[Attack] to spawn")
-// spawn_hint_text.KeyValueFromString("color", "0 0 255 255")
-// spawn_hint_text.KeyValueFromString("orientation", "1")
-// spawn_hint_text.AcceptInput("SetParent", "!activator", spawn_hint_teleporter, spawn_hint_teleporter)
+// spawn_hint_text.KeyValueFromString( "targetname", format( "spawn_hint_text%d", player.entindex() ) )
+// spawn_hint_text.KeyValueFromString( "message", "Press[Attack] to spawn" )
+// spawn_hint_text.KeyValueFromString( "color", "0 0 255 255" )
+// spawn_hint_text.KeyValueFromString( "orientation", "1" )
+// spawn_hint_text.AcceptInput( "SetParent", "!activator", spawn_hint_teleporter, spawn_hint_teleporter )
 // spawn_hint_text.DispatchSpawn()

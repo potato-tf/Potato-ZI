@@ -7,12 +7,12 @@ Convars.SetValue( "mp_respawnwavetime", 2 )
 
 local spawns = []
 
-for (local spawn; spawn = FindByClassname( spawn, "info_player_teamspawn" ); ) {
+for ( local spawn; spawn = FindByClassname( spawn, "info_player_teamspawn" ); ) {
 
     // SetPropInt( spawn, "m_iTeamNum", TEAM_UNASSIGNED )
 
     if ( spawn.GetName() == "" )
-        SetPropString( spawn, "m_iName", format( "teamspawn_%d", spawn.entindex() ) )
+        SetPropString( spawn, STRING_NETPROP_NAME, format( "teamspawn_%d", spawn.entindex() ) )
 
     spawns.append( spawn.GetName() )
 }
@@ -20,7 +20,7 @@ for (local spawn; spawn = FindByClassname( spawn, "info_player_teamspawn" ); ) {
 local spawns_len = spawns.len()
 
 local logic_ents = {
- 
+
     tf_logic_koth                    = "KOTH"
     tf_logic_arena                   = "Arena"
     tf_logic_medieval                = "Medieval"
@@ -100,7 +100,7 @@ local gamemode_funcs = {
         PZI_EVENT( "player_death", "PZI_MapStripper_PlayerDeath", function ( params ) {
 
             EntFire( "item_teamflag", "Kill" )
-        })
+        } )
     }
 }
 gamemode_funcs.RD  <- gamemode_funcs.PD
@@ -128,20 +128,20 @@ local gamemode_props = [
     "m_bBountyModeEnabled"
 ]
 
-foreach (prop in gamemode_props)
-    SetPropBool(PZI_Util.GameRules, prop, false)
+foreach ( prop in gamemode_props )
+    SetPropBool( PZI_Util.GameRules, prop, false )
 
-try { IncludeScript( format("infection_potato/map_stripper/%s", MAPNAME) ) } catch ( e ) {}
+try { IncludeScript( format( "infection_potato/map_stripper/%s", MAPNAME ) ) } catch ( e ) {}
 
 local ents_to_kill = [ "team_round_timer", "game_round_win" ]
 
 PZI_EVENT( "teamplay_round_start", "PZI_MapStripper_RoundStart", function ( params ) {
-    
+
     if ( GAMEMODE in gamemode_funcs )
         gamemode_funcs[ GAMEMODE ]()
 
     foreach ( tokill in ents_to_kill )
-        for (local ent; ent = FindByClassname( ent, tokill ); )
+        for ( local ent; ent = FindByClassname( ent, tokill ); )
             EntFireByHandle( ent, "Kill", null, -1, null, null )
 
     local timer = SpawnEntityFromTable( "team_round_timer", {
@@ -157,7 +157,7 @@ PZI_EVENT( "teamplay_round_start", "PZI_MapStripper_RoundStart", function ( para
         timer_length        = 480
         StartDisabled       = 0
         "OnFinished#1"      : "__pzi_util,CallScriptFunction,RoundWin,1"
-    })
+    } )
 
     EntFire( "__pzi_timer", "Resume", null, 1 )
 
@@ -165,8 +165,8 @@ PZI_EVENT( "teamplay_round_start", "PZI_MapStripper_RoundStart", function ( para
     SetPropInt( PZI_Util.GameRules, "m_nHudType", 2 )
 
     // disable control points hud elements
-    for ( local tcp; tcp = FindByClassname( null, "team_control_point_master" ); )
-    {
+    for ( local tcp; tcp = FindByClassname( null, "team_control_point_master" ); ) {
+
         SetPropFloat( tcp, "m_flCustomPositionX", 1.0 )
         SetPropFloat( tcp, "m_flCustomPositionY", 1.0 )
         tcp.AcceptInput( "RoundSpawn", "", null, null )
@@ -180,7 +180,7 @@ PZI_EVENT( "teamplay_round_start", "PZI_MapStripper_RoundStart", function ( para
     EntFire( "team_control_point", "HideModel" )
 	EntFire( "team_control_point", "Disable" )
 
-})
+} )
 
 PZI_EVENT( "teamplay_setup_finished", "PZI_MapStripper_SetupFinished", function ( params ) {
 
@@ -189,22 +189,22 @@ PZI_EVENT( "teamplay_setup_finished", "PZI_MapStripper_SetupFinished", function 
     EntFire( "func_regenerate", "Kill" )
 
     // open all doors near respawn rooms
-    for (local respawnroom; respawnroom = FindByClassname( respawnroom, "func_respawnroom*" ); ) {
+    for ( local respawnroom; respawnroom = FindByClassname( respawnroom, "func_respawnroom*" ); ) {
 
-        for (local door; door = FindByClassnameWithin( door, "func_door*", respawnroom.GetCenter(), 1024 ); ) {
+        for ( local door; door = FindByClassnameWithin( door, "func_door*", respawnroom.GetCenter(), 1024 ); ) {
 
             door.AcceptInput( "Open", null, null, null )
             EntFireByHandle( door, "Kill", null, 0.1, null, null )
         }
     }
 
-})
+} )
 
 PZI_EVENT( "player_spawn", "PZI_MapStripper_PlayerSpawn", function ( params ) {
 
-    local player = GetPlayerFromUserID(params.userid)
-    EntFire("__pzi_respawnoverride", "StartTouch", null, -1, player )
+    local player = GetPlayerFromUserID( params.userid )
+    EntFire( "__pzi_respawnoverride", "StartTouch", null, -1, player )
 
     // random spawn points
-    EntFire("__pzi_respawnoverride", "SetRespawnName", spawns[ RandomInt( 0, spawns_len - 1 ) ], -1, player )
-})
+    EntFire( "__pzi_respawnoverride", "SetRespawnName", spawns[ RandomInt( 0, spawns_len - 1 ) ], -1, player )
+} )

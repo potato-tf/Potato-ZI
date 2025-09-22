@@ -73,7 +73,7 @@
  * MyExtensionEntity.Kill() // delete the entity and the global ::MyExtension reference alongside it *
  * EntFire( "__pzi_myextension", "Kill" ) // same thing                                              *
  *****************************************************************************************************/
-                                                                                                      
+
 if ( !( "__pzi_active_scopes" in ROOT ) )
 	::__pzi_active_scopes <- {}
 
@@ -89,7 +89,11 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
 	}
 
 	SetPropBool( ent, STRING_NETPROP_PURGESTRINGS, true )
-	__pzi_active_scopes[ ent ] <- namespace || name
+	__pzi_active_scopes[ ent ] <- namespace
+
+	// don't spawn an actual move_rope to save an edict
+	if ( preserved )
+		SetPropString( ent, "m_iClassname", "move_rope" )
 
 	local ent_scope = ent.GetScriptScope()
 
@@ -98,7 +102,7 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
 	ROOT[ namespace ]  <- ent_scope
 	ROOT[ entity_ref ] <- ent
 
-	ent_scope.setdelegate({
+	ent_scope.setdelegate( {
 
 		function _newslot( k, v ) {
 
@@ -131,7 +135,7 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
                 v.setdelegate( ent_scope )
 		}
 
-	}.setdelegate({
+	}.setdelegate( {
 
 			parent     = ent_scope.getdelegate()
 			id         = ent.GetScriptId()
@@ -144,7 +148,7 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
 
 				if ( k == id ) {
 
-					if ( _OnDestroy ) 
+					if ( _OnDestroy )
 						_OnDestroy()
 
                     // delete root references to ourself
@@ -157,7 +161,7 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
 
 				delete parent[k]
 			}
-		})
+		} )
 	)
 
 	if ( think_func ) {
@@ -185,10 +189,6 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
 
 		AddThinkToEnt( ent, think_func )
 	}
-
-	// don't spawn an actual move_rope to save an edict
-	if ( preserved )
-		SetPropString( ent, "m_iClassname", "move_rope" )
 
 	return { Entity = ent, Scope = ent_scope }
 }

@@ -3,13 +3,13 @@
 /*************************************************************************************************************************************************************
  * PROBLEM:                                                                                                                                                  *
  * All entity access functions will add the entities scriptID and targetname to the string table                                                             *
- * Additionally, "param" arguments passed to Entity I/O related functions (AcceptInput, EntFire...) will add the param to the string table                   *
+ * Additionally, "param" arguments passed to Entity I/O related functions ( AcceptInput, EntFire... ) will add the param to the string table                   *
  * these strings don't get cleared until map change, eventually causing a CUtlRBTree overflow                                                                *
- * large amounts of rapid entity spawning, modifying, and Entity I/O calls (notably RunScriptCode) will overflow the string table faster                     *
- * freaky fair (and probably some other vscript-heavy maps) have this problem on 100 player servers, after ~40 minutes the server will crash with this error *
+ * large amounts of rapid entity spawning, modifying, and Entity I/O calls ( notably RunScriptCode ) will overflow the string table faster                     *
+ * freaky fair ( and probably some other vscript-heavy maps ) have this problem on 100 player servers, after ~40 minutes the server will crash with this error *
  *                                                                                                                                                           *
  * Scripters can largely workaround this issue by:                                                                                                           *
- * 1. setting NetProps.SetPropBool( ent, "m_bForcePurgeFixedUpStrings", true ) on all entities after they are spawned or modified/accessed in any way        *
+ * 1. setting NetProps.SetPropBool( ent, STRING_NETPROP_PURGESTRINGS, true ) on all entities after they are spawned or modified/accessed in any way        *
  * 2. manually hooking and  purging the values passed to the following functions:                                                                            *
  *   - AcceptInput/EntFire/DoEntFire/EntFireByHandle's parameter argument                                                                                    *
  *   - KeyValueFromString                                                                                                                                    *
@@ -83,8 +83,8 @@ function PZI_GameStrings::PurgeString( str ) {
 
 // 	foreach ( i, k in strings.keys() ) {
 
-// 		template.AddTemplate( "logic_autosave", { targetname = k.tostring() })
-// 		template.AddTemplate( "logic_autosave", { targetname = strings[k].tostring() })
+// 		template.AddTemplate( "logic_autosave", { targetname = k.tostring() } )
+// 		template.AddTemplate( "logic_autosave", { targetname = strings[k].tostring() } )
 
 // 		if ( !( i % 8 ) && i ) {
 
@@ -101,18 +101,18 @@ function PZI_GameStrings::PurgeString( str ) {
 
 function PZI_GameStrings::StringFixGenerator() {
 
-    if ( !("PZI_GameStrings" in ROOT) )
+    if ( !( "PZI_GameStrings" in ROOT ) )
         return
 
     local PurgeString = PZI_GameStrings.PurgeString
 
     local i = 1
-    foreach ( k, v in (clone StringTable) ) {
+    foreach ( k, v in ( clone StringTable ) ) {
 
         PurgeString( k )
         PurgeString( v )
 
-    //    printl(format( "GAME STRINGS : %s : %s : %d", k.tostring(), v ? v.tostring() : "null", i ))
+    //    printl( format( "GAME STRINGS : %s : %s : %d", k.tostring(), v ? v.tostring() : "null", i ) )
         if ( !( i % 4 ) )
             yield k || true
 
@@ -195,7 +195,7 @@ function SetPropStringArray( ent, prop, value, index = 0 ) {
 
 function SpawnEntityFromTable( classname, table ) {
 
-    if ( !("_SpawnEntityFromTable" in ROOT) )
+    if ( !( "_SpawnEntityFromTable" in ROOT ) )
         return SpawnEntityFromTable( classname, table )
 
     local ent = _SpawnEntityFromTable( classname, table )
@@ -215,4 +215,4 @@ function PZI_GameStrings::PurgeAllStrings() {
 }
 
 foreach ( event in [ "teamplay_round_start", "teamplay_setup_finished" ] )
-    PZI_EVENT( event, format( "GameStrings%s", event ), @(_) PZI_GameStrings.PurgeAllStrings() )
+    PZI_EVENT( event, format( "GameStrings%s", event ), @( _ ) PZI_GameStrings.PurgeAllStrings() )
