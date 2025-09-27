@@ -23,7 +23,7 @@ if ( !( "ConstantNamingConvention" in ROOT ) )
 			CONST[k] <- v != null ? v : 0
 
 // String caches
-// const STRING_NETPROP_ITEMDEF 	  	    = "m_AttributeManager.m_Item.m_iItemDefinitionIndex"
+const STRING_NETPROP_ITEMDEF 	  	    = "m_AttributeManager.m_Item.m_iItemDefinitionIndex"
 const STRING_NETPROP_INIT 	 	  	    = "m_AttributeManager.m_Item.m_bInitialized"
 const STRING_NETPROP_ATTACH  	  	    = "m_bValidatedAttachedEntity"
 const STRING_NETPROP_PURGESTRINGS 	    = "m_bForcePurgeFixedupStrings"
