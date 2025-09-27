@@ -544,7 +544,7 @@ function PZI_PlayerThink() {
                     // shouldn't have flag if not sniper or a human
                     m_iFlags = ( m_iFlags & ~ZBIT_SNIPER_CHARGING_SPIT )
                 }
-                else if ( _bPressingAttack2 ) // if we're holding right click while charging spit {
+                else if ( _bPressingAttack2 ) { // if we're holding right click while charging spit
 
                     if ( !m_tblEventQueue.rawin( EVENT_SNIPER_SPITBALL ) ) {
 
@@ -581,7 +581,7 @@ function PZI_PlayerThink() {
                         m_tblEventQueue[ EVENT_SNIPER_SPITBALL ] += 0.1
                     }
                 }
-                else if ( !_bPressingAttack2 ) // right click released while charging {
+                else if ( !_bPressingAttack2 ) { // right click released while charging
 
                     local _flMinTime = ( m_fTimeAbilityCastStarted + MIN_TIME_BETWEEN_SPIT_START_END )
 
@@ -911,7 +911,7 @@ function SniperSpitThink() {
 
         return SNIPER_SPIT_RETHINK_TIME
     }
-    else if ( m_iState == SPIT_STATE_ZONE ) // spit has deployed a zone and zone is active this tick {
+    else if ( m_iState == SPIT_STATE_ZONE ) { // spit has deployed a zone and zone is active this tick
 
         // if the spit zone has expired
         if ( Time() >= ( m_fTimeStart + SPIT_ZONE_LIFETIME ) ) {
@@ -1008,7 +1008,7 @@ function SniperSpitThink() {
         m_bDealtPopDmg <- true
         return SNIPER_SPIT_ZONE_RETHINK_TIME
     }
-    else if ( m_iState == SPIT_STATE_REJECTED ) // spit couldn't deploy zone, burst harmlessly and die {
+    else if ( m_iState == SPIT_STATE_REJECTED ) { // spit couldn't deploy zone, burst harmlessly and die
 
         if ( FX_SPIT_IMPACT )
             PZI_Util.DispatchEffect( self, FX_SPIT_IMPACT )
@@ -1114,7 +1114,7 @@ function EngieEMPThink() {
         }
     }
 
-    if ( Time() >= m_fNextFlashTime ) // on flash {
+    if ( Time() >= m_fNextFlashTime ) { // on flash
 
         PZI_Util.DispatchEffect ( self, FX_EMP_FLASH )
         EmitSoundOn            ( SFX_EMP_BEEP, self )
@@ -1123,7 +1123,7 @@ function EngieEMPThink() {
         m_fNextFlashTime     = ( Time() + m_fFlashRate )
     }
 
-    if ( Time() >= m_fExplodeTime ) // on explode {
+    if ( Time() >= m_fExplodeTime ) { // on explode
 
         ScreenShake( self.GetOrigin(),
                      ENGIE_EMP_SCREENSHAKE_AMP,

@@ -252,7 +252,7 @@ PZI_EVENT( "player_spawn", "Infection_PlayerSpawn", function( params ) {
         // _hPlayer.SetHealth( _hPlayer.GetMaxHealth() )
         return
     }
-    else // game has started, player should be a zombie {
+    else { // game has started, player should be a zombie {
 
         if ( _hPlayer.GetTeam() == TF_TEAM_RED ) {
 
@@ -396,11 +396,11 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
         // build string for chat notification          //
         // ------------------------------------------- //
 
-        if ( !i ) // first player in the message {
+        if ( !i ) { // first player in the message
 
             _szZombieNetNames = "\x07FF3F3F" + NetName( _nextPlayer ) + "\x07FBECCB"
         }
-        else if ( i == _zombieArr_len - 1 ) // last player in the message {
+        else if ( i == _zombieArr_len - 1 ) { // last player in the message
 
             if ( _zombieArr_len > 1 ) {
 
@@ -413,7 +413,7 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
 
             _szZombieNetNames += ( NetName( _nextPlayer ) + "\x07FBECCB" )
         }
-        else // players in the middle get commas {
+        else { // players in the middle get commas
 
             _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" + NetName( _nextPlayer ) + "\x07FBECCB" )
         }
@@ -421,7 +421,7 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
 
     local _szFirstInfectedAnnounceMSG = ""
 
-    if ( _zombieArr_len > 1 ) // set the first infected announce message {
+    if ( _zombieArr_len > 1 ) { // set the first infected announce message
 
         _szFirstInfectedAnnounceMSG = format( _szZombieNetNames +
                                             STRING_UI_CHAT_FIRST_WAVE_MSG_PLURAL )
@@ -503,7 +503,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
 
     SetPropIntArray( _hPlayer, STRING_NETPROP_MDLINDEX_OVERRIDES, 0, 3 )
 
-    if ( ::bGameStarted && _hPlayerTeam == TF_TEAM_BLUE ) // zombie has died {
+    if ( ::bGameStarted && _hPlayerTeam == TF_TEAM_BLUE ) { // zombie has died
 
         if ( _iClassNum ==  TF_CLASS_MEDIC ) {
 
@@ -635,7 +635,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
         return; // zombie death event ends here
     }
 
-    if ( ::bGameStarted ) // if the game is started, a dying survivor becomes a zombie {
+    if ( ::bGameStarted ) { // if the game is started, a dying survivor becomes a zombie
 
         // player was survivor, killed by a zombie and wasn't suicide
         if ( _hKiller && _hKiller.IsPlayer() && _hKiller.GetTeam() == TF_TEAM_BLUE && _hPlayerTeam == TF_TEAM_RED ) {
@@ -650,7 +650,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
 
             ClientPrint( null, HUD_PRINTTALK, _szDeathMsg )
         }
-        else // player died to enviro/other, announce they were infected with no killer name {
+        else { // player died to enviro/other, announce they were infected with no killer name
 
             local _szDeathMsg = format ( STRING_UI_CHAT_INFECT_SOLO_MSG,
                                         NetName( _hPlayer ) )
@@ -726,9 +726,9 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
     local _szKillicon     =   ""
     if ( _hVictim.GetName() == "engie_nade_physprop" ) {
 
-        if ( _hAttacker.IsPlayer() ) // must check before trying to access active weapon {
+        if ( _hAttacker.IsPlayer() ) { // must check before trying to access active weapon
 
-            if ( _hAttacker.GetPlayerClass() == TF_CLASS_PYRO && _hAttacker.GetActiveWeapon().GetPropInt( STRING_NETPROP_ITEMDEF ) == 153 ) // homewrecker {
+            if ( _hAttacker.GetPlayerClass() == TF_CLASS_PYRO && _hAttacker.GetActiveWeapon().GetPropInt( STRING_NETPROP_ITEMDEF ) == 153 ) { // homewrecker
 
                 _hVictim.GetScriptScope().m_bMustFizzle <- true
             }

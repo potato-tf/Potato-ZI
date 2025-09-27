@@ -1,9 +1,8 @@
 // add extensions to this table.
 // extensions will be loaded in the order they are defined.
 ::PZI_ACTIVE_EXTENSIONS <- [
- {
- "infection_potato/extensions/spawnanywhere"    : null } // single file {
- "infection_potato/extensions/damageradiusmult" : null } // single file
+    {"infection_potato/extensions/spawnanywhere"    : null } // single file
+    {"infection_potato/extensions/damageradiusmult" : null } // single file
     // { "infection_potato/extensions/example/"         : [ "misc", "navmesh", "potatozi" ] } // multiple files in the example dir
 ]
 
@@ -29,10 +28,10 @@ local function Include( script ) { try { IncludeScript( format( "%s", script ), 
 
 // load core files
 local include = [
- {
- "infection_potato/util/" : [ "constants", "itemdef_constants", "item_map", "create_scope", "event_wrapper", "gamestrings", "util" ] } {
- "infection_potato/"      : [ "strings", "const", "infection" ] } // bug with util ents being deleted too early {
- "infection_potato/map_stripper/" : [ "mapstripper_main" ] }
+
+    {"infection_potato/util/" : [ "constants", "itemdef_constants", "item_map", "create_scope", "event_wrapper", "gamestrings", "util" ] } 
+    {"infection_potato/"      : [ "strings", "const", "infection" ] } // bug with util ents being deleted too early
+    {"infection_potato/map_stripper/" : [ "mapstripper_main" ] }
 
 ].extend( PZI_ACTIVE_EXTENSIONS ) // load extensions after
 

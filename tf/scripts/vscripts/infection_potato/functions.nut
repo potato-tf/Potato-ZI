@@ -265,7 +265,8 @@ function ShouldZombiesWin ( _hPlayer ) {
         }
     }
 
-    if ( !_iValidPlayers ) // GetAllPlayers didn't find any players, should never happen {
+    // GetAllPlayers didn't find any players, should never happen
+    if ( !_iValidPlayers ) {
 
         return
     }
@@ -291,7 +292,7 @@ function ShouldZombiesWin ( _hPlayer ) {
     }
     else {
 
-        if ( _iValidSurvivors == 1 ) // last guy {
+        if ( _iValidSurvivors == 1 ) { // last guy
 
             foreach( _hNextPlayer in GetAllPlayers() ) {
 
@@ -314,7 +315,7 @@ function ShouldZombiesWin ( _hPlayer ) {
                 }
             }
         }
-        else if ( ( _iValidSurvivors < 4 ) && ( _iValidSurvivors > 1 ) ) // last 3 get minicrits {
+        else if ( ( _iValidSurvivors < 4 ) && ( _iValidSurvivors > 1 ) ) { // last 3 get minicrits
 
             foreach( _hNextPlayer in GetAllPlayers() ) {
 
@@ -710,15 +711,14 @@ function CTFPlayer_GiveZombieWeapon() {
     SetPropBool ( _zombieWep, "m_AttributeManager.m_Item.m_bOnlyIterateItemViewAttributes", true )
     SetPropBool ( _zombieWep, STRING_NETPROP_ATTACH, true )
 
-    foreach( _attrib in ZOMBIE_WEP_ATTRIBS[ 0 ] ) // default attribs {
-
+    // default attribs
+    foreach( _attrib in ZOMBIE_WEP_ATTRIBS[ 0 ] ) 
         _zombieWep.AddAttribute( _attrib[ 0 ], _attrib[ 1 ], _attrib[ 2 ] )
-    }
 
-    foreach( _attrib in ZOMBIE_WEP_ATTRIBS[ _playerClass ] ) // class specific attribs {
-
+    // class specific attribs
+    foreach( _attrib in ZOMBIE_WEP_ATTRIBS[ _playerClass ] ) 
         _zombieWep.AddAttribute( _attrib[ 0 ], _attrib[ 1 ], _attrib[ 2 ] )
-    }
+
 
     _zombieWep.DispatchSpawn()
 
@@ -767,34 +767,26 @@ function CTFPlayer_AddZombieAttribs() {
 
     if ( ZOMBIE_PLAYER_CONDS[ 0 ].len() ) {
 
-        foreach ( _cond in ZOMBIE_PLAYER_CONDS[ 0 ] ) // default conds {
-
+        foreach ( _cond in ZOMBIE_PLAYER_CONDS[ 0 ] ) // default conds
             this.AddCondEx( _cond, -1, null )
-        }
     }
 
     if ( ZOMBIE_PLAYER_CONDS[ _iClassNum ].len() ) {
 
-        foreach ( _cond in ZOMBIE_PLAYER_CONDS[ _iClassNum ] )  // class specific conds {
-
+        foreach ( _cond in ZOMBIE_PLAYER_CONDS[ _iClassNum ] )  // class specific conds
             this.AddCondEx( _cond, -1, null )
-        }
     }
 
     if ( ZOMBIE_PLAYER_ATTRIBS[ 0 ].len() > 1 ) {
 
-        foreach ( _attrib in ZOMBIE_PLAYER_ATTRIBS[ 0 ]  ) // default attribs {
-
+        foreach ( _attrib in ZOMBIE_PLAYER_ATTRIBS[ 0 ]  ) // default attribs
             this.AddCustomAttribute( _attrib[ 0 ], _attrib[ 1 ], _attrib[ 2 ] )
-        }
     }
 
     if ( ZOMBIE_PLAYER_ATTRIBS[ _iClassNum ].len() ) {
 
-        foreach ( _attrib in ZOMBIE_PLAYER_ATTRIBS[ _iClassNum ]  ) // class specific attribs {
-
+        foreach ( _attrib in ZOMBIE_PLAYER_ATTRIBS[ _iClassNum ]  ) // class specific attribs
             this.AddCustomAttribute( _attrib[ 0 ], _attrib[ 1 ], _attrib[ 2 ] )
-        }
     }
 
     return
@@ -804,37 +796,21 @@ function CTFPlayer_ClearZombieAttribs() {
 
     local _iClassNum = this.GetPlayerClass()
 
-    if ( ZOMBIE_PLAYER_CONDS[ 0 ].len() ) {
-
-        foreach ( _cond in ZOMBIE_PLAYER_CONDS[ 0 ] ) // default conds {
-
+    if ( ZOMBIE_PLAYER_CONDS[ 0 ].len() ) 
+        foreach ( _cond in ZOMBIE_PLAYER_CONDS[ 0 ] ) // default conds
             this.RemoveCondEx( _cond, true )
-        }
-    }
 
-    if ( ZOMBIE_PLAYER_CONDS[ _iClassNum ].len() ) {
-
-        foreach ( _cond in ZOMBIE_PLAYER_CONDS[ _iClassNum ] )  // class specific conds {
-
+    if ( ZOMBIE_PLAYER_CONDS[ _iClassNum ].len() )
+        foreach ( _cond in ZOMBIE_PLAYER_CONDS[ _iClassNum ] )  // class specific conds
             this.RemoveCondEx( _cond, true )
-        }
-    }
 
-    if ( ZOMBIE_PLAYER_ATTRIBS[ 0 ].len() > 1 ) {
-
-        foreach ( _attrib in ZOMBIE_PLAYER_ATTRIBS[ 0 ]  ) // default attribs {
-
+    if ( ZOMBIE_PLAYER_ATTRIBS[ 0 ].len() > 1 )
+        foreach ( _attrib in ZOMBIE_PLAYER_ATTRIBS[ 0 ]  ) // default attribs
             this.RemoveCustomAttribute( _attrib[ 0 ] )
-        }
-    }
 
-    if ( ZOMBIE_PLAYER_ATTRIBS[ _iClassNum ].len() ) {
-
-        foreach ( _attrib in ZOMBIE_PLAYER_ATTRIBS[ _iClassNum ]  ) // class specific attribs {
-
+    if ( ZOMBIE_PLAYER_ATTRIBS[ _iClassNum ].len() )
+        foreach ( _attrib in ZOMBIE_PLAYER_ATTRIBS[ _iClassNum ]  ) // class specific attribs
             this.RemoveCustomAttribute( _attrib[ 0 ] )
-        }
-    }
 
     return
 }
@@ -1309,7 +1285,8 @@ function CTFPlayer_ModifyJumperWeapons() {
 
     if ( this.GetPlayerClass() == TF_CLASS_SOLDIER ) {
 
-        if ( this.HasThisWeapon( 237 ) ) // rocket jumper {
+        // rocket jumper
+        if ( this.HasThisWeapon( 237 ) ) {
 
             local _hWeapon = GetPropEntityArray( this, STRING_NETPROP_MYWEAPONS, 1 )
 
@@ -1323,7 +1300,8 @@ function CTFPlayer_ModifyJumperWeapons() {
 
     if ( this.GetPlayerClass() == TF_CLASS_DEMOMAN ) {
 
-        if ( this.HasThisWeapon( 265 ) ) // sticky jumper {
+        // sticky jumper
+        if ( this.HasThisWeapon( 265 ) ) {
 
             local _hWeapon = GetPropEntityArray( this, STRING_NETPROP_MYWEAPONS, 2 )
 
@@ -1461,26 +1439,9 @@ function CTFPlayer_SetNextActTime ( _iAct, _fTime ) {
 
 function CTFPlayer_DestroyAllWeapons() {
 
-    local _tfwep
-
-    // for ( local _hWearable = this.FirstMoveChild(); _hWearable != null; _hWearable = _hWearable.NextMovePeer() )
-    // {
-    //     if ( _hWearable.GetClassname() == "tf_weapon*" || _hWearable.GetClassname() == "tf_wearable*" )
-    //     {
-    //         _hWearable.Destroy()
-    //     }
-    // }
-
-    for ( local i = 0; i < TF_WEAPON_COUNT; i++ ) {
-
-        local _hNextWeapon = GetPropEntityArray( this, STRING_NETPROP_MYWEAPONS, i )
-
-        if ( _hNextWeapon == null )
-            continue
-
-        _hNextWeapon.Destroy()
-        _hNextWeapon = null
-    }
+    for ( local i = 0, _hNextWeapon; i < TF_WEAPON_COUNT; i++ )
+        if ( _hNextWeapon = GetPropEntityArray( this, STRING_NETPROP_MYWEAPONS, i ) )
+            EntFireByHandle( _hNextWeapon, "Kill", null, -1, null, null )
 
     return
 }
