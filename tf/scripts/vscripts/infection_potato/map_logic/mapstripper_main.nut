@@ -113,6 +113,88 @@ local function GetGamemode() {
     return split( MAPNAME, "_" )[0].toupper()
 }
 
+local function SetupRoundTimer() {
+
+    for (local timer; timer = FindByClassname(timer, "team_round_timer");)
+        EntFireByHandle(timer, "Kill", null, -1, null, null)
+
+    local timer = SpawnEntityFromTable( "team_round_timer", {
+
+        targetname          = "__pzi_timer",
+        auto_countdown      = 1
+        max_length          = 720
+        reset_time          = 1
+        setup_length        = 60
+        show_in_hud         = 1
+        show_time_remaining = 1
+        start_paused        = 0
+        timer_length        = 480
+        StartDisabled       = 0
+        "OnFinished#1"      : "__pzi_util,CallScriptFunction,RoundWin,1"
+        "OnFinished#2"      : "__pzi_util,RunScriptCode,SetValue(`mp_humans_must_join_team` `red`),1"
+    })
+
+    EntFire( "__pzi_timer", "Resume", null, 1 )
+
+    local scope = timer.GetScriptScope()
+
+    if ("VPI" in ROOT)
+    {
+        function TimerThink()
+        {
+            local time_left = base_timestamp - Time()
+
+            if (time_left > 0)
+            {
+                if (!(time_left % 10))
+                {
+                    LocalTime(LOCALTIME)
+                    SERVER_DATA.update_time = LOCALTIME
+                    SERVER_DATA.max_wave = time_left
+                    SERVER_DATA.wave = time_left
+                    local players = array(2, 0)
+                    local spectators = 0
+                    foreach (player, userid in PZI_Util.PlayerTable)
+                    {
+                        if (!player || !player.IsValid() || player.IsFakeClient()) continue
+
+                        if (player.GetTeam() == TEAM_SPECTATOR)
+                            spectators++
+                        else
+                            players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
+                    }
+                    SERVER_DATA.players_red = players[0]
+                    SERVER_DATA.players_blu = players[1]
+                    SERVER_DATA.players_connecting = spectators
+                    SERVER_DATA.server_name = GetStr("hostname")
+
+                    VPI.AsyncCall({
+
+                        func   = "VPI_UpdateServerData"
+                        kwargs = SERVER_DATA
+
+                        function callback(response, error) {
+
+                            if (error)
+                                return 3
+
+                            if (SERVER_DATA.address == 0 && "address" in response)
+                                SERVER_DATA.address = response.address
+
+                        }
+                    })
+                }
+                return -1
+            }
+        }
+        scope.TimerThink <- TimerThink
+        AddThinkToEnt(timer, "TimerThink")
+    }
+    return timer
+}
+
+local timer = SetupRoundTimer()
+
 local GAMEMODE = GetGamemode()
 
 local gamemode_funcs = {
@@ -199,80 +281,8 @@ PZI_EVENT( "teamplay_round_start", "PZI_MapStripper_RoundStart", function ( para
         for ( local ent; ent = FindByClassname( ent, tokill ); )
             EntFireByHandle( ent, "Kill", null, -1, null, null )
 
-    local timer = SpawnEntityFromTable( "team_round_timer", {
+    timer = SetupRoundTimer()
 
-        targetname          = "__pzi_timer",
-        auto_countdown      = 1
-        max_length          = 720
-        reset_time          = 1
-        setup_length        = 60
-        show_in_hud         = 1
-        show_time_remaining = 1
-        start_paused        = 0
-        timer_length        = 480
-        StartDisabled       = 0
-        "OnFinished#1"      : "__pzi_util,CallScriptFunction,RoundWin,1"
-        "OnFinished#2"      : "__pzi_util,RunScriptCode,SetValue(`mp_humans_must_join_team` `red`),1"
-    })
-
-    EntFire( "__pzi_timer", "Resume", null, 1 )
-
-    local scope = timer.GetScriptScope()
-
-    if ("VPI" in ROOT)
-    {
-        function TimerThink()
-        {
-            local time_left = base_timestamp - Time()
-
-            if (time_left > 0)
-            {
-                if (!(time_left % 10))
-                {
-                    LocalTime(LOCALTIME)
-                    SERVER_DATA.update_time = LOCALTIME
-                    SERVER_DATA.max_wave = time_left
-                    SERVER_DATA.wave = time_left
-                    local players = array(2, 0)
-                    local spectators = 0
-                    foreach (player, userid in PZI_Util.PlayerTable)
-                    {
-                        if (!player || !player.IsValid() || player.IsFakeClient()) continue
-
-                        if (player.GetTeam() == TEAM_SPECTATOR)
-                            spectators++
-                        else
-                            players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
-                    }
-                    SERVER_DATA.players_red = players[0]
-                    SERVER_DATA.players_blu = players[1]
-                    SERVER_DATA.players_connecting = spectators
-                    SERVER_DATA.server_name = GetStr("hostname")
-
-                    VPI.AsyncCall({
-
-                        func   = "VPI_UpdateServerData"
-                        kwargs = SERVER_DATA
-
-                        function callback(response, error) {
-
-                            if (error)
-                                return 3
-
-                            if (SERVER_DATA.address == 0 && "address" in response)
-                                SERVER_DATA.address = response.address
-
-                        }
-                    })
-                }
-                return -1
-            }
-
-            delete TimerScope.TimerThink
-        }
-        scope.TimerThink <- TimerThink
-        AddThinkToEnt(timer, "TimerThink")
-    }
     // Disables most huds
     SetPropInt( PZI_Util.GameRules, "m_nHudType", 2 )
 
@@ -292,7 +302,7 @@ PZI_EVENT( "teamplay_round_start", "PZI_MapStripper_RoundStart", function ( para
     EntFire( "team_control_point", "HideModel" )
 	EntFire( "team_control_point", "Disable" )
 
-} )
+})
 
 PZI_EVENT( "teamplay_setup_finished", "PZI_MapStripper_SetupFinished", function ( params ) {
 
