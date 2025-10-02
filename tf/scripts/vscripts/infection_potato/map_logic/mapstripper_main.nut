@@ -5,6 +5,61 @@ Convars.SetValue( "mp_teams_unbalance_limit", 0 )
 Convars.SetValue( "mp_tournament", 0 )
 Convars.SetValue( "mp_respawnwavetime", 2 )
 
+::LOCALTIME <- {}
+LocalTime(LOCALTIME)
+
+//TODO: move this somewhere more fitting than the map logic scripts
+local SERVER_DATA = {
+	endpoint_url			  = "https://archive.potato.tf/api/serverstatus"
+	server_key				  = ""
+	address					  = 0
+	wave 					  = 0
+	max_wave				  = -1
+	players_blu				  = 0
+	players_connecting		  = 0
+	players_max				  = MaxClients().tointeger()
+	players_red				  = 0
+	matchmaking_disable_time  = 0
+	map					      = GetMapName()
+	mission					  = ""
+	region					  = ""
+	server_name				  = ""
+	password 				  = ""
+	classes					  = ""
+	domain 					  = "potato.tf"
+	campaign_name 			  = "Zombie Infection"
+	status 					  = "Eating your brains..."
+	in_protected_match		  = false
+	is_fake_ip				  = false
+	steam_ids				  = []
+
+	update_time 			  = {
+
+		year	= LOCALTIME.year
+		month	= LOCALTIME.month
+		day		= LOCALTIME.day
+		hour	= LOCALTIME.hour
+		minute	= LOCALTIME.minute
+		second	= LOCALTIME.second
+	}
+}
+
+PZI_Util.ScriptEntFireSafe("__mge_main", @"
+
+	local server_name  = GetStr(`hostname`)
+	local split_server = split(server_name, `#`)
+	local split_region = split_server.len() == 1 ? [``, `]`] : split(split_server[1], `[`)
+
+	SERVER_DATA.server_name <- server_name
+	SERVER_DATA.server_key	= split_server.len() == 1 ? `` : split_server[1].slice(0, split_server[1].find(`[`))
+	SERVER_DATA.region		= split_region.len() == 1 ? `` : split_region[1].slice(0, split_region[1].find(`]`))
+	SERVER_DATA.domain		= SERVER_DATA.region == `USA` ? `us.potato.tf` : format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
+
+	if ( SERVER_DATA.domain == `ustx.potato.tf` )
+		SERVER_DATA.domain += `:22443`
+
+", 5)
+
 local spawns = []
 
 for ( local spawn; spawn = FindByClassname( spawn, "info_player_teamspawn" ); ) {
@@ -158,10 +213,66 @@ PZI_EVENT( "teamplay_round_start", "PZI_MapStripper_RoundStart", function ( para
         StartDisabled       = 0
         "OnFinished#1"      : "__pzi_util,CallScriptFunction,RoundWin,1"
         "OnFinished#2"      : "__pzi_util,RunScriptCode,SetValue(`mp_humans_must_join_team` `red`),1"
-    } )
+    })
 
     EntFire( "__pzi_timer", "Resume", null, 1 )
 
+    local scope = timer.GetScriptScope()
+
+    if ("VPI" in ROOT)
+    {
+        function TimerThink()
+        {
+            local time_left = base_timestamp - Time()
+
+            if (time_left > 0)
+            {
+                if (!(time_left % 10))
+                {
+                    LocalTime(LOCALTIME)
+                    SERVER_DATA.update_time = LOCALTIME
+                    SERVER_DATA.max_wave = time_left
+                    SERVER_DATA.wave = time_left
+                    local players = array(2, 0)
+                    local spectators = 0
+                    foreach (player, userid in PZI_Util.PlayerTable)
+                    {
+                        if (!player || !player.IsValid() || player.IsFakeClient()) continue
+
+                        if (player.GetTeam() == TEAM_SPECTATOR)
+                            spectators++
+                        else
+                            players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
+                    }
+                    SERVER_DATA.players_red = players[0]
+                    SERVER_DATA.players_blu = players[1]
+                    SERVER_DATA.players_connecting = spectators
+                    SERVER_DATA.server_name = GetStr("hostname")
+
+                    VPI.AsyncCall({
+
+                        func   = "VPI_UpdateServerData"
+                        kwargs = SERVER_DATA
+
+                        function callback(response, error) {
+
+                            if (error)
+                                return 3
+
+                            if (SERVER_DATA.address == 0 && "address" in response)
+                                SERVER_DATA.address = response.address
+
+                        }
+                    })
+                }
+                return -1
+            }
+
+            delete TimerScope.TimerThink
+        }
+        scope.TimerThink <- TimerThink
+        AddThinkToEnt(timer, "TimerThink")
+    }
     // Disables most huds
     SetPropInt( PZI_Util.GameRules, "m_nHudType", 2 )
 
