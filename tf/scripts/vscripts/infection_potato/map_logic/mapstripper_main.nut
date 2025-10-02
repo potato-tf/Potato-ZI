@@ -12,7 +12,7 @@ LocalTime(LOCALTIME)
 local SERVER_DATA = {
 	endpoint_url			  = "https://archive.potato.tf/api/serverstatus"
 	server_key				  = ""
-    server_tags               = "gametype\\zi" //TODO: update vpi to just accept sv_tags and build the request string on the python-side
+    server_tags               = "gametype/zi" //TODO: update vpi to just accept sv_tags and build the request string on the python-side
 	address					  = 0
 	wave 					  = 0
 	max_wave				  = -1
@@ -173,8 +173,8 @@ local function SetupRoundTimer() {
                 SERVER_DATA.server_name = GetStr("hostname")
 
                 printl("Sending POST request...")
-                VPI.AsyncCall({
 
+                VPI.AsyncCall({
                     func   = "VPI_UpdateServerData"
                     kwargs = SERVER_DATA
 
