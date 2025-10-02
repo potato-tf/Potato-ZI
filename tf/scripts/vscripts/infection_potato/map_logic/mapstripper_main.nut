@@ -181,7 +181,7 @@ local function SetupRoundTimer() {
                     function callback(response, error) {
 
                         if (error)
-                            return 3
+                            Assert(false, error)
 
                         if (SERVER_DATA.address == 0 && "address" in response)
                             SERVER_DATA.address = response.address
