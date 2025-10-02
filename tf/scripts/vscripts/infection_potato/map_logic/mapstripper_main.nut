@@ -120,7 +120,8 @@ local function SetupRoundTimer() {
 
     local timer = SpawnEntityFromTable( "team_round_timer", {
 
-        targetname          = "__pzi_timer",
+        targetname          = "__pzi_timer"
+        vscripts            = " "
         auto_countdown      = 1
         max_length          = 720
         reset_time          = 1
