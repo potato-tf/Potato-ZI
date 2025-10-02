@@ -2582,6 +2582,9 @@ PZI_EVENT( "player_team", "UtilPlayerTeam", function( params ) {
 
 	local player = GetPlayerFromUserID( params.userid )
 
+	// hack for potato servers, not necessary in vanilla
+	if (!player || !player.IsValid()) return
+
 	if ( !( player in PZI_Util.PlayerTable ) ) {
 
 		PZI_Util.PlayerTable[ player ] <- params.userid
