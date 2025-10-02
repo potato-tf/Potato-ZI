@@ -1279,6 +1279,10 @@ function GameStateThink() {
     local _iNumRedPlayers = PlayerCount( TF_TEAM_RED )
     local _iNumBluPlayers = PlayerCount( TF_TEAM_BLUE )
 
+    // empty server, ignore round state.
+    if ( !(_iNumRedPlayers + _iNumBluPlayers) )
+        return
+
     if ( _iNumRedPlayers < 1 && ::bGameStarted ) {
 
         ShouldZombiesWin( null )
