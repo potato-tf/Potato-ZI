@@ -138,12 +138,14 @@ local function SetupRoundTimer() {
     EntFire( "__pzi_timer", "Resume", null, 1 )
 
     local scope = timer.GetScriptScope()
+    scope.time_left      <- GetPropFloat(timer, "m_flTimeRemaining")
+    scope.base_timestamp <- GetPropFloat(timer, "m_flTimeRemaining")
 
     if ("VPI" in ROOT)
     {
         function TimerThink()
         {
-            local time_left = base_timestamp - Time()
+            time_left = base_timestamp - Time()
 
             if (time_left > 0)
             {
