@@ -146,49 +146,49 @@ local function SetupRoundTimer() {
         {
             local time_left = (base_timestamp - Time()).tointeger()
 
-            printl(!(time_left % 10))
-            if (time_left > 0)
+            if (time_left < 1)
+                return 1
+
+            if ( !(time_left % 10) )
             {
-                if ( !(time_left % 10) )
+                LocalTime(LOCALTIME)
+                SERVER_DATA.update_time = LOCALTIME
+                SERVER_DATA.max_wave = time_left
+                SERVER_DATA.wave = time_left
+                local players = array(2, 0)
+                local spectators = 0
+                foreach (player, userid in PZI_Util.PlayerTable)
                 {
-                    LocalTime(LOCALTIME)
-                    SERVER_DATA.update_time = LOCALTIME
-                    SERVER_DATA.max_wave = time_left
-                    SERVER_DATA.wave = time_left
-                    local players = array(2, 0)
-                    local spectators = 0
-                    foreach (player, userid in PZI_Util.PlayerTable)
-                    {
-                        if (!player || !player.IsValid() || player.IsFakeClient()) continue
+                    if (!player || !player.IsValid() || player.IsFakeClient()) continue
 
-                        if (player.GetTeam() == TEAM_SPECTATOR)
-                            spectators++
-                        else
-                            players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
-                    }
-                    SERVER_DATA.players_red = players[0]
-                    SERVER_DATA.players_blu = players[1]
-                    SERVER_DATA.players_connecting = spectators
-                    SERVER_DATA.server_name = GetStr("hostname")
-
-                    VPI.AsyncCall({
-
-                        func   = "VPI_UpdateServerData"
-                        kwargs = SERVER_DATA
-
-                        function callback(response, error) {
-
-                            if (error)
-                                return 3
-
-                            if (SERVER_DATA.address == 0 && "address" in response)
-                                SERVER_DATA.address = response.address
-                        }
-                    })
-                    return 1.1
+                    if (player.GetTeam() == TEAM_SPECTATOR)
+                        spectators++
+                    else
+                        players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
                 }
-                return -1
+                SERVER_DATA.players_red = players[0]
+                SERVER_DATA.players_blu = players[1]
+                SERVER_DATA.players_connecting = spectators
+                SERVER_DATA.server_name = GetStr("hostname")
+
+                printl("Sending POST request...")
+                VPI.AsyncCall({
+
+                    func   = "VPI_UpdateServerData"
+                    kwargs = SERVER_DATA
+
+                    function callback(response, error) {
+
+                        if (error)
+                            return 3
+
+                        if (SERVER_DATA.address == 0 && "address" in response)
+                            SERVER_DATA.address = response.address
+                    }
+                })
+                return 1.1
             }
+            return -1
         }
         scope.TimerThink <- TimerThink
         AddThinkToEnt(timer, "TimerThink")
