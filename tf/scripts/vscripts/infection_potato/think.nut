@@ -1295,6 +1295,7 @@ function GameStateThink() {
             switch_teams    = false
         } )
 
+        SetValue( "mp_humans_must_join_team", "red" )
         _hGameWin.AcceptInput( "RoundWin", null, null, null )
         ::bGameStarted <- false
         return FLT_MAX
