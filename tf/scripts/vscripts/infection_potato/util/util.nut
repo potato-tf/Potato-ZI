@@ -2589,7 +2589,7 @@ PZI_EVENT( "player_team", "UtilPlayerTeam", function( params ) {
 
 		PZI_Util.PlayerTable[ player ] <- params.userid
 
-		if ( player.IsBotOfType( TF_BOT_TYPE ) && !( player in PZI_Util.BotTable ) )
+		if ( IsPlayerABot( player ) && !( player in PZI_Util.BotTable ) )
 			PZI_Util.BotTable[ player ] <- params.userid
 	}
 
@@ -2629,7 +2629,7 @@ PZI_EVENT( "post_inventory_application", "UtilPostInventoryApplication", functio
 			local scope = PZI_Util.GetEntScope( player )
 			local userid = PZI_Util.GetPlayerUserID( player )
 
-			if ( player.IsBotOfType( TF_BOT_TYPE ) )
+			if ( IsPlayerABot( player ) )
 				bot_table[ player ] <- userid
 
 			else if ( player.GetTeam() == TF_TEAM_RED )
@@ -2647,7 +2647,7 @@ PZI_EVENT( "post_inventory_application", "UtilPostInventoryApplication", functio
 
 	local userid = params.userid
 
-	if ( player.IsBotOfType( TF_BOT_TYPE ) )
+	if ( IsPlayerABot( player ) )
 		bot_table[ player ] <- userid
 
 	else if ( player.GetTeam() == TF_TEAM_RED )
