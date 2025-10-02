@@ -27,7 +27,7 @@ if ( "InfectionLoaded" in getroottable() )
 ::bZombiesDontSwitchInPlace     <- true
 
 const GAMEMODE_NAME =  "Potato Zombie Infection"
-const PZI_VERSION   =  "v0.1.0 - 09/05/2025"
+const PZI_VERSION   =  "10.02.2025.1"
 
 ::INFECTION_CONVARS <- {
 
