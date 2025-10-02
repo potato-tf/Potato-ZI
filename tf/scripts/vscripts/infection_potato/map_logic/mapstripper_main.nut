@@ -146,7 +146,7 @@ local function SetupRoundTimer() {
         {
             local time_left = base_timestamp - Time()
 
-            printl(time_left)
+            printl(!(time_left % 10))
             if (time_left > 0)
             {
                 if ( !(time_left % 10) )
@@ -183,7 +183,6 @@ local function SetupRoundTimer() {
 
                             if (SERVER_DATA.address == 0 && "address" in response)
                                 SERVER_DATA.address = response.address
-
                         }
                     })
                 }
