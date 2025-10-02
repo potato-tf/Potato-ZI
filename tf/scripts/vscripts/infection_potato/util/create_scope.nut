@@ -8,8 +8,7 @@
  * - think_func: Create a think function for this entity/scope, depending on argument type.  *
  * 	  - String: Create a new think function that iterates over a 'ThinkTable' table.		 *
  * 	  - Function: Does NOT create 'ThinkTable', sets the think function directly.			 *
- * - preserved: If true, will not be deleted on round reset                                  *
- * - classname_override: overrides the spawned entity classname to something else            *
+ * - classname: overrides the spawned entity classname to something else                     *
  *********************************************************************************************/
 
 // EXAMPLE USAGE:
@@ -77,13 +76,13 @@
 if ( !( "__pzi_active_scopes" in ROOT ) )
 	::__pzi_active_scopes <- {}
 
-function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think_func = null, preserved = true, table_auto_delegate = true ) {
+function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think_func = null, classname = null, table_auto_delegate = true ) {
 
 	local ent = FindByName( null, name )
 
 	if ( !ent || !ent.IsValid() ) {
 
-		ent = CreateByClassname( "logic_autosave" )
+		ent = CreateByClassname( classname || "logic_autosave" )
 		SetPropString( ent, STRING_NETPROP_NAME, name )
 		ent.ValidateScriptScope()
 	}
@@ -92,7 +91,7 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
 	__pzi_active_scopes[ ent ] <- namespace
 
 	// don't spawn an actual move_rope to save an edict
-	if ( preserved )
+	if ( !classname )
 		SetPropString( ent, "m_iClassname", "move_rope" )
 
 	local ent_scope = ent.GetScriptScope()
@@ -117,16 +116,8 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
                     _OnCreate.call( ent_scope )
 
                 // fix anonymous function declarations in perf counter
-                else if ( v.getinfos().name == null ) {
-
-                    compilestring( format( @"
-
-                        local _%s = %s.%s
-
-                        function %s::%s() { _%s() }
-
-                    ", k, namespace, k, namespace, k, k ) )()
-                }
+                else if ( v.getinfos().name == null ) 
+                    compilestring( format( @" local _%s = %s; function %s() { _%s() }", k, k, k, k ) ).call( ent_scope )
             }
 
             // delegate variables to ent_scope for less verbose writing

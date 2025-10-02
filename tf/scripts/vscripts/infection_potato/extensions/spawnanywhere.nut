@@ -86,6 +86,7 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
     player.SetAbsVelocity( Vector() )
     player.AcceptInput( "SetForcedTauntCam", "1", null, null )
     player.AddCustomAttribute( "no_jump", 1, -1 )
+    player.GiveZombieEyeParticles()
 
     scope.m_iFlags = scope.m_iFlags | ZBIT_PENDING_ZOMBIE
 
@@ -119,6 +120,7 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
     dummy_player.AcceptInput( "SetParent", "!activator", dummy_skeleton, dummy_skeleton )
     SetPropInt( dummy_player, "m_fEffects", EF_BONEMERGE|EF_BONEMERGE_FASTCULL )
     dummy_player.DispatchSpawn()
+    // CTFPlayer.GiveZombieEyeParticles.call( dummy_player )
 
     player.RemoveCustomAttribute( "dmg taken increased" )
     player.SetHealth( 1 )
@@ -183,7 +185,6 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
 
             SetPropInt( player, "m_afButtonDisabled", 0 )
             player.GiveZombieCosmetics()
-            player.GiveZombieEyeParticles()
             // PZI_Util.ScriptEntFireSafe( player, "self.GiveZombieCosmetics(); self.GiveZombieEyeParticles()" )
 
             EntFireByHandle( self, "Kill", "", -1, null, null )
@@ -317,13 +318,13 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
 
         PZI_Util.ScriptEntFireSafe( player, @"
 
-            PZI_Util.TeleportNearVictim( self, GetRandomPlayers( 1, TF_TEAM_RED )[0], 128 )
+            PZI_Util.TeleportNearVictim( self, GetRandomPlayers( 1, TF_TEAM_RED )[0], 0.25)
             PZI_SpawnAnywhere.BeginSummonSequence( self, self.GetOrigin() )
 
         ", RandomFloat( 0.1, 1.2 ) ) // random delay to avoid predictable spawn waves
     }
 
-    PZI_Util.TeleportNearVictim( player, GetRandomPlayers( 1, TF_TEAM_RED )[0], 128 )
+    PZI_Util.TeleportNearVictim( player, GetRandomPlayers( 1, TF_TEAM_RED )[0], 0.25 )
 
     local spawn_hint = CreateByClassname( "move_rope" )
     spawn_hint.KeyValueFromString( "targetname", format( "spawn_hint_%d", player.entindex() ) )

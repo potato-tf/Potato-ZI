@@ -203,31 +203,24 @@ PZI_Util.PROJECTILE_WEAPONS <- {
 	tf_weapon_jar 					   = true
 }
 
-// PZI_Util.ROMEVISION_MODELS <- {
+// All entity classname prefixes listed here will have their think functions overwritten and throw a warning
+// Think functions will instead be added to a table with the value of the first element in the array
+// You should always use PopExtUtil.AddThink instead to handle these gracefully.
 
-// 	[1] = ["models/workshop/player/items/scout/tw_scoutbot_armor/tw_scoutbot_armor.mdl", "models/workshop/player/items/scout/tw_scoutbot_hat/tw_scoutbot_hat.mdl"],
-// 	[2] = ["models/workshop/player/items/sniper/tw_sniperbot_armor/tw_sniperbot_armor.mdl", "models/workshop/player/items/sniper/tw_sniperbot_helmet/tw_sniperbot_helmet.mdl"],
-// 	[3] = ["models/workshop/player/items/soldier/tw_soldierbot_armor/tw_soldierbot_armor.mdl", "models/workshop/player/items/soldier/tw_soldierbot_helmet/tw_soldierbot_helmet.mdl"],
-// 	[4] = ["models/workshop/player/items/demo/tw_demobot_armor/tw_demobot_armor.mdl", "models/workshop/player/items/demo/tw_demobot_helmet/tw_demobot_helmet.mdl", "models/workshop/player/items/demo/tw_sentrybuster/tw_sentrybuster.mdl"],
-// 	[5] = ["models/workshop/player/items/medic/tw_medibot_chariot/tw_medibot_chariot.mdl", "models/workshop/player/items/medic/tw_medibot_hat/tw_medibot_hat.mdl"],
-// 	[6] = ["models/workshop/player/items/heavy/tw_heavybot_armor/tw_heavybot_armor.mdl", "models/workshop/player/items/heavy/tw_heavybot_helmet/tw_heavybot_helmet.mdl"],
-// 	[7] = ["models/workshop/player/items/pyro/tw_pyrobot_armor/tw_pyrobot_armor.mdl", "models/workshop/player/items/pyro/tw_pyrobot_helmet/tw_pyrobot_helmet.mdl"],
-// 	[8] = ["models/workshop/player/items/spy/tw_spybot_armor/tw_spybot_armor.mdl", "models/workshop/player/items/spy/tw_spybot_hood/tw_spybot_hood.mdl"],
-// 	[9] = ["models/workshop/player/items/engineer/tw_engineerbot_armor/tw_engineerbot_armor.mdl", "models/workshop/player/items/engineer/tw_engineerbot_helmet/tw_engineerbot_helmet.mdl"],
-// }
+// e.g. calling AddThinkToEnt( player, "MyFunc") with the default config:
+// - Creates a table named "PlayerThinkTable" and a think function named "PlayerThinks" in player scope
+// - The "true" think function is set to "PlayerThinks", this function iterates over the table and calls each function
+// - Passing null will simply clear the think table
 
-// PZI_Util.ROMEVISION_ITEM_INDEXES <- {
 
-// 	[1] = [ID_TW_SCOUTBOT_ARMOR, ID_TW_SCOUTBOT_HAT],
-// 	[2] = [ID_TW_SNIPERBOT_ARMOR, ID_TW_SNIPERBOT_HELMET],
-// 	[3] = [ID_TW_SOLDIERBOT_ARMOR, ID_TW_SOLDIERBOT_HELMET],
-// 	[4] = [ID_TW_DEMOBOT_ARMOR, ID_TW_DEMOBOT_HELMET, ID_TW_SENTRYBUSTER],
-// 	[5] = [ID_TW_MEDIBOT_CHARIOT, ID_TW_MEDIBOT_HAT],
-// 	[6] = [ID_TW_HEAVYBOT_ARMOR, ID_TW_HEAVYBOT_HELMET],
-// 	[7] = [ID_TW_PYROBOT_ARMOR, ID_TW_PYROBOT_HELMET],
-// 	[8] = [ID_TW_SPYBOT_ARMOR, ID_TW_SPYBOT_HOOD],
-// 	[9] = [ID_TW_ENGINEERBOT_ARMOR, ID_TW_ENGINEERBOT_HELMET],
-// }
+PZI_Util.ThinkTableSetup <- {
+
+    // entity classname prefixes to overwrite, and the name of the think table
+    player 			= [ "ThinkTable", "PlayerThinks" ]
+    tf_projectile_ 	= [ "ThinkTable", "ProjectileThinks" ]
+    tf_weapon_ 		= [ "ThinkTable", "WeaponThinks" ]
+    tf_wearable 	= [ "ThinkTable", "WearableThinks" ]
+}
 
 PZI_Util.ROCKET_LAUNCHER_CLASSNAMES <- [
 
@@ -1833,6 +1826,7 @@ function PZI_Util::RoundWin( team = TF_TEAM_RED ) {
 		switch_teams    = false
 	} )
 
+    SetValue( "mp_humans_must_join_team", "red" )
 	round_win.AcceptInput( "RoundWin", null, null, null )
 
 	EntFireByHandle( round_win, "Kill", null, 3.0, null, null )
@@ -1885,24 +1879,26 @@ function PZI_Util::TeleportNearVictim( ent, victim, attempt ) {
 	if ( victim.GetLastKnownArea() == null )
 		return
 
-	const max_surround_travel_range = 6000.0
+	local max_surround_travel_range = 6000.0
 
 	local surround_travel_range = 1500.0 + 500.0 * attempt
 	surround_travel_range = Max( surround_travel_range, max_surround_travel_range )
 
 	local areas = {}
-	GetNavAreasInRadius( victim.GetLastKnownArea().GetCenter(), surround_travel_range, areas )
+	GetNavAreasInRadius( victim.GetOrigin(), surround_travel_range, areas )
 
+	// local ambush_areas = areas.filter(@(i, area) area.IsValidForWanderingPopulation() && !area.IsPotentiallyVisibleToTeam( victim.GetTeam() ))
 	local ambush_areas = []
 
-	foreach ( name, area in areas ) {
+	foreach ( area in areas ) {
+
 		if ( !area.IsValidForWanderingPopulation() )
 			continue
 
-		if ( area.IsPotentiallyVisibleToTeam( victim.GetTeam() ) )
+		else if ( area.IsPotentiallyVisibleToTeam( victim.GetTeam() ) )
 			continue
 
-		ambush_areas.push( area )
+		ambush_areas.append( area )
 	}
 
 	if ( !ambush_areas.len() )
@@ -1910,7 +1906,9 @@ function PZI_Util::TeleportNearVictim( ent, victim, attempt ) {
 
 	local max_tries = Min( 10, ambush_areas.len() )
 
-	for ( local retry = 0; retry < max_tries; ++retry ) {
+	for ( local retry = 0; retry < max_tries; retry++ ) {
+		
+		printl(ambush_areas.len())
 		local which = RandomInt( 0, ambush_areas.len() - 1 )
 		local where = ambush_areas[which].GetCenter() + Vector( 0, 0, STEP_HEIGHT )
 
@@ -2068,7 +2066,7 @@ function PZI_Util::IsProjectileWeapon( wep ) {
 
 function PZI_Util::GetLastFiredProjectile( player ) {
 
-	local active_projectiles = GetEntScope( player ).Preserved.active_projectiles
+	local active_projectiles = GetEntScope( player ).PRESERVED.active_projectiles
 	local projectiles = []
 
 	foreach ( projectile, info in active_projectiles )
@@ -2133,126 +2131,127 @@ function PZI_Util::ToStrictNum( str, float = false ) {
 		return
 }
 
-function PZI_Util::SetRedMoney( value ) {
+function PZI_Util::AddThink( ent, func ) {
 
-	if ( !value ) {
+	local thinktable_name = null
+	local thinktable_func = null
 
-		PZI_EVENT( "player_death", "ForceRedMoneyKill", null, EVENT_WRAPPER_UTIL )
+	if ( !ent || !ent.IsValid() )
+		return
+
+	foreach ( k, v in PZI_Util.ThinkTableSetup ) {
+
+		if ( typeof v != "array" )
+			continue
+
+		if ( startswith( ent.GetClassname(), k ) ) {
+
+			thinktable_name = 0 in v ? v[0] : "ThinkTable"
+			thinktable_func = 1 in v ? v[1] : format( "%s_Think", ent.GetName() )
+
+			// if ( thinktable_name == "PlayerThinkTable" ) {
+
+			// 	ForEachItem( ent, @( item ) AddThink( item, func ))
+			// }
+			break
+		}
+	}
+
+	local scope = GetEntScope( ent )
+
+	// no think table setup, normal function
+	if ( !thinktable_name || !thinktable_func ) {
+
+		local func_name = ""
+
+		if ( endswith( typeof func, "function" ) ) {
+
+			func_name = func.getinfos().name || format( "__%s_ANONYMOUS_THINK", ent.GetName() )
+			scope[ func_name ] <- func
+		}
+		else if ( !(func in scope) && func in ROOT ) {
+
+			func_name = func
+			scope[ func_name ] <- ROOT[ func_name ].bindenv( scope )
+		}
+
+		"_AddThinkToEnt" in ROOT ? _AddThinkToEnt( ent, func_name ) : AddThinkToEnt( ent, func_name )
+
 		return
 	}
 
-	PZI_EVENT( "player_death", "ForceRedMoneyKill", function( params ) {
+	// setup thinktable if it doesn't exist
+	if ( !( thinktable_name in scope ) )
+		scope[ thinktable_name ] <- {}
 
-		local should_collect = false
+	scope.__thinktable_name <- thinktable_name
 
-		if ( value >= 1 )
-			should_collect = true
-		else {
+	if ( !( thinktable_func in scope ) ) {
 
-			local attacker = GetPlayerFromUserID( params.attacker )
+		scope[ thinktable_func ] <- function() {
 
-			if ( attacker ) {
+			foreach ( name, _func in scope[ thinktable_name ] || {} )
+				_func.call( scope )
 
-				for ( local i = 0; i < SLOT_COUNT; i++ ) {
-
-					local weapon = GetPropEntityArray( attacker, STRING_NETPROP_MYWEAPONS, i )
-
-					if ( weapon == null )
-						continue
-
-					if ( GetItemIndex( weapon ) != params.weapon_def_index )
-						continue
-
-					local weapon_scope = GetEntScope( weapon )
-					if ( weapon_scope && "collect_currency_on_kill" in weapon_scope )
-						should_collect = true
-				}
-			}
+			return -1
 		}
 
-		if ( !should_collect )
+        // fix anonymous function declaration
+        compilestring( format( @"local _%s = %s; function %s() { _%s() }", thinktable_func, thinktable_func, thinktable_func, thinktable_func ) ).call(scope)
+
+		try { _AddThinkToEnt( ent, thinktable_func ) } catch ( e ) { AddThinkToEnt( ent, thinktable_func ) }
+	}
+	// only initialize blank think setup for empty string
+	if ( func == "" )
+		return
+
+	// add think function to thinktable
+	else if ( func ) {
+
+		if ( endswith( typeof func, "function" ) ) {
+
+			scope[ thinktable_name ][ func.getinfos().name || format( "__%s_ANONYMOUS_THINK", ent.GetName() ) ] <- func
 			return
-
-		local player = GetPlayerFromUserID( params.userid )
-
-		// bots only drop item_currencypack_custom, but all other pack classes are supported just in case
-		for ( local entity; entity = FindByClassnameWithin( entity, "item_currencypack_*", player.GetOrigin(), 100 ); ) {
-
-			local scope = GetEntScope( entity )
-			scope.real_origin <- entity.GetOrigin()
-
-			function CollectPack() {
-
-				local pack = self
-
-				if ( !pack.IsValid() )
-					return
-
-				if ( GetPropBool( pack, "m_bDistributed" ) )
-					return
-
-				local origin = GetEntScope( pack ).real_origin
-				local owner = GetPropEntity( pack, "m_hOwnerEntity" )
-				local model_path = pack.GetModelName()
-
-				local objective_resource = PZI_Util.ObjectiveResource
-
-				local money_before = GetPropInt( objective_resource, "m_nMvMWorldMoney" )
-				pack.Kill()
-				local money_after = GetPropInt( objective_resource, "m_nMvMWorldMoney" )
-
-				local pack_price = money_before - money_after
-
-				local mvm_stats = PZI_Util.MvMStatsEnt
-
-				SetPropInt( mvm_stats, "m_currentWaveStats.nCreditsAcquired", GetPropInt( mvm_stats, "m_currentWaveStats.nCreditsAcquired" ) + pack_price )
-
-				for ( local i = 1, player; i <= MaxClients(); i++ )
-					if ( player = PlayerInstanceFromIndex( i ), player && !player.IsBotOfType( TF_BOT_TYPE ) )
-						player.AddCurrency( pack_price )
-
-				// spawn a worthless currencypack which can be collected by a scout for overheal
-				local fake_pack = CreateByClassname( "item_currencypack_custom" )
-				SetPropBool( fake_pack, "m_bDistributed", true )
-				SetPropEntity( fake_pack, "m_hOwnerEntity", owner )
-				DispatchSpawn( fake_pack )
-				fake_pack.SetModel( model_path )
-
-				// position to ground, as fake pack won't have any velocity
-				trace_world <- {
-					start = origin,
-					end = origin - Vector( 0, 0, 50000 )
-					mask = MASK_SOLID_BRUSHONLY
-				}
-
-				TraceLineEx( trace_world )
-
-				if ( trace_world.hit ) {
-
-					fake_pack.SetAbsOrigin( trace_world.pos + Vector( 0, 0, 5 ) )
-				}
-				else
-					fake_pack.SetAbsOrigin( origin )
-
-
-				GetEntScope( fake_pack ).despawn_time <- Time() + TF_POWERUP_LIFETIME
-
-				function DespawnThink() {
-
-					if ( Time() < despawn_time )
-						return
-
-					fake_pack.Kill()
-				}
-				AddThink( fake_pack, DespawnThink )
-			}
-			scope.CollectPack <- CollectPack
-
-			entity.SetAbsOrigin( Vector( -1000000, -1000000, -1000000 ) )
-			EntFireByHandle( entity, "CallScriptFunction", "CollectPack", 0, null, null )
 		}
 
-	}, EVENT_WRAPPER_UTIL )
+		else if (
+			typeof func == "string"
+			&& !( func in scope[ thinktable_name ] )
+			&& ( ( func in this && endswith( typeof this[ func ], "function" ) ) || ( func in ROOT && endswith( typeof ROOT[ func ], "function" ) ) )
+		) {
+
+			scope[ thinktable_name ][ func ] <- func in this ? this[ func ].bindenv( scope ) : ROOT[ func ].bindenv( scope )
+			return
+		}
+	}
+	else {
+
+		scope[ thinktable_name ].clear()
+		return
+	}
+
+}
+
+PZI_Util.AddThinkToEnt <- PZI_Util.AddThink
+
+function PZI_Util::RemoveThink( ent, func = null ) {
+
+	local scope = GetEntScope( ent )
+
+	if ( !( "__thinktable_name" in scope ) ) {
+		SetPropString( ent, "m_iszScriptThinkFunction", "" )
+		return
+	}
+
+	local thinktable_name = scope.__thinktable_name
+
+	if ( typeof func == "function" )
+		func = func.getinfos().name || format( "__%s_ANONYMOUS_THINK", ent.GetName() )
+
+	if ( !( func in scope[ thinktable_name ] ) )
+		return
+
+	func == null ? scope[ thinktable_name ].clear() : delete scope[ thinktable_name ][ func ]
 }
 
 function PZI_Util::SetConvar( convar, value, duration = 0, hide_chat_message = true ) {
@@ -2350,6 +2349,20 @@ function PZI_Util::KVStringToVectorOrQAngle( str, angles = false, startidx = 0 )
 	}
 
 	return angles ? QAngle( split[ startidx ], split[ startidx + 1 ], split[ startidx + 2 ] ) : Vector( split[ startidx ], split[ startidx + 1 ], split[ startidx + 2 ] )
+}
+
+function PZI_Util::RunGenerator( func, interval = -1 ) {
+
+	local dummy = CreateByClassname( "logic_autosave" )
+	dummy.ValidateScriptScope()
+	
+	local gen = func()
+	function PZI_GeneratorThink() {
+
+		resume gen
+		return interval
+	}
+	dummy.GetScriptScope()[ func.getinfos().name ] <- func
 }
 
 // MATH
@@ -2521,11 +2534,20 @@ PZI_EVENT( "teamplay_round_start", "UtilRoundStart", function ( params ) {
 
 }, EVENT_WRAPPER_UTIL )
 
-PZI_EVENT( "player_activate", "UtilPlayerActivate", function ( params ) {
+PZI_EVENT( "player_team", "UtilPlayerTeam", function ( params ) {
 
 	local player = GetPlayerFromUserID( params.userid )
 
-	PZI_Util.PlayerTable[ player ] <- params.userid
+	if ( !( player in PZI_Util.PlayerTable ) )
+		PZI_Util.PlayerTable[ player ] <- params.userid
+
+	if ( params.team > TEAM_SPECTATOR ) {
+
+		local tbl = PZI_Util[ params.team == TF_TEAM_RED ? "HumanTable" : "ZombieTable" ]
+
+		if ( !( player in tbl ) )
+			tbl[ player ] <- params.userid
+	}
 
 	PZI_Util.ValidatePlayerTables()
 

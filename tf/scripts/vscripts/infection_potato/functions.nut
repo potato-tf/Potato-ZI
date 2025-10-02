@@ -50,14 +50,15 @@ function GetPlayerUserID ( _hPlayer ) {
 
 function PlayerCount ( _team = -1 ) {
 
-    local playerCount   = 0
+    // local playerCount   = 0
     // local targetTeamCount = 0
 
-    for ( local i = 1, player; i <= MaxPlayers; player = PlayerInstanceFromIndex( i ), i++ )
-        if ( player && ( player.GetTeam() == _team || _team == -1 ) )
-            playerCount++
+    // for ( local i = 1, player; i <= MaxPlayers; player = PlayerInstanceFromIndex( i ), i++ )
+    //     if ( player && ( player.GetTeam() == _team || _team == -1 ) )
+    //         playerCount++
 
-    return playerCount
+    // return playerCount
+    return (PZI_Util.PlayerArray.filter(@(i, player) player.GetTeam() == _team || _team == -1)).len()
 }
 
 function PlayGlobalBell ( _bForce ) {
@@ -91,12 +92,16 @@ function DemomanExplosionPreCheck ( _vecLocation, _flDmg, _flDmgMult, _flRange, 
         _buildable.TakeDamage( 999, DMG_BLAST, _hInflictor )
     }
 
-    for ( local _player; _player = FindByClassnameWithin( _player, "player", _vecLocation, _flRange ); ) {
+    if ( _flDmgMult && _flDmgMult != 1.0 ) {
 
-        if ( _player.GetTeam() != TF_TEAM_RED )
-            continue
+        for ( local _player; _player = FindByClassnameWithin( _player, "player", _vecLocation, _flRange ); ) {
 
-        _finalDmg *= _flDmgMult
+            if ( _player.GetTeam() != TF_TEAM_RED )
+                continue
+
+            _finalDmg *= _flDmgMult
+        }
+
     }
 
     printl( "Final damage: " + _finalDmg )
@@ -185,24 +190,14 @@ function GetAllPlayers( team = null ) {
 
 function GetRandomPlayers( _howMany = 1, team = null ) {
 
-    local _playerArr = []
+    local _playerArr =  PZI_Util.PlayerArray.filter( @(i, player) team == null || player.GetTeam() == team )
 
-    foreach ( _hPlayer in GetAllPlayers( team ) ) {
+    _howMany = ( _howMany - 1 in _playerArr ) ? _howMany : _playerArr.len()
 
-        if ( _hPlayer != null /* &&  ( _hPlayer.GetFlags() & FL_FAKECLIENT ) == 0 */  )
-            _playerArr.append( _hPlayer )
-    }
+    local _selectedPlayers = array( _howMany )
 
-    _howMany = ( _howMany <= _playerArr.len() ) ? _howMany : _playerArr.len()
-
-    local _selectedPlayers = []
-
-    for ( local i = 0; i < _howMany; i++ ) {
-
-        local _randomID = RandomInt ( 0, _playerArr.len() - 1 )
-        _selectedPlayers.append     ( _playerArr[ _randomID ] )
-        _playerArr.remove           ( _randomID )
-    }
+    for ( local i = 0; i < _howMany; i++ )
+        _selectedPlayers[i] = _playerArr[RandomInt( 0, _playerArr.len() - 1 )]
 
     return _selectedPlayers
 }
@@ -227,7 +222,7 @@ function NetName ( _hPlayer ) {
 
     local _szNetname = GetPropString( _hPlayer, "m_szNetname" )
 
-    if ( typeof _szNetname != "string" || _szNetname == "" || _szNetname == null )
+    if ( !_szNetname || typeof _szNetname != "string" || _szNetname == "" )
         return "[BAD NETNAME]"
 
     return _szNetname
@@ -288,6 +283,7 @@ function ShouldZombiesWin ( _hPlayer ) {
 
         // the zombies have won the round.
         ::bGameStarted <- false
+        SetValue( "mp_humans_must_join_team", "red" )
         _hGameWin.AcceptInput( "RoundWin", null, null, null )
     }
     else {

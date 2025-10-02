@@ -40,6 +40,7 @@ const PZI_VERSION   =  "v0.1.0 - 09/05/2025"
     "mp_scrableteams_auto"                 : 0,
     "mp_scrambleteams_auto_windifference"  : 0,
     "mp_humans_must_join_team"             : "red",
+    "mp_forceautoteam"                     : 1,
     "tf_weapon_criticals"                  : 1,
     "tf_forced_holiday"                    : 2,
     "tf_dropped_weapon_lifetime"           : 0,

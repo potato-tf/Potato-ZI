@@ -157,6 +157,7 @@ PZI_EVENT( "teamplay_round_start", "PZI_MapStripper_RoundStart", function ( para
         timer_length        = 480
         StartDisabled       = 0
         "OnFinished#1"      : "__pzi_util,CallScriptFunction,RoundWin,1"
+        "OnFinished#2"      : "__pzi_util,RunScriptCode,SetValue(`mp_humans_must_join_team` `red`),1"
     } )
 
     EntFire( "__pzi_timer", "Resume", null, 1 )
