@@ -144,7 +144,7 @@ local function SetupRoundTimer() {
     {
         function TimerThink()
         {
-            local time_left = base_timestamp - Time()
+            local time_left = (base_timestamp - Time()).tointeger()
 
             printl(!(time_left % 10))
             if (time_left > 0)
@@ -185,6 +185,7 @@ local function SetupRoundTimer() {
                                 SERVER_DATA.address = response.address
                         }
                     })
+                    return 1.1
                 }
                 return -1
             }
