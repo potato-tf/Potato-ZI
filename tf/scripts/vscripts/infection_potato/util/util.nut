@@ -1817,7 +1817,7 @@ function PZI_Util::GetPlayerReadyCount() {
 	return ready
 }
 
-function PZI_Util::RoundWin( team = TEAM_HUMAN ) {
+function PZI_Util::RoundWin( team = 2 ) {
 
 	local round_win = SpawnEntityFromTable( "game_round_win", {
 
