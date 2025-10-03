@@ -41,7 +41,7 @@ jobs:
             for i in "${servers[@]}"; do a=( $i );
             {
                 rsync -a --chmod=777 --mkpath -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./tf/* ${a[1]}:${a[2]}/tf2server/tf/zi/
-                ln -sfn ${a[2]}/tf2server/tf/zi/ ${a[2]}/www/html/tf/
+                ln -sfn ${a[2]}/tf2server/tf/zi/ ${a[2]}/www/html/gameassets/zi/
             } &
             wait
             done
