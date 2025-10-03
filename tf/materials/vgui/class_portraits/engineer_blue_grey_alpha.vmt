@@ -1,0 +1,9 @@
+"UnlitGeneric"
+{
+	"$baseTexture" "vgui\class_portraits\engineer_zombie_grey"
+	"$saturation" "0.01"
+	"$vertexcolor" 1
+	"$no_fullbright" 1
+	"$ignorez" 1
+	"$translucent" 1
+}

@@ -1,0 +1,35 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models\player\infection\w_grenade_emp"
+	"$bumpmap" "models\player\infection\w_grenade_emp_normal"
+	"$selfillum" "1"
+
+	"$phong" "1"
+	"$phongexponent" "5"
+	"$phongboost" "2"	
+	"$lightwarptexture" "models\lightwarps\weapon_lightwarp"
+	"$phongfresnelranges" "[0.25 0.5 1]"
+	"$bumpmapalphaphongmask" "1"
+
+
+	"Proxies"
+	{
+		"Sine"
+		{
+			"resultVar" $selfillumtint
+			"sinemin" .1
+			"sinemax" 2.00
+			"sineperiod" 0.30
+		}
+	}
+
+	// Cloaking
+	"$cloakPassEnabled" "1"
+	"Proxies"
+	{
+		"invis"
+		{
+		}
+	}
+
+}
