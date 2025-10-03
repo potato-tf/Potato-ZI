@@ -45,10 +45,7 @@ jobs:
                 ssh -p ${a[0]} ${a[1]} '
                   if [ -f "${a[2]}/tf2server/tf/cfg/mapcycle_zi.txt" ]; then
                     while IFS= read -r mapname || [ -n "$mapname" ]; do
-                      mapname_trimmed=$(echo "$mapname" | xargs)
-                      if [ -n "$mapname_trimmed" ]; then
-                        cp -rn "${a[2]}/tf2server/tf/cfg/downloads_zi.kv" "${a[2]}/tf2server/tf/maps/${mapname_trimmed}.res"
-                      fi
+                      cp -rn "${a[2]}/tf2server/tf/cfg/downloads_zi.kv" "${a[2]}/tf2server/tf/maps/${mapname}.res"
                     done < "${a[2]}/tf2server/tf/cfg/mapcycle_zi.txt"
                   fi
                 '
