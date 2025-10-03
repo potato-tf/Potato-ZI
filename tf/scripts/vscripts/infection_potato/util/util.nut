@@ -2288,13 +2288,6 @@ function PZI_Util::ResetConvars( hide_chat_message = true ) {
 
 function PZI_Util::ValidatePlayerTables() {
 
-	// remove invalid players from the table
-	local invalid = []
-
-	foreach( player, _ in PlayerTable )
-		if ( !player || !player.IsValid() )
-			invalid.append( player )
-
 	local function playervalidate(player, _) { return player && player.IsValid() }
 
 	PlayerTable = PlayerTable.filter( playervalidate )
@@ -2656,6 +2649,8 @@ PZI_EVENT( "post_inventory_application", "UtilPostInventoryApplication", functio
 	PZI_Util.ZombieArray = zombie_table.keys()
 	PZI_Util.PlayerArray = player_table.keys()
 	PZI_Util.BotArray    = bot_table.keys()
+
+	PZI_Util.ValidatePlayerTables()
 
 }, EVENT_WRAPPER_UTIL )
 
