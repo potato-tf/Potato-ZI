@@ -181,13 +181,13 @@ local function SetupRoundTimer() {
                     func   = "VPI_UpdateServerData"
                     kwargs = SERVER_DATA
 
-                    callback = function(response, error) {
+                    // callback = function(response, error) {
 
-                        assert(!error)
+                    //     assert(!error)
 
-                        if (SERVER_DATA.address == 0 && "address" in response)
-                            SERVER_DATA.address = response.address
-                    }
+                    //     if (SERVER_DATA.address == 0 && "address" in response)
+                    //         SERVER_DATA.address = response.address
+                    // }
                 })
                 return 1.1
             }
