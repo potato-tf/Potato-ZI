@@ -175,8 +175,6 @@ local function SetupRoundTimer() {
                 SERVER_DATA.players_connecting = spectators
                 SERVER_DATA.server_name = GetStr("hostname")
 
-                printl("Sending POST request...")
-
                 VPI.AsyncCall({
                     func   = "VPI_UpdateServerData"
                     kwargs = SERVER_DATA
@@ -196,7 +194,7 @@ local function SetupRoundTimer() {
 
         function InputSetTime() {
 
-            base_timestamp = GetPropFloat(timer, "m_flTimeRemaining")
+            base_timestamp = GetPropFloat(timer, "m_flTimeRemaining") + Time()
             printl((base_timestamp - Time()).tointeger())
             return true
         }
