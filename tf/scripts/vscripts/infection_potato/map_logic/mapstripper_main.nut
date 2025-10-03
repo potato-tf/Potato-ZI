@@ -196,6 +196,14 @@ local function SetupRoundTimer() {
             }
             return -1
         }
+
+        function InputSetTime() {
+
+            printl(GetPropFloat(timer, "m_flTimeRemaining"))
+            return true
+        }
+        scope.InputSetTime <- InputSetTime
+        scope.Inputsettime <- InputSetTime
         scope.TimerThink <- TimerThink
         AddThinkToEnt(timer, "TimerThink")
     }
