@@ -154,6 +154,9 @@ local function SetupRoundTimer() {
 
             if ( !(time_left % 10) )
             {
+
+                if ( !( PlayerCount( TF_TEAM_RED ) + PlayerCount( TF_TEAM_BLUE ) ) )
+                    timer.AcceptInput("SetTime", "60", null, null)
                 LocalTime(LOCALTIME)
                 SERVER_DATA.update_time = LOCALTIME
                 SERVER_DATA.max_wave = time_left
