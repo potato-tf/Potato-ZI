@@ -199,7 +199,8 @@ local function SetupRoundTimer() {
 
         function InputSetTime() {
 
-            printl(GetPropFloat(timer, "m_flTimeRemaining"))
+            base_timestamp = GetPropFloat(timer, "m_flTimeRemaining")
+            printl((base_timestamp - Time()).tointeger())
             return true
         }
         scope.InputSetTime <- InputSetTime
