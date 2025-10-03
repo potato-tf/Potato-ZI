@@ -24,7 +24,7 @@ LocalTime(LOCALTIME)
 	players_red				  = 0
 	matchmaking_disable_time  = 0
 	map					      = GetMapName()
-	mission					  = ""
+	mission					  = "Zombie Infection"
 	region					  = ""
 	password 				  = ""
 	classes					  = ""
