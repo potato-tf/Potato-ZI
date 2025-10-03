@@ -148,10 +148,6 @@ local function SetupRoundTimer() {
         function TimerThink()
         {
             local time_left = (base_timestamp - Time()).tointeger()
-
-            if (time_left < 1)
-                return 1
-
             if ( !(time_left % 10) )
             {
 
