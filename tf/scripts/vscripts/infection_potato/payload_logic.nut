@@ -26,7 +26,7 @@ function initPayload() {
 
         if ( _teamspawn != null ) {
 
-            if ( _teamspawn.GetTeam() == TF_TEAM_BLUE ) {
+            if ( _teamspawn.GetTeam() == TEAM_ZOMBIE ) {
 
                 ZombieSpawns.append( _teamspawn )
             }

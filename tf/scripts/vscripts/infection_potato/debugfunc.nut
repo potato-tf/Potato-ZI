@@ -5,7 +5,7 @@ function ChatCmdHuman( _hPlayer ) {
     _hPlayer.RemovePlayerWearables()
     _hPlayer.ClearZombieEntities()
 
-    _hPlayer.ForceChangeTeam( TF_TEAM_RED, true )
+    _hPlayer.ForceChangeTeam( TEAM_HUMAN, true )
     _hPlayer.SetHealth  ( _hPlayer.GetMaxHealth() )
 
     _hPlayer.MakeHuman()
@@ -21,7 +21,7 @@ function ChatCmdHuman( _hPlayer ) {
 function ChatCmdZombie( _hPlayer ) {
 
     local _sc = _hPlayer.GetScriptScope()
-    _hPlayer.ForceChangeTeam( TF_TEAM_BLUE, true )
+    _hPlayer.ForceChangeTeam( TEAM_ZOMBIE, true )
     _sc.m_iFlags         <- ( _sc.m_iFlags | ZBIT_PENDING_ZOMBIE )
 
     _hPlayer.RemovePlayerWearables()

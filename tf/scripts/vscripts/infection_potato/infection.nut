@@ -1,11 +1,14 @@
-// --------------------------------------------------------------------------------------- //
-// Zombie Infection                                                                        //
-// --------------------------------------------------------------------------------------- //
-// All Code By: Harry Colquhoun ( https://steamcommunity.com/profiles/76561198025795825 )    //
-// Assets/Game Design by: Diva Dan ( https://steamcommunity.com/profiles/76561198072146551 ) //
-// --------------------------------------------------------------------------------------- //
-// infection mode main script                                                              //
-// --------------------------------------------------------------------------------------- //
+
+/**************************************************************************************************
+ *                                                                                                *
+ * All Code By: Harry Colquhoun ( https://steamcommunity.com/profiles/76561198025795825 )         *
+ * Assets/Game Design by: Diva Dan ( https://steamcommunity.com/profiles/76561198072146551 )      *
+ * Modified for Potato.TF by: Braindawg ( https://steamcommunity.com/profiles/76561197988531991 ) *
+ *                                                                                                *
+***************************************************************************************************
+ * infection mode main script                                                                     *
+***************************************************************************************************/
+
 zi <- this
 
 if ( !( "InfectionLoaded" in getroottable() ) ) {
@@ -184,12 +187,10 @@ PZI_EVENT( "player_spawn", "Infection_PlayerSpawn", function( params ) {
     local _hPlayer     = GetPlayerFromUserID( params.userid )
     local _iRoundState = GetPropInt( GameRules, "m_iRoundState" )
 
-    _hPlayer.ValidateScriptScope(); // only do this once, for ficool's sake
-
-    if ( _hPlayer == null )
+    if ( !_hPlayer )
         return
 
-    _sc <- _hPlayer.GetScriptScope()
+    _sc <- _hPlayer.GetScriptScope() || (_hPlayer.ValidateScriptScope(), _hPlayer.GetScriptScope())
 
     _sc.ThinkTable <- {}
 
@@ -218,10 +219,10 @@ PZI_EVENT( "player_spawn", "Infection_PlayerSpawn", function( params ) {
     }
 
     // game hasn't started, player should be a survivor
-    if ( !::bGameStarted ) {
+    if ( !bGameStarted ) {
 
         // force the player to red team and then respawn them
-        if ( _hPlayer.GetTeam() == TF_TEAM_BLUE ) {
+        if ( _hPlayer.GetTeam() == TEAM_ZOMBIE ) {
 
             // remove all conditions/attribs that could linger from previous round
             _hPlayer.ClearZombieAttribs()
@@ -231,7 +232,7 @@ PZI_EVENT( "player_spawn", "Infection_PlayerSpawn", function( params ) {
             _hPlayer.ResetInfectionVars()
             _hPlayer.ClearZombieEntities()
 
-            ChangeTeamSafe( _hPlayer, TF_TEAM_RED, false )
+            ChangeTeamSafe( _hPlayer, TEAM_HUMAN, false )
             _hPlayer.ForceRegenerateAndRespawn()
             return
         }
@@ -254,9 +255,9 @@ PZI_EVENT( "player_spawn", "Infection_PlayerSpawn", function( params ) {
     }
     else { // game has started, player should be a zombie {
 
-        if ( _hPlayer.GetTeam() == TF_TEAM_RED ) {
+        if ( _hPlayer.GetTeam() == TEAM_HUMAN ) {
 
-            ChangeTeamSafe( _hPlayer, TF_TEAM_BLUE, false )
+            ChangeTeamSafe( _hPlayer, TEAM_ZOMBIE, false )
             _hPlayer.ForceRegenerateAndRespawn()
             // _hPlayer.TakeDamage( 9999999, DMG_GENERIC, null )
             return
@@ -294,7 +295,7 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
 
     ::bGameStarted <- true
 
-    local _iPlayerCountRed    = PlayerCount( TF_TEAM_RED )
+    local _iPlayerCountRed    = PlayerCount( TEAM_HUMAN )
     local _numStartingZombies = ( _iPlayerCountRed / STARTING_ZOMBIE_FAC ) || 1
 
     // -------------------------------------------------- //
@@ -308,7 +309,7 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
         local _hGameWin = SpawnEntityFromTable( "game_round_win", {
 
             force_map_reset = true
-            TeamNum         = TF_TEAM_RED
+            TeamNum         = TEAM_HUMAN
             switch_teams    = false
         } )
         
@@ -322,10 +323,10 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
     // enable glow on RED//
     // ------------------//
 
-    EntFire( "player", "RunScriptCode", "if ( self.GetTeam() == TF_TEAM_RED ) SetPropBool( self, `m_bGlowEnabled`, true )" )
+    EntFire( "player", "RunScriptCode", "if ( self.GetTeam() == TEAM_HUMAN ) SetPropBool( self, `m_bGlowEnabled`, true )" )
 
     local _szZombieNetNames  =  ""
-    local _zombieArr         =  GetRandomPlayers( _numStartingZombies, TF_TEAM_RED )
+    local _zombieArr         =  GetRandomPlayers( _numStartingZombies, TEAM_HUMAN )
     local _zombieArr_len     = _zombieArr.len()
 
     if ( !_zombieArr_len )
@@ -350,9 +351,9 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
             local _nextPlayer2 = _zombieArr[behind]
 
             if ( !_nextPlayer1 || !_nextPlayer1.IsValid() )
-                _nextPlayer1 = GetRandomPlayers( 1, TF_TEAM_RED )[0]
+                _nextPlayer1 = GetRandomPlayers( 1, TEAM_HUMAN )[0]
             if ( !_nextPlayer2 || !_nextPlayer2.IsValid() )
-                _nextPlayer2 = GetRandomPlayers( 1, TF_TEAM_RED )[0]
+                _nextPlayer2 = GetRandomPlayers( 1, TEAM_HUMAN )[0]
 
             local _sc = _nextPlayer1.GetScriptScope()
             local _sc2 = _nextPlayer2.GetScriptScope()
@@ -388,8 +389,8 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
             _nextPlayer1.ResetInfectionVars()
             _nextPlayer2.ResetInfectionVars()
 
-            ChangeTeamSafe( _nextPlayer1, TF_TEAM_BLUE, false )
-            ChangeTeamSafe( _nextPlayer2, TF_TEAM_BLUE, false )
+            ChangeTeamSafe( _nextPlayer1, TEAM_ZOMBIE, false )
+            ChangeTeamSafe( _nextPlayer2, TEAM_ZOMBIE, false )
 
             if ( bZombiesDontSwitchInPlace ) {
 
@@ -483,7 +484,7 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
     local _hNextRespawnRoom = null
     while ( _hNextRespawnRoom = FindByClassname( _hNextRespawnRoom, "func_respawnroom" ) ) {
 
-        if ( _hNextRespawnRoom && _hNextRespawnRoom.GetTeam() == TF_TEAM_RED ) {
+        if ( _hNextRespawnRoom && _hNextRespawnRoom.GetTeam() == TEAM_HUMAN ) {
 
             EntFireByHandle( _hNextRespawnRoom, "SetInactive", "", -1, null, null )
         }
@@ -546,7 +547,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
 
     SetPropIntArray( _hPlayer, STRING_NETPROP_MDLINDEX_OVERRIDES, 0, 3 )
 
-    if ( ::bGameStarted && _hPlayerTeam == TF_TEAM_BLUE ) { // zombie has died
+    if ( ::bGameStarted && _hPlayerTeam == TEAM_ZOMBIE ) { // zombie has died
 
         if ( _iClassNum ==  TF_CLASS_MEDIC ) {
 
@@ -585,7 +586,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
 
                 while ( _hNextPlayer = FindByClassnameWithin( _hNextPlayer, "player", _hPlayer.GetOrigin(), 125 ) ) {
 
-                    if ( _hNextPlayer != null && _hNextPlayer.GetTeam() == TF_TEAM_RED && _hNextPlayer != _hPlayer ) {
+                    if ( _hNextPlayer != null && _hNextPlayer.GetTeam() == TEAM_HUMAN && _hNextPlayer != _hPlayer ) {
 
                         KnockbackPlayer           ( _hPlayer, _hNextPlayer, 210, 0.85, true )
                         _hNextPlayer.TakeDamageEx ( _hKillicon, _hPlayer, _hPlayer.GetActiveWeapon(), Vector( 0, 0, 0 ), _hPlayer.GetOrigin(), 10, ( DMG_CLUB | DMG_PREVENT_PHYSICS_FORCE ) )
@@ -681,7 +682,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
     if ( ::bGameStarted ) { // if the game is started, a dying survivor becomes a zombie
 
         // player was survivor, killed by a zombie and wasn't suicide
-        if ( _hKiller && _hKiller.IsPlayer() && _hKiller.GetTeam() == TF_TEAM_BLUE && _hPlayerTeam == TF_TEAM_RED ) {
+        if ( _hKiller && _hKiller.IsPlayer() && _hKiller.GetTeam() == TEAM_ZOMBIE && _hPlayerTeam == TEAM_HUMAN ) {
 
             if ( _hKiller == null || _hPlayer == _hKiller )
                 return
@@ -754,6 +755,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
     }
 }, EVENT_WRAPPER_MAIN )
 
+local special_weapons = { [ID_GOLDEN_WRENCH] = null, [ID_SAXXY] = null, [ID_SPY_CICLE] = null, [ID_GOLD_FRYING_PAN] = null }
 PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
 
     if ( params.const_entity == null || params.inflictor == null || params.attacker == null )
@@ -797,17 +799,17 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
     if ( _sc && "m_iFlags" in _sc && _sc.m_iFlags & ZBIT_MUST_EXPLODE ) {
 
         if ( _hVictim == _hAttacker && _hInflictor.GetClassname() == "tf_generic_bomb" )
-            params.damage <- ( _iForceGibDmg )
+            params.damage = ( _iForceGibDmg )
 
         if ( params.damage >= ( _hVictim.GetHealth() ) )
-            params.damage <- ( _iForceGibDmg )
+            params.damage = ( _iForceGibDmg )
 
         return
     }
 
     local _iOriginalDmgBits = params.damage_type
 
-    if ( _hVictim.GetTeam() == TF_TEAM_BLUE ) {
+    if ( _hVictim.GetTeam() == TEAM_ZOMBIE ) {
 
         // ---------------------------------------------------------------------- //
         // On Zombie receives damage from player                                  //
@@ -817,7 +819,7 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
         if ( params.damage_type & ~DMG_BLAST ) {
 
             // if the damage isn't already blast we add blast
-            params.damage_type <- ( _iOriginalDmgBits | DMG_BLAST | DMG_PREVENT_PHYSICS_FORCE )
+            params.damage_type = _iOriginalDmgBits | DMG_BLAST | DMG_PREVENT_PHYSICS_FORCE
         }
 
         if ( _szWeaponName != "worldspawn" ) {
@@ -834,17 +836,14 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
         try{ _iWeaponIDX = GetPropInt( _hAttacker.GetActiveWeapon(), STRING_NETPROP_ITEMDEF ); }
         catch( e ){}
 
-        if (  _iWeaponIDX == TF_IDX_GWRENCH   ||
-            _iWeaponIDX == TF_IDX_SAXXY     ||
-            _iWeaponIDX == TF_IDX_SPYCICLE  ||
-            _iWeaponIDX == TF_IDX_GOLDENPAN  ) {
+        if (  _iWeaponIDX in special_weapons ) {
 
-            params.damage_type <- ( _iOriginalDmgBits )
+            params.damage_type = _iOriginalDmgBits
         }
 
         if ( _hVictim.GetPlayerClass() == TF_CLASS_PYRO && ( params.damage_type & DMG_BURN ) ) {
 
-            params.damage <- ( 0 )
+            params.damage *= 0.5
             return
         }
 
@@ -858,7 +857,7 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
                     if ( _szWeaponName == "tf_weapon_compound_bow" ) {
 
                         // no longer modified
-                        params.damage <- ( params.damage )
+                        params.damage = ( params.damage )
                     }
 
                     break
@@ -868,7 +867,7 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
                     if ( _szWeaponName == "tf_weapon_crossbow" ) {
 
                         // no longer modified
-                        params.damage <- ( params.damage )
+                        params.damage = ( params.damage )
                     }
 
                     break
@@ -877,7 +876,7 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
 
                     if ( _szWeaponName == "tf_weapon_minigun" ) {
 
-                        params.damage <- ( params.damage * TF_NERF_MINIGUN_Z_DMG )
+                        params.damage = ( params.damage * TF_NERF_MINIGUN_Z_DMG )
                     }
 
                     break
@@ -890,7 +889,7 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
                         _szWeaponName == "tf_weapon_flamethrower_rocket" ||
                         _szWeaponName == "tf_weapon_flaregun"  ) {
 
-                        params.damage <- ( params.damage * 0 )
+                        params.damage = ( params.damage * 0 )
                     }
 
                     break
@@ -903,7 +902,7 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
 
         if ( _szWeaponName == "obj_sentrygun" ) {
 
-        params.damage <- ( params.damage * TF_NERF_SENTRY_Z_DMG )
+        params.damage = ( params.damage * TF_NERF_SENTRY_Z_DMG )
         }
 
         if ( params.damage_type & DMG_FALL && _szWeaponName == "worldspawn" ) {
@@ -917,7 +916,7 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
                 if ( _hGroundEnt.IsPlayer() ) {
 
                     _flDamage = ( _flDamage * 3 ) + 10
-                    if ( _hGroundEnt.GetTeam() == TF_TEAM_BLUE || !( _sc.m_iFlags & ZBIT_SOLDIER_IN_POUNCE ) )
+                    if ( _hGroundEnt.GetTeam() == TEAM_ZOMBIE || !( _sc.m_iFlags & ZBIT_SOLDIER_IN_POUNCE ) )
                         return
 
                     local _hWeapon = _hVictim.GetActiveWeapon()
@@ -939,7 +938,7 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
                 }
             }
 
-            params.damage <- ( 0 )
+            params.damage = ( 0 )
         }
     }
 
@@ -948,8 +947,8 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
     // ----------------------------------------------------------- //
 
     if ( _hAttacker.IsPlayer() &&
-        _hVictim.GetTeam() == TF_TEAM_RED &&
-        _hAttacker.GetTeam() == TF_TEAM_BLUE ) {
+        _hVictim.GetTeam() == TEAM_HUMAN &&
+        _hAttacker.GetTeam() == TEAM_ZOMBIE ) {
 
         local _sc = _hAttacker.GetScriptScope()
 
@@ -957,7 +956,7 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
         // zombie heavy knock up effect                                //
         // ----------------------------------------------------------- //
 
-        if ( _hAttacker.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS && _hAttacker.GetTeam() == TF_TEAM_BLUE && params.damage_type & DMG_CLUB ) {
+        if ( _hAttacker.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS && _hAttacker.GetTeam() == TEAM_ZOMBIE && params.damage_type & DMG_CLUB ) {
 
             if ( !_hVictim || !_hVictim.IsPlayer() )
                 return
@@ -978,7 +977,7 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
         // ----------------------------------------------------------- //
         // zombie demo charge knock up effect                          //
         // ----------------------------------------------------------- //
-        if ( _hAttacker.GetPlayerClass() == TF_CLASS_DEMOMAN && _hAttacker.GetTeam() == TF_TEAM_BLUE && _hInflictor.GetClassname() == KILLICON_DEMOMAN_BOOM ) {
+        if ( _hAttacker.GetPlayerClass() == TF_CLASS_DEMOMAN && _hAttacker.GetTeam() == TEAM_ZOMBIE && _hInflictor.GetClassname() == KILLICON_DEMOMAN_BOOM ) {
 
             if ( !_hVictim || !_hVictim.IsPlayer() )
                 return
@@ -1006,7 +1005,7 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
         }
 
         if ( _hAttacker.GetPlayerClass() == TF_CLASS_PYRO &&
-            _hAttacker.GetTeam() == TF_TEAM_BLUE && params.damage_type & DMG_CLUB ) {
+            _hAttacker.GetTeam() == TEAM_ZOMBIE && params.damage_type & DMG_CLUB ) {
 
             local _hIgniteTrigger = SpawnEntityFromTable( "trigger_ignite", {
 
@@ -1071,7 +1070,7 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
                                     ZOMBIE_SPOOF_WEAPON_IDX,
                                     _szKillicon )
 
-            params.early_out <- true
+            params.early_out = true
         }
 
         // register the time we hit someone
@@ -1092,7 +1091,7 @@ PZI_EVENT( "player_hurt", "Infection_PlayerHurt", function( params ) {
 
     local _iTeamNum  = _hPlayer.GetTeam()
 
-    if ( _iTeamNum == TF_TEAM_BLUE ) {
+    if ( _iTeamNum == TEAM_ZOMBIE ) {
 
         // on zombie death
         if ( params.health <= 0 ) {
@@ -1125,7 +1124,7 @@ PZI_EVENT( "player_hurt", "Infection_PlayerHurt", function( params ) {
             }
         }
     }
-    else if ( _iTeamNum == TF_TEAM_RED ) {
+    else if ( _iTeamNum == TEAM_HUMAN ) {
 
         // on survivor death
         if ( params.health <=  0 ) {

@@ -278,7 +278,7 @@ PZI_EVENT( "player_hurt", "SpawnAnywhere_RemoveQuickHeal", function( params ) {
 
     local player = GetPlayerFromUserID( params.userid )
 
-    if ( player.InCond( TF_COND_HALLOWEEN_QUICK_HEAL ) && player.GetTeam() == TF_TEAM_BLUE )
+    if ( player.InCond( TF_COND_HALLOWEEN_QUICK_HEAL ) && player.GetTeam() == TEAM_ZOMBIE )
         player.RemoveCond( TF_COND_HALLOWEEN_QUICK_HEAL )
 
 } )
@@ -302,7 +302,7 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
     }
 
     // BLU LOGIC BEYOND THIS POINT
-    if ( player.GetTeam() != TF_TEAM_BLUE ) return
+    if ( player.GetTeam() != TEAM_ZOMBIE ) return
 
     else if ( GetRoundState() != GR_STATE_RND_RUNNING ) return
 
@@ -318,13 +318,13 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
 
         PZI_Util.ScriptEntFireSafe( player, @"
 
-            PZI_Util.TeleportNearVictim( self, GetRandomPlayers( 1, TF_TEAM_RED )[0], 0.25)
+            PZI_Util.TeleportNearVictim( self, GetRandomPlayers( 1, TEAM_HUMAN )[0], 0.25)
             PZI_SpawnAnywhere.BeginSummonSequence( self, self.GetOrigin() )
 
         ", RandomFloat( 0.1, 1.2 ) ) // random delay to avoid predictable spawn waves
     }
 
-    PZI_Util.TeleportNearVictim( player, GetRandomPlayers( 1, TF_TEAM_RED )[0], 0.25 )
+    PZI_Util.TeleportNearVictim( player, GetRandomPlayers( 1, TEAM_HUMAN )[0], 0.25 )
 
     local spawn_hint = CreateByClassname( "move_rope" )
     spawn_hint.KeyValueFromString( "targetname", format( "spawn_hint_%d", player.entindex() ) )
@@ -411,7 +411,7 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
             if ( spawn_area && buttons & IN_ATTACK && !( buttons & IN_ATTACK2 ) ) {
 
                 for ( local survivor; survivor = FindByClassnameWithin( survivor, "player", tracepos, SUMMON_RADIUS ); )
-                    if ( survivor.GetTeam() == TF_TEAM_RED )
+                    if ( survivor.GetTeam() == TEAM_HUMAN )
                         return ClientPrint( player, HUD_PRINTTALK, "Too close to a survivor!" )
 
                 PZI_SpawnAnywhere.BeginSummonSequence( player, spawn_area.GetCenter() )
@@ -438,7 +438,7 @@ PZI_EVENT( "player_death", "SpawnAnywhere_PlayerDeath", function( params ) {
 
     local player = GetPlayerFromUserID( params.userid )
 
-    if ( player.GetTeam() == TF_TEAM_BLUE ) {
+    if ( player.GetTeam() == TEAM_ZOMBIE ) {
 
         player.RemoveFlag( FL_ATCONTROLS|FL_DUCKING|FL_DONTTOUCH|FL_NOTARGET )
         player.AcceptInput( "DispatchEffect", "ParticleEffectStop", null, null )

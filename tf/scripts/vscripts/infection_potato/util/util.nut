@@ -501,9 +501,9 @@ function PZI_Util::ShowChatMessage( target, fmt, ... ) {
 			local player = vargv[i++]
 
 			local team = player.GetTeam()
-			if ( team == TF_TEAM_RED )
+			if ( team == TEAM_HUMAN )
 				result += "\x07" + TF_COLOR_RED
-			else if ( team == TF_TEAM_BLUE )
+			else if ( team == TEAM_ZOMBIE )
 				result += "\x07" + TF_COLOR_BLUE
 			else
 				result += "\x07" + TF_COLOR_SPEC
@@ -1817,7 +1817,7 @@ function PZI_Util::GetPlayerReadyCount() {
 	return ready
 }
 
-function PZI_Util::RoundWin( team = TF_TEAM_RED ) {
+function PZI_Util::RoundWin( team = TEAM_HUMAN ) {
 
 	local round_win = SpawnEntityFromTable( "game_round_win", {
 
@@ -2295,24 +2295,17 @@ function PZI_Util::ValidatePlayerTables() {
 		if ( !player || !player.IsValid() )
 			invalid.append( player )
 
-	foreach( player in invalid ) {
+	local function playervalidate(player, _) { return player && player.IsValid() }
 
-		delete PlayerTable[ player ]
+	PlayerTable = PlayerTable.filter( playervalidate )
+	BotTable 	= BotTable.filter( playervalidate )
+	HumanTable 	= HumanTable.filter( playervalidate )
+	ZombieTable = ZombieTable.filter( playervalidate )
 
-		if ( player in HumanTable )
-			delete HumanTable[ player ]
-
-		if ( player in ZombieTable )
-			delete ZombieTable[ player ]
-
-		if ( player in BotTable )
-			delete BotTable[ player ]
-	}
-
-	HumanArray  = HumanTable.keys()
-	ZombieArray = ZombieTable.keys()
 	PlayerArray = PlayerTable.keys()
 	BotArray    = BotTable.keys()
+	HumanArray  = HumanTable.keys()
+	ZombieArray = ZombieTable.keys()
 }
 
 function PZI_Util::KVStringToVectorOrQAngle( str, angles = false, startidx = 0 ) {
@@ -2543,7 +2536,7 @@ PZI_EVENT( "player_team", "UtilPlayerTeam", function ( params ) {
 
 	if ( params.team > TEAM_SPECTATOR ) {
 
-		local tbl = PZI_Util[ params.team == TF_TEAM_RED ? "HumanTable" : "ZombieTable" ]
+		local tbl = PZI_Util[ params.team == TEAM_HUMAN ? "HumanTable" : "ZombieTable" ]
 
 		if ( !( player in tbl ) )
 			tbl[ player ] <- params.userid
@@ -2593,7 +2586,7 @@ PZI_EVENT( "player_team", "UtilPlayerTeam", function( params ) {
 			PZI_Util.BotTable[ player ] <- params.userid
 	}
 
-	local tablename = params.team == TF_TEAM_RED ? "HumanTable" : "ZombieTable"
+	local tablename = params.team == TEAM_HUMAN ? "HumanTable" : "ZombieTable"
 
 	if ( !( player in PZI_Util[ tablename ] ) )
 		PZI_Util[ tablename ][ player ] <- params.userid
@@ -2632,10 +2625,10 @@ PZI_EVENT( "post_inventory_application", "UtilPostInventoryApplication", functio
 			if ( IsPlayerABot( player ) )
 				bot_table[ player ] <- userid
 
-			else if ( player.GetTeam() == TF_TEAM_RED )
+			else if ( player.GetTeam() == TEAM_HUMAN )
 				human_table[ player ] <- userid
 
-			else if ( player.GetTeam() == TF_TEAM_BLUE )
+			else if ( player.GetTeam() == TEAM_ZOMBIE )
 				zombie_table[ player ] <- userid
 
 			player_table[ player ] <- userid
@@ -2650,10 +2643,10 @@ PZI_EVENT( "post_inventory_application", "UtilPostInventoryApplication", functio
 	if ( IsPlayerABot( player ) )
 		bot_table[ player ] <- userid
 
-	else if ( player.GetTeam() == TF_TEAM_RED )
+	else if ( player.GetTeam() == TEAM_HUMAN )
 		human_table[ player ] <- userid
 
-	else if ( player.GetTeam() == TF_TEAM_BLUE )
+	else if ( player.GetTeam() == TEAM_ZOMBIE )
 		zombie_table[ player ] <- userid
 
 	if ( !( player in player_table ) )

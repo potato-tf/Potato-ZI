@@ -1,14 +1,16 @@
 // if ( "_CONST" in getconsttable() && _CONST )
 //     return
-
-// --------------------------------------------------------------------------------------- //
-// Zombie Infection                                                                        //
-// --------------------------------------------------------------------------------------- //
-// All Code By: Harry Colquhoun ( https://steamcommunity.com/profiles/76561198025795825 )    //
-// Assets/Game Design by: Diva Dan ( https://steamcommunity.com/profiles/76561198072146551 ) //
-// --------------------------------------------------------------------------------------- //
+/**************************************************************************************************
+ *                                                                                                *
+ * All Code By: Harry Colquhoun ( https://steamcommunity.com/profiles/76561198025795825 )         *
+ * Assets/Game Design by: Diva Dan ( https://steamcommunity.com/profiles/76561198072146551 )      *
+ * Modified for Potato.TF by: Braindawg ( https://steamcommunity.com/profiles/76561197988531991 ) *
+ *                                                                                                *
+***************************************************************************************************/
 const _CONST                           = false
 const TF_COND_NO_KNOCKBACK             = 130
+CONST.TEAM_HUMAN  <- TF_TEAM_RED
+CONST.TEAM_ZOMBIE <- TF_TEAM_BLUE
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Cooldowns ( in seconds ) |--------------------------------------------------------------- //
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -35,7 +37,7 @@ const MIN_TIME_BETWEEN_PYRO_BLAST      = 5;     // Ability Cooldown  - Pyro Blas
 /////////////////////////////////////////////////////////////////////////////////////////////
 // Game mode values |--------------------------------------------------------------------- //
 /////////////////////////////////////////////////////////////////////////////////////////////
-const ADDITIONAL_SEC_PER_PLAYER        = 8;     // Additional time added per player        //
+const ADDITIONAL_SEC_PER_PLAYER        = 8;     // Additional time added per player death  //
 const ROUND_TIMER_NAME                 = "infection_timer"    // targetname of round timer //
 const STARTING_ZOMBIE_FAC              = 3;                                                //
 /////////////////////////////////////////////////////////////////////////////////////////////

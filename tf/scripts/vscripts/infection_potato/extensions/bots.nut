@@ -616,7 +616,7 @@ function PZI_Bots::MedicZombie( bot ) {
     function MedicZombieThink() {
 
 		for (local player; player = FindByClassnameWithin( player, "player", bot.GetOrigin(), MEDIC_HEAL_RANGE );)
-			if ( player.GetTeam() == TF_TEAM_BLUE && player.GetHealth() < player.GetMaxHealth() * 0.75 )
+			if ( player.GetTeam() == TEAM_ZOMBIE && player.GetHealth() < player.GetMaxHealth() * 0.75 )
 				bot.PressAltFireButton( 1.0 )
 
     }

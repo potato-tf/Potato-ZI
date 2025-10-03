@@ -11,7 +11,7 @@ PZI_EVENT( "player_spawn", "DamageRadiusMult_OnPlayerSpawn", function( params ) 
 
     local player = GetPlayerFromUserID( params.userid )
 
-    if ( player.GetTeam() != TF_TEAM_RED ) return
+    if ( player.GetTeam() != TEAM_HUMAN ) return
 
     local scope = player.GetScriptScope()
     local dmg_mult = DMG_MULT_MIN
@@ -22,7 +22,7 @@ PZI_EVENT( "player_spawn", "DamageRadiusMult_OnPlayerSpawn", function( params ) 
         if ( dmg_mult >= DMG_MULT_MAX )
             break
 
-        if ( survivor.GetTeam() == TF_TEAM_RED && survivor != player )
+        if ( survivor.GetTeam() == TEAM_HUMAN && survivor != player )
             dmg_mult += DMG_MULT_PER_PLAYER
     }
 
@@ -41,7 +41,7 @@ PZI_EVENT( "player_spawn", "DamageRadiusMult_OnPlayerSpawn", function( params ) 
             if ( _dmg_mult >= DMG_MULT_MAX )
                 break
 
-            if ( survivor.GetTeam() == TF_TEAM_RED && survivor != player )
+            if ( survivor.GetTeam() == TEAM_HUMAN && survivor != player )
                 _dmg_mult += DMG_MULT_PER_PLAYER
         }
 
@@ -59,7 +59,7 @@ PZI_EVENT( "OnTakeDamage", "DamageRadiusMult_OnTakeDamage", function( params ) {
     local victim = params.const_entity
     local victim_scope = PZI_Util.GetEntScope( victim )
 
-    if ( victim.IsPlayer() && victim.GetTeam() == TF_TEAM_RED && "DmgMult" in victim_scope )
+    if ( victim.IsPlayer() && victim.GetTeam() == TEAM_HUMAN && "DmgMult" in victim_scope )
         params.damage *= victim_scope.DmgMult
 
 } )

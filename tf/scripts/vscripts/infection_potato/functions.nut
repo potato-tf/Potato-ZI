@@ -1,11 +1,13 @@
-// --------------------------------------------------------------------------------------- //
-// Zombie Infection                                                                        //
-// --------------------------------------------------------------------------------------- //
-// All Code By: Harry Colquhoun ( https://steamcommunity.com/profiles/76561198025795825 )    //
-// Assets/Game Design by: Diva Dan ( https://steamcommunity.com/profiles/76561198072146551 ) //
-// --------------------------------------------------------------------------------------- //
-// utility functions                                                                       //
-// --------------------------------------------------------------------------------------- //
+
+/**************************************************************************************************
+ *                                                                                                *
+ * All Code By: Harry Colquhoun ( https://steamcommunity.com/profiles/76561198025795825 )         *
+ * Assets/Game Design by: Diva Dan ( https://steamcommunity.com/profiles/76561198072146551 )      *
+ * Modified for Potato.TF by: Braindawg ( https://steamcommunity.com/profiles/76561197988531991 ) *
+ *                                                                                                *
+***************************************************************************************************
+ * utility functions                                                                              *
+***************************************************************************************************/
 
 function PrecacheResources() {
 
@@ -77,7 +79,7 @@ function PlayGlobalBell ( _bForce ) {
 }
 
 // damage is multiplied by _flDmgMult for each player in range
-function DemomanExplosionPreCheck ( _vecLocation, _flDmg, _flDmgMult, _flRange, _hInflictor, _flForceMultiplier = 0.0, _flUpwardForce = 0.0, _iTeamnum = TF_TEAM_BLUE ) {
+function DemomanExplosionPreCheck ( _vecLocation, _flDmg, _flDmgMult, _flRange, _hInflictor, _flForceMultiplier = 0.0, _flUpwardForce = 0.0, _iTeamnum = TEAM_ZOMBIE ) {
 
     local _finalDmg = _flDmg.tofloat() / _flDmgMult.tofloat(); // divide once first to effectively skip the first player
 
@@ -96,7 +98,7 @@ function DemomanExplosionPreCheck ( _vecLocation, _flDmg, _flDmgMult, _flRange, 
 
         for ( local _player; _player = FindByClassnameWithin( _player, "player", _vecLocation, _flRange ); ) {
 
-            if ( _player.GetTeam() != TF_TEAM_RED )
+            if ( _player.GetTeam() != TEAM_HUMAN )
                 continue
 
             _finalDmg *= _flDmgMult
@@ -112,7 +114,7 @@ function DemomanExplosionPreCheck ( _vecLocation, _flDmg, _flDmgMult, _flRange, 
     return
 }
 
-function CreateExplosion ( _vecLocation, _flDmg, _flRange, _hInflictor, _flForceMultiplier = 0.0, _flUpwardForce = 0.0, _iTeamnum = TF_TEAM_BLUE ) {
+function CreateExplosion ( _vecLocation, _flDmg, _flRange, _hInflictor, _flForceMultiplier = 0.0, _flUpwardForce = 0.0, _iTeamnum = TEAM_ZOMBIE ) {
 
     ScreenShake ( _vecLocation, 5000, 5000, 4, 350, 0, true )
 
@@ -151,13 +153,13 @@ function CreateExplosion ( _vecLocation, _flDmg, _flRange, _hInflictor, _flForce
 
     EntFireByHandle ( _hPfxEnt, "Start",    "", -1, null, null )
 
-    SetPropInt      ( _hBomb, "m_iTeamNum", TF_TEAM_BLUE )
+    SetPropInt      ( _hBomb, "m_iTeamNum", TEAM_ZOMBIE )
     EmitSoundOn     ( "Breakable.MatFlesh", _hBomb )
     EmitSoundOn     ( "Halloween.Merasmus_Hiding_Explode", _hBomb )
 
     _hBomb.DispatchSpawn()
 
-    _hBomb.SetTeam       ( TF_TEAM_BLUE )
+    _hBomb.SetTeam       ( TEAM_ZOMBIE )
     _hBomb.SetAbsOrigin     ( _vecLocation )
     _hBomb.SetOwner      ( _hInflictor )
     // KnockbackPlayer( _hBomb, _hInflictor, _flForceMultiplier, _flUpwardForce, Vector( 400, 400, 400 ), true )
@@ -204,7 +206,7 @@ function GetRandomPlayers( _howMany = 1, team = null ) {
 
 function ChangeTeamSafe ( _hPlayer, _iTeamNum, _bForce = false ) {
 
-    if ( _hPlayer == null || _iTeamNum < 0 || _iTeamNum > 3 || _hPlayer.GetTeam() == _iTeamNum )
+    if ( !_hPlayer || !_hPlayer.IsValid() || _iTeamNum < TEAM_SPECTATOR || _iTeamNum > TEAM_ZOMBIE || _hPlayer.GetTeam() == _iTeamNum )
         return
 
     // m_bIsCoaching trick to change team even if player is in a duel ( source: vdc )
@@ -217,7 +219,7 @@ function ChangeTeamSafe ( _hPlayer, _iTeamNum, _bForce = false ) {
 
 function NetName ( _hPlayer ) {
 
-    if ( _hPlayer == null )
+    if ( !_hPlayer )
         return "[UNKNOWN/INVALID PLAYER]"
 
     local _szNetname = GetPropString( _hPlayer, "m_szNetname" )
@@ -230,7 +232,7 @@ function NetName ( _hPlayer ) {
 
 function PlayerIsValid ( _hPlayer ) {
 
-    if ( _hPlayer == null )
+    if ( !_hPlayer )
         return false
 
     return true
@@ -246,13 +248,13 @@ function ShouldZombiesWin ( _hPlayer ) {
 
         local _player = PlayerInstanceFromIndex( i )
 
-        if ( _player != null ) {
+        if ( _player ) {
 
             _iValidPlayers++
 
             // if the player is valid, on survivor ( red ) team, alive, and not the player who just died
-            if ( ( _player != null ) &&
-                 ( _player.GetTeam() == TF_TEAM_RED ) &&
+            if ( ( _player ) &&
+                 ( _player.GetTeam() == TEAM_HUMAN ) &&
                  ( _player.IsAlive() ) && _player != _hPlayer ) {
 
                  _iValidSurvivors++
@@ -277,7 +279,7 @@ function ShouldZombiesWin ( _hPlayer ) {
         local _hGameWin = SpawnEntityFromTable( "game_round_win", {
 
             force_map_reset = true,
-            TeamNum         = TF_TEAM_BLUE, // TF_TEAM_BLUE
+            TeamNum         = TEAM_ZOMBIE, // TEAM_ZOMBIE
             switch_teams    = false
         } )
 
@@ -292,7 +294,7 @@ function ShouldZombiesWin ( _hPlayer ) {
 
             foreach( _hNextPlayer in GetAllPlayers() ) {
 
-                if ( _hNextPlayer.GetTeam() == TF_TEAM_RED && _hNextPlayer.IsAlive() ) {
+                if ( _hNextPlayer.GetTeam() == TEAM_HUMAN && _hNextPlayer.IsAlive() ) {
 
                     if ( !_hNextPlayer || _hNextPlayer == _hPlayer )
                         continue
@@ -315,7 +317,7 @@ function ShouldZombiesWin ( _hPlayer ) {
 
             foreach( _hNextPlayer in GetAllPlayers() ) {
 
-                if ( _hNextPlayer.GetTeam() == TF_TEAM_RED && _hNextPlayer.IsAlive() ) {
+                if ( _hNextPlayer.GetTeam() == TEAM_HUMAN && _hNextPlayer.IsAlive() ) {
 
                     if ( !_hNextPlayer )
                         continue
@@ -655,7 +657,7 @@ function CTFPlayer_ApplyOutOfCombat() {
     this.AddCustomAttribute  ( "move speed penalty", ZOMBIE_BOOST_SPEED_DEBUFF, -1 )
 }
 
-function CTFPlayer_RemoveOutOfCombat ( _bForceCooldown = false ) {
+function CTFPlayer_RemoveOutOfCombat( _bForceCooldown = false ) {
 
     local _sc = this.GetScriptScope()
 
@@ -663,7 +665,7 @@ function CTFPlayer_RemoveOutOfCombat ( _bForceCooldown = false ) {
 
     if ( _bForceCooldown ) {
 
-        _sc.m_fTimeLastHit <- Time()
+        _sc.m_fTimeLastHit = Time()
     }
 
     if ( _sc.m_iFlags & ZBIT_MUST_EXPLODE )
@@ -672,8 +674,8 @@ function CTFPlayer_RemoveOutOfCombat ( _bForceCooldown = false ) {
     if ( this.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS || this.GetPlayerClass() == TF_CLASS_SCOUT )
         return
 
-    _sc.m_iFlags            <- ( _sc.m_iFlags & ~ZBIT_OUT_OF_COMBAT )
-    this.RemoveCond            ( TF_COND_SPEED_BOOST )
+    _sc.m_iFlags = _sc.m_iFlags & ~ZBIT_OUT_OF_COMBAT
+    this.RemoveCond( TF_COND_SPEED_BOOST )
 
     this.RemoveCustomAttribute ( "move speed penalty" )
 }
@@ -708,11 +710,11 @@ function CTFPlayer_GiveZombieWeapon() {
     SetPropBool ( _zombieWep, STRING_NETPROP_ATTACH, true )
 
     // default attribs
-    foreach( _attrib in ZOMBIE_WEP_ATTRIBS[ 0 ] ) 
+    foreach( _attrib in ZOMBIE_WEP_ATTRIBS[ 0 ] )
         _zombieWep.AddAttribute( _attrib[ 0 ], _attrib[ 1 ], _attrib[ 2 ] )
 
     // class specific attribs
-    foreach( _attrib in ZOMBIE_WEP_ATTRIBS[ _playerClass ] ) 
+    foreach( _attrib in ZOMBIE_WEP_ATTRIBS[ _playerClass ] )
         _zombieWep.AddAttribute( _attrib[ 0 ], _attrib[ 1 ], _attrib[ 2 ] )
 
 
@@ -792,7 +794,7 @@ function CTFPlayer_ClearZombieAttribs() {
 
     local _iClassNum = this.GetPlayerClass()
 
-    if ( ZOMBIE_PLAYER_CONDS[ 0 ].len() ) 
+    if ( ZOMBIE_PLAYER_CONDS[ 0 ].len() )
         foreach ( _cond in ZOMBIE_PLAYER_CONDS[ 0 ] ) // default conds
             this.RemoveCondEx( _cond, true )
 

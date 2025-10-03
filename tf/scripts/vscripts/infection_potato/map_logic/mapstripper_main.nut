@@ -138,7 +138,8 @@ local function SetupRoundTimer() {
         "OnFinished#2"      : "__pzi_util,RunScriptCode,SetValue(`mp_humans_must_join_team` `red`),1"
     })
 
-    EntFire( "__pzi_timer", "Resume", null, 1 )
+    if ( PlayerCount(TEAM_HUMAN) + PlayerCount(TEAM_ZOMBIE) )
+        EntFire( "__pzi_timer", "Resume", null, 1 )
 
     local scope = timer.GetScriptScope()
     scope.base_timestamp <- GetPropFloat(timer, "m_flTimeRemaining")
@@ -151,7 +152,7 @@ local function SetupRoundTimer() {
             if ( !(time_left % 10) )
             {
 
-                if ( !( PlayerCount( TF_TEAM_RED ) + PlayerCount( TF_TEAM_BLUE ) ) )
+                if ( !( PlayerCount( TEAM_HUMAN ) + PlayerCount( TEAM_ZOMBIE ) ) )
                     timer.AcceptInput("SetTime", "60", null, null)
                 LocalTime(LOCALTIME)
                 SERVER_DATA.update_time = LOCALTIME
@@ -166,7 +167,7 @@ local function SetupRoundTimer() {
                     if (player.GetTeam() == TEAM_SPECTATOR)
                         spectators++
                     else
-                        players[player.GetTeam() == TF_TEAM_RED ? 0 : 1]++
+                        players[player.GetTeam() == TEAM_HUMAN ? 0 : 1]++
                 }
                 SERVER_DATA.players_red = players[0]
                 SERVER_DATA.players_blu = players[1]
@@ -181,8 +182,7 @@ local function SetupRoundTimer() {
 
                     function callback(response, error) {
 
-                        if (error)
-                            Assert(false, error)
+                        assert(!error)
 
                         if (SERVER_DATA.address == 0 && "address" in response)
                             SERVER_DATA.address = response.address

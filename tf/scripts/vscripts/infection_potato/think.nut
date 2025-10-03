@@ -1,11 +1,13 @@
-// --------------------------------------------------------------------------------------- //
-// Zombie Infection                                                                        //
-// --------------------------------------------------------------------------------------- //
-// All Code By: Harry Colquhoun ( https://steamcommunity.com/profiles/76561198025795825 )    //
-// Assets/Game Design by: Diva Dan ( https://steamcommunity.com/profiles/76561198072146551 ) //
-// --------------------------------------------------------------------------------------- //
-// think scripts                                                                           //
-// --------------------------------------------------------------------------------------- //
+
+/**************************************************************************************************
+ *                                                                                                *
+ * All Code By: Harry Colquhoun ( https://steamcommunity.com/profiles/76561198025795825 )         *
+ * Assets/Game Design by: Diva Dan ( https://steamcommunity.com/profiles/76561198072146551 )      *
+ * Modified for Potato.TF by: Braindawg ( https://steamcommunity.com/profiles/76561197988531991 ) *
+ *                                                                                                *
+***************************************************************************************************
+ * think scripts                                                                                  *
+***************************************************************************************************/
 
 function PZI_PlayerThink() {
 
@@ -20,7 +22,7 @@ function PZI_PlayerThink() {
     }
 
     // make sure we always have crits as last man standing
-    else if ( self.GetTeam() == TF_TEAM_RED ) {
+    else if ( self.GetTeam() == TEAM_HUMAN ) {
 
         if ( m_bLastThree )
             self.AddCond( TF_COND_OFFENSEBUFF )
@@ -31,7 +33,7 @@ function PZI_PlayerThink() {
     // spy garbage
     // if ( self.GetPlayerClass() == TF_CLASS_SPY )
     // {
-    //     if ( self.GetTeam() == TF_TEAM_RED )
+    //     if ( self.GetTeam() == TEAM_HUMAN )
     //     {
     //         // --------------------------------------------------------------------- //
     //         // spoofing disguises for zombie players                                 //
@@ -48,7 +50,7 @@ function PZI_PlayerThink() {
     //             local _iDisguiseClass = GetPropInt     ( self, "m_Shared.m_nDisguiseClass" )
     //             local _iDisguiseTeam  = GetPropInt     ( self, "m_Shared.m_nDisguiseTeam" )
 
-    //             if ( _iDisguiseTeam == TF_TEAM_BLUE && GetPropIntArray( self, STRING_NETPROP_MDLINDEX_OVERRIDES, 3 ) != idxArrZombiePlayerModels[ _iDisguiseClass ] )
+    //             if ( _iDisguiseTeam == TEAM_ZOMBIE && GetPropIntArray( self, STRING_NETPROP_MDLINDEX_OVERRIDES, 3 ) != idxArrZombiePlayerModels[ _iDisguiseClass ] )
     //             {
     //                 SetPropIntArray( self, STRING_NETPROP_MDLINDEX_OVERRIDES, idxArrZombiePlayerModels[ _iDisguiseClass ], 3 )
     //             }
@@ -64,7 +66,7 @@ function PZI_PlayerThink() {
 
         // for blue spies we set their model to the regular spy model when they're invisible
         // this prevents them from emitting a bunch of particles
-        // if ( self.GetTeam() == TF_TEAM_BLUE )
+        // if ( self.GetTeam() == TEAM_ZOMBIE )
         // {
         //     if ( self.IsFullyInvisible() )
         //     {
@@ -722,7 +724,7 @@ function SniperSpitThink() {
                 else if ( _szHitEntClass == "player" ) {
 
                     // return if we hit a zombie
-                    if ( _tblTrace.enthit.GetTeam() == TF_TEAM_BLUE )
+                    if ( _tblTrace.enthit.GetTeam() == TEAM_ZOMBIE )
                         return SNIPER_SPIT_RETHINK_TIME
 
                     local _hKillIcon = KilliconInflictor( KILLICON_SNIPER_SPIT )
@@ -952,7 +954,7 @@ function SniperSpitThink() {
         // get all the players in the zone area
         while ( _hNextPlayer = FindByClassnameWithin( _hNextPlayer, "player", m_vecSpitZone, SPIT_ZONE_RADIUS ) ) {
 
-            if ( _hNextPlayer != null && _hNextPlayer.GetTeam() != TF_TEAM_BLUE ) {
+            if ( _hNextPlayer != null && _hNextPlayer.GetTeam() != TEAM_ZOMBIE ) {
 
                 _arrPlayers.append( _hNextPlayer )
                 _iPlayerCount++
@@ -963,7 +965,7 @@ function SniperSpitThink() {
 
             foreach ( _hNextPlayer in _arrPlayers ) {
 
-                if ( _hNextPlayer == null || _hNextPlayer.GetTeam() == TF_TEAM_BLUE )
+                if ( _hNextPlayer == null || _hNextPlayer.GetTeam() == TEAM_ZOMBIE )
                     continue; // redundant
 
                 // prevent spit pool stacking
@@ -1276,8 +1278,8 @@ function ZombieWearableThink() {
 
 function GameStateThink() {
 
-    local _iNumRedPlayers = PlayerCount( TF_TEAM_RED )
-    local _iNumBluPlayers = PlayerCount( TF_TEAM_BLUE )
+    local _iNumRedPlayers = PlayerCount( TEAM_HUMAN )
+    local _iNumBluPlayers = PlayerCount( TEAM_ZOMBIE )
 
     // empty server, ignore round state.
     if ( !(_iNumRedPlayers + _iNumBluPlayers) )
@@ -1295,7 +1297,7 @@ function GameStateThink() {
         local _hGameWin = SpawnEntityFromTable( "game_round_win", {
 
             force_map_reset = true,
-            TeamNum         = TF_TEAM_RED, // TF_TEAM_RED
+            TeamNum         = TEAM_HUMAN, // TEAM_HUMAN
             switch_teams    = false
         } )
 

@@ -1,11 +1,14 @@
-// --------------------------------------------------------------------------------------- //
-// Zombie Infection                                                                        //
-// --------------------------------------------------------------------------------------- //
-// All Code By: Harry Colquhoun ( https://steamcommunity.com/profiles/76561198025795825 )    //
-// Assets/Game Design by: Diva Dan ( https://steamcommunity.com/profiles/76561198072146551 ) //
-// --------------------------------------------------------------------------------------- //
-// zombie abilites                                                                         //
-// --------------------------------------------------------------------------------------- //
+
+/**************************************************************************************************
+ *                                                                                                *
+ * All Code By: Harry Colquhoun ( https://steamcommunity.com/profiles/76561198025795825 )         *
+ * Assets/Game Design by: Diva Dan ( https://steamcommunity.com/profiles/76561198072146551 )      *
+ * Modified for Potato.TF by: Braindawg ( https://steamcommunity.com/profiles/76561197988531991 ) *
+ *                                                                                                *
+***************************************************************************************************
+ * zombie abilities                                                                               *
+***************************************************************************************************/
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 // ZombieEngie EMP Grenade Ability |------------------------------------------------------ //
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -167,7 +170,7 @@ class CSpyReveal extends CZombieAbility {
         while ( _hPlayer = FindByClassnameWithin( _hPlayer, "player", this.m_hAbilityOwner.GetOrigin(), ( SPY_REVEAL_RANGE ) ) ) {
 
             // red ( survivor ) team only
-            if ( _hPlayer != null && _hPlayer.GetTeam() != TF_TEAM_BLUE ) {
+            if ( _hPlayer != null && _hPlayer.GetTeam() != TEAM_ZOMBIE ) {
 
                 _arrPlayersInRange.append( _hPlayer )
             }
@@ -302,7 +305,7 @@ class CMedicHeal extends CZombieAbility {
         while ( _hPlayer = FindByClassnameWithin( _hPlayer, "player", this.m_hAbilityOwner.GetOrigin(), MEDIC_HEAL_RANGE ) ) {
 
             // blue ( zombie ) team only
-            if ( _hPlayer != null && _hPlayer.GetTeam() == TF_TEAM_BLUE && _hPlayer != this.m_hAbilityOwner ) {
+            if ( _hPlayer != null && _hPlayer.GetTeam() == TEAM_ZOMBIE && _hPlayer != this.m_hAbilityOwner ) {
 
                 _arrPlayersInRange.append( _hPlayer )
             }
