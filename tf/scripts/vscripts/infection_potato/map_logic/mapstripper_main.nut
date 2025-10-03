@@ -154,6 +154,7 @@ local function SetupRoundTimer() {
 
                 if ( !( PlayerCount( TEAM_HUMAN ) + PlayerCount( TEAM_ZOMBIE ) ) )
                     timer.AcceptInput("SetTime", "60", null, null)
+
                 LocalTime(LOCALTIME)
                 SERVER_DATA.update_time = LOCALTIME
                 SERVER_DATA.max_wave = time_left
@@ -180,7 +181,7 @@ local function SetupRoundTimer() {
                     func   = "VPI_UpdateServerData"
                     kwargs = SERVER_DATA
 
-                    function callback(response, error) {
+                    callback = function(response, error) {
 
                         assert(!error)
 
