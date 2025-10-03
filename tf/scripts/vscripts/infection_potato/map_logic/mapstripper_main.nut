@@ -29,7 +29,7 @@ LocalTime(LOCALTIME)
 	password 				  = ""
 	classes					  = ""
 	domain 					  = "potato.tf"
-	campaign_name 			  = "Zombie Infection"
+	campaign_name 			  = "Other Gamemodes"
 	status 					  = "Eating your brains..."
 	in_protected_match		  = false
 	is_fake_ip				  = false
