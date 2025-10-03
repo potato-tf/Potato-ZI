@@ -41,7 +41,7 @@ jobs:
             for i in "${servers[@]}"; do a=( $i );
             {
                 rsync -a --chmod=777 --mkpath -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./tf/* ${a[1]}:${a[2]}/tf2server/tf/zi/
-                ssh -p ${a[0]} ${a[1]} while IFS= read -r mapname || [ -n "$mapname" ]; do cp -au ${a[2]}/tf2server/tf/zi/cfg/downloads_zi.kv ${a[2]}/tf2server/tf/maps/$mapname.res; done < ${a[2]}/tf2server/tf/cfg/mapcycle_zi.txt
+                ssh -p ${a[0]} ${a[1]} while IFS= read -r mapname || [ -n '$mapname' ]; do cp -au ${a[2]}/tf2server/tf/zi/cfg/downloads_zi.kv ${a[2]}/tf2server/tf/maps/$mapname.res; done < ${a[2]}/tf2server/tf/cfg/mapcycle_zi.txt
                 ssh -p ${a[0]} ${a[1]} ln -sfn ${a[2]}/tf2server/tf/zi ${a[2]}/www/html/gameassets/
             } &
             done
