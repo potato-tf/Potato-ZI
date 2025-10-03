@@ -284,7 +284,6 @@ PZI_EVENT( "player_hurt", "SpawnAnywhere_RemoveQuickHeal", function( params ) {
 } )
 
 PZI_EVENT( "player_activate", "SpawnAnywhere_PlayerActivate", function( params ) { GetPlayerFromUserID( params.userid ).ValidateScriptScope() } )
-PZI_EVENT( "player_team", "SpawnAnywhere_PlayerTeam", function( params ) { GetPlayerFromUserID( params.userid ).ValidateScriptScope() } )
 
 PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
 
