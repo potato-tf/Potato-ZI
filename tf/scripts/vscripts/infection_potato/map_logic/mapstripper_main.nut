@@ -9,7 +9,7 @@ Convars.SetValue( "mp_respawnwavetime", 2 )
 LocalTime(LOCALTIME)
 
 //TODO: move this somewhere more fitting than the map logic scripts
-local SERVER_DATA = {
+::SERVER_DATA <- {
 
 	endpoint_url			  = "https://archive.potato.tf/api/serverstatus"
 	server_name				  = ""
