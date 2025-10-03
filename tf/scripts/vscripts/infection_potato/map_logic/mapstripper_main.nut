@@ -10,9 +10,11 @@ LocalTime(LOCALTIME)
 
 //TODO: move this somewhere more fitting than the map logic scripts
 local SERVER_DATA = {
+
 	endpoint_url			  = "https://archive.potato.tf/api/serverstatus"
+	server_name				  = ""
 	server_key				  = ""
-    server_tags               = "gametype/zi" //TODO: update vpi to just accept sv_tags and build the request string on the python-side
+    server_tags               = GetStr("sv_tags")
 	address					  = 0
 	wave 					  = 0
 	max_wave				  = -1
@@ -24,7 +26,6 @@ local SERVER_DATA = {
 	map					      = GetMapName()
 	mission					  = ""
 	region					  = ""
-	server_name				  = ""
 	password 				  = ""
 	classes					  = ""
 	domain 					  = "potato.tf"
@@ -45,13 +46,14 @@ local SERVER_DATA = {
 	}
 }
 
-PZI_Util.ScriptEntFireSafe("__mge_main", @"
+PZI_Util.ScriptEntFireSafe("__pzi_util", @"
 
 	local server_name  = GetStr(`hostname`)
 	local split_server = split(server_name, `#`)
 	local split_region = split_server.len() == 1 ? [``, `]`] : split(split_server[1], `[`)
 
-	SERVER_DATA.server_name <- server_name
+	SERVER_DATA.server_name = server_name
+    SERVER_DATA.server_tags = GetStr(`sv_tags`)
 	SERVER_DATA.server_key	= split_server.len() == 1 ? `` : split_server[1].slice(0, split_server[1].find(`[`))
 	SERVER_DATA.region		= split_region.len() == 1 ? `` : split_region[1].slice(0, split_region[1].find(`]`))
 	SERVER_DATA.domain		= SERVER_DATA.region == `USA` ? `us.potato.tf` : format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
