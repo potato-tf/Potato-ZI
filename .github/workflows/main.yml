@@ -42,6 +42,16 @@ jobs:
             {
                 rsync -a --chmod=777 --mkpath -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./tf/* ${a[1]}:${a[2]}/tf2server/tf/zi/
                 ssh -p ${a[0]} ${a[1]} "ln -sfn ${a[2]}/tf2server/tf/zi ${a[2]}/www/html/gameassets/"
+                ssh -p ${a[0]} ${a[1]} '
+                  if [ -f "${a[2]}/tf2server/tf/cfg/mapcycle_zi.cfg" ]; then
+                    while IFS= read -r mapname || [ -n "$mapname" ]; do
+                      mapname_trimmed=$(echo "$mapname" | xargs)
+                      if [ -n "$mapname_trimmed" ]; then
+                        cp -rn "${a[2]}/tf2server/tf/cfg/downloads_zi.kv" "${a[2]}/tf2server/tf/maps/${mapname_trimmed}.res"
+                      fi
+                    done < "${a[2]}/tf2server/tf/cfg/mapcycle_zi.cfg"
+                  fi
+                '
             } &
             wait
             done
