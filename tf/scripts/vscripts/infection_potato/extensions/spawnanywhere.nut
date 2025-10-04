@@ -90,14 +90,17 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
 
     scope.m_iFlags = scope.m_iFlags | ZBIT_PENDING_ZOMBIE
 
+    local playercls = player.GetPlayerClass()
+
     local dummy_skeleton = CreateByClassname( "funCBaseFlex" )
 
     dummy_skeleton.SetModel( SNIPER_SKELETON )
     dummy_skeleton.SetAbsOrigin( origin )
     dummy_skeleton.SetAbsAngles( QAngle( 0, player.EyeAngles().y, 0 ) )
 
-    dummy_skeleton.DispatchSpawn()
+    ::DispatchSpawn( dummy_skeleton )
     dummy_skeleton.ValidateScriptScope()
+    local dummy_scope = dummy_skeleton.GetScriptScope()
 
     SetPropInt( dummy_skeleton, "m_nRenderMode", kRenderTransColor )
     SetPropInt( dummy_skeleton, "m_clrRender", 0 )
@@ -113,14 +116,21 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
 
     local dummy_player = CreateByClassname( "funCBaseFlex" )
 
-    // dummy_player.SetModel( scope.playermodel )
-    dummy_player.SetModel( format( "models/player/%s_infected.mdl", PZI_Util.Classes[player.GetPlayerClass()] ) )
+    dummy_player.SetModel( format( "models/player/%s.mdl", PZI_Util.Classes[playercls] ) )
     dummy_player.SetAbsOrigin( origin )
-    dummy_player.SetSkin( player.GetSkin() )
+    dummy_player.SetSkin( player.GetSkin() + 4 )
     dummy_player.AcceptInput( "SetParent", "!activator", dummy_skeleton, dummy_skeleton )
     SetPropInt( dummy_player, "m_fEffects", EF_BONEMERGE|EF_BONEMERGE_FASTCULL )
-    dummy_player.DispatchSpawn()
+    ::DispatchSpawn( dummy_player )
+    dummy_scope.dummy_player <- dummy_player
     // CTFPlayer.GiveZombieEyeParticles.call( dummy_player )
+
+    local fakewearable = CreateByClassname( "prop_dynamic_ornament" )
+    fakewearable.SetModel( arrZombieCosmeticModelStr[playercls] )
+    fakewearable.SetSkin( 1 )
+    ::DispatchSpawn( fakewearable )
+    fakewearable.AcceptInput( "SetAttached", "!activator", dummy_player, dummy_player )
+    dummy_scope.fakewearable <- fakewearable
 
     player.RemoveCustomAttribute( "dmg taken increased" )
     player.SetHealth( 1 )
@@ -144,16 +154,17 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
     scope.ThinkTable.SummonPreSpawn <- SummonPreSpawn
 
     //max health attrib is always last
-    local attrib = ZOMBIE_PLAYER_ATTRIBS[player.GetPlayerClass()]
+    local attrib = ZOMBIE_PLAYER_ATTRIBS[playercls]
     local lastattrib = attrib[attrib.len() - 1]
 
     player.AddCustomAttribute( lastattrib[0], lastattrib[1], lastattrib[2] )
 
-    local dummy_scope = dummy_skeleton.GetScriptScope()
-
     function SpawnPlayer() {
 
         if ( !player || !player.IsValid() || !player.IsAlive() ) {
+
+            if ( fakewearable && fakewearable.IsValid() )
+                fakewearable.Kill()
 
             self.Kill()
             return
@@ -188,6 +199,7 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
             // PZI_Util.ScriptEntFireSafe( player, "self.GiveZombieCosmetics(); self.GiveZombieEyeParticles()" )
 
             EntFireByHandle( self, "Kill", "", -1, null, null )
+            EntFireByHandle( fakewearable, "Kill", "", -1, null, null )
             return 10
         }
 
@@ -317,18 +329,27 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
 
         PZI_Util.ScriptEntFireSafe( player, @"
 
-            PZI_Util.TeleportNearVictim( self, GetRandomPlayers( 1, TEAM_HUMAN )[0], 0.25)
+            local players = GetRandomPlayers( 1, TEAM_HUMAN )
+            if ( !( 0 in players ) )
+                return
+
+            PZI_Util.TeleportNearVictim( self, players[0], 0.25)
             PZI_SpawnAnywhere.BeginSummonSequence( self, self.GetOrigin() )
 
         ", RandomFloat( 0.1, 1.2 ) ) // random delay to avoid predictable spawn waves
     }
 
-    PZI_Util.TeleportNearVictim( player, GetRandomPlayers( 1, TEAM_HUMAN )[0], 0.25 )
+    local players = GetRandomPlayers( 1, TEAM_HUMAN )
+
+    if ( !( 0 in players ) )
+        return
+
+    PZI_Util.TeleportNearVictim( player, players[0], 0.25 )
 
     local spawn_hint = CreateByClassname( "move_rope" )
     spawn_hint.KeyValueFromString( "targetname", format( "spawn_hint_%d", player.entindex() ) )
     // spawn_hint.AddEFlags( EFL_IN_SKYBOX )
-    spawn_hint.DispatchSpawn()
+    ::DispatchSpawn( spawn_hint )
     SetPropBool( spawn_hint, STRING_NETPROP_PURGESTRINGS, true )
 
     PZI_Util.ScriptEntFireSafe( spawn_hint, format( @"
@@ -450,7 +471,7 @@ PZI_EVENT( "player_death", "SpawnAnywhere_PlayerDeath", function( params ) {
 // local spawn_hint_teleporter = CreateByClassname( "obj_teleporter" )
 // spawn_hint_teleporter.KeyValueFromString( "targetname", hint_teleporter_name )
 
-// spawn_hint_teleporter.DispatchSpawn()
+// spawn_hint_teleporter.::DispatchSpawn()
 // spawn_hint_teleporter.AddEFlags( EFL_NO_THINK_FUNCTION )
 
 // spawn_hint_teleporter.SetSolid( SOLID_NONE )
@@ -472,4 +493,4 @@ PZI_EVENT( "player_death", "SpawnAnywhere_PlayerDeath", function( params ) {
 // spawn_hint_text.KeyValueFromString( "color", "0 0 255 255" )
 // spawn_hint_text.KeyValueFromString( "orientation", "1" )
 // spawn_hint_text.AcceptInput( "SetParent", "!activator", spawn_hint_teleporter, spawn_hint_teleporter )
-// spawn_hint_text.DispatchSpawn()
+// spawn_hint_text.::DispatchSpawn()

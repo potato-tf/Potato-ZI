@@ -402,8 +402,8 @@ class CSniperSpitball extends CZombieAbility {
         _spitEnt.SetModel  ( MDL_WORLD_MODEL_ENGIE_NADE )
         _spitEnt.SetAbsOrigin ( _angPos )
 
-        // not sure if this does anything
-        SetPropVector ( _spitEnt, "m_vInitialVelocity ", _vecThrow )
+        // // not sure if this does anything
+        // SetPropVector ( _spitEnt, "m_vInitialVelocity", _vecThrow )
 
         // make it invisible
         SetPropInt    ( _spitEnt, "m_nRenderMode", kRenderTransColor )
@@ -419,7 +419,7 @@ class CSniperSpitball extends CZombieAbility {
 
         EntFireByHandle( _hPfxEnt, "SetParent", "!activator",  0, _spitEnt, _spitEnt )
 
-        _spitEnt.DispatchSpawn()
+        ::DispatchSpawn( _spitEnt )
         _spitEnt.SetPhysVelocity ( _vecThrow )
 
         SetPropInt( _spitEnt, "m_nRenderMode", kRenderTransColor )
@@ -529,7 +529,7 @@ class CEngineerSapperNade extends CZombieAbility {
         _nadeEnt.KeyValueFromString ( "targetname", "engie_nade_physprop" )
 
 
-        _nadeEnt.DispatchSpawn()
+        ::DispatchSpawn( _nadeEnt )
         //_nadeEnt.SetMoveType( MOVETYPE_WALK, MOVECOLLIDE_DEFAULT )
         local _hPfxEnt = SpawnEntityFromTable( "info_particle_system", {
 
@@ -808,7 +808,7 @@ class CPyroBlast extends CZombieAbility {
         SetPropBool ( _dummyFlamer, STRING_NETPROP_ATTACH, true )
         SetPropFloat( _dummyFlamer, "m_flNextSecondaryAttack", 0.0 )
 
-        _dummyFlamer.DispatchSpawn()
+        ::DispatchSpawn( _dummyFlamer )
 
         this.m_hAbilityOwner.Weapon_Equip( _dummyFlamer )
 

@@ -155,6 +155,7 @@ local function SetupRoundTimer() {
                 if ( !( PlayerCount( TEAM_HUMAN ) + PlayerCount( TEAM_ZOMBIE ) ) )
                     timer.AcceptInput("SetTime", "60", null, null)
 
+                printl((base_timestamp - Time()).tointeger())
                 LocalTime(LOCALTIME)
                 SERVER_DATA.update_time = LOCALTIME
                 SERVER_DATA.max_wave = time_left
@@ -195,7 +196,6 @@ local function SetupRoundTimer() {
         function InputSetTime() {
 
             base_timestamp = GetPropFloat(timer, "m_flTimeRemaining") + Time()
-            printl((base_timestamp - Time()).tointeger())
             return true
         }
         scope.InputSetTime <- InputSetTime
@@ -217,21 +217,23 @@ local gamemode_funcs = {
         // delete payload cart and tracks
         for ( local watcher; watcher = FindByClassname( watcher, "team_train_watcher" ); ) {
 
-            local start  = FindByName( null, GetPropString( watcher, "m_iszStartNode" ) )
-            local next   = GetPropEntity( start, "p_pnext" )
-            local tracks = { start = next }
+            local last  = FindByName( null, GetPropString( watcher, "m_iszGoalNode" ) )
+            local prev   = GetPropEntity( last, "m_pprevious" )
+            local tracks = { [last] = prev }
 
-            while ( next = GetPropEntity( next, "p_pnext" ) ) {
+            while ( prev = GetPropEntity( prev, "m_pprevious" ) ) {
 
-                tracks[ next ] <- null
+                if ( prev in PZI_Util.EntShredder )
+                    continue
 
-                local altpath = GetPropEntity( next, "m_paltpath" )
-                if ( altpath = FindByName( null, GetPropString( next, "m_altName" ) ) || altpath )
-                    tracks[ next ] = altpath
+                PZI_Util.EntShredder.append( prev )
+                local altpath = GetPropEntity( prev, "m_paltpath" )
+                if ( altpath )
+                    PZI_Util.EntShredder.append( altpath )
+                else if ( altpath = FindByName( null, GetPropString( prev, "m_altName" ) ) )
+                    PZI_Util.EntShredder.append( altpath )
+
             }
-
-            foreach ( track1, track2 in tracks )
-                PZI_Util.EntShredder[ track1 ] <- track2
 
             EntFire( GetPropString( watcher, "m_iszTrain" ), "Kill" )
         }

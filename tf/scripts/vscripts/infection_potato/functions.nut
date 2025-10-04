@@ -149,7 +149,7 @@ function CreateExplosion ( _vecLocation, _flDmg, _flRange, _hInflictor, _flForce
     _hBomb.GetScriptScope     ().m_flKillTime <- ( Time() + 0.1 ).tofloat()
     _hBomb.GetScriptScope     ().m_hOwner     <- _hInflictor
 
-    _hPfxEnt.DispatchSpawn()
+    ::DispatchSpawn( _hPfxEnt )
 
     EntFireByHandle ( _hPfxEnt, "Start",    "", -1, null, null )
 
@@ -157,7 +157,7 @@ function CreateExplosion ( _vecLocation, _flDmg, _flRange, _hInflictor, _flForce
     EmitSoundOn     ( "Breakable.MatFlesh", _hBomb )
     EmitSoundOn     ( "Halloween.Merasmus_Hiding_Explode", _hBomb )
 
-    _hBomb.DispatchSpawn()
+    ::DispatchSpawn( _hBomb )
 
     _hBomb.SetTeam       ( TEAM_ZOMBIE )
     _hBomb.SetAbsOrigin     ( _vecLocation )
@@ -559,7 +559,7 @@ function CTFPlayer_GiveZombieEyeParticles() {
 
     local eye_particle = szEyeParticles[RandomInt( 0, szEyeParticles.len() - 1 )]
 
-    if ( this.GetPlayerClass() != TF_CLASS_DEMOMAN )
+    if ( this.IsPlayer() && this.GetPlayerClass() != TF_CLASS_DEMOMAN )
         PZI_Util.AttachParticle( this, eye_particle, "eyeglow_L" )
 
     PZI_Util.AttachParticle( this, eye_particle, "eyeglow_R" )
@@ -585,7 +585,7 @@ function CTFPlayer_GiveZombieCosmetics_OLD() {
     _zombieCosmetic.AddAttribute ( "player skin override", 1, -1 )
     SetPropInt                   ( this, "m_iPlayerSkinOverride", 1 )
 
-    DispatchSpawn       ( _zombieCosmetic )
+    ::DispatchSpawn       ( _zombieCosmetic )
     _zombieCosmetic.SetAbsOrigin ( this.GetLocalOrigin() )
     _zombieCosmetic.SetAbsAngles ( this.GetLocalAngles() )
 
@@ -617,7 +617,7 @@ function CTFPlayer_GiveZombieFXWearable() {
 
     local _zombieFXWearable = CreateByClassname( "tf_wearable" )
 
-    DispatchSpawn         ( _zombieFXWearable )
+    ::DispatchSpawn         ( _zombieFXWearable )
     _zombieFXWearable.SetAbsOrigin ( this.GetLocalOrigin() )
     _zombieFXWearable.SetAbsAngles ( this.GetLocalAngles() )
 
@@ -718,7 +718,7 @@ function CTFPlayer_GiveZombieWeapon() {
         _zombieWep.AddAttribute( _attrib[ 0 ], _attrib[ 1 ], _attrib[ 2 ] )
 
 
-    _zombieWep.DispatchSpawn()
+    ::DispatchSpawn( _zombieWep )
 
     this.Weapon_Equip( _zombieWep )
 
@@ -726,7 +726,7 @@ function CTFPlayer_GiveZombieWeapon() {
 
     _zombieArms.SetAbsOrigin  ( this.GetLocalOrigin() )
     _zombieArms.SetAbsAngles  ( this.GetLocalAngles() )
-    _zombieArms.DispatchSpawn ()
+    ::DispatchSpawn( _zombieArms )
 
     // Zombie Arm Viewmodel Netprops // ------------------------------------------------- //
     SetPropEntity ( _zombieArms, "m_hWeaponAssociatedWith",                    _zombieWep )
@@ -928,49 +928,42 @@ function CTFPlayer_InitializeZombieHUD() {
 
     local _hAbilityHUDText = SpawnEntityFromTable( "game_text", {
 
-        x          =  ZHUD_X_POS,
-        y          =  0.895,
-        effect     =  0,
-        color      =  "255 255 255",
-        color2     =  "0 0 0",
-        fadein     =  0,
-        fadeout    =  0,
-        holdtime   =  10,
-        fxtime     =  0,
-        channel    =  2,
-        message    =  "",
-        spawnflags =  0,
+        targetname = "__pzi_hud_text_value" + this.entindex()
+        x          =  ZHUD_X_POS
+        y          =  0.895
+        effect     =  0
+        color      =  "255 255 255"
+        color2     =  "0 0 0"
+        fadein     =  0
+        fadeout    =  0
+        holdtime   =  10
+        fxtime     =  0
+        channel    =  2
+        message    =  ""
+        spawnflags =  0
     } )
 
     local _hAbilityNameHUDText = SpawnEntityFromTable( "game_text", {
 
-        x          =  ZHUD_X_POS,
-        y          =  0.80,
-        effect     =  0,
-        color      =  "255 255 255",
-        color2     =  "0 0 0",
-        fadein     =  0,
-        fadeout    =  0,
-        holdtime   =  10,
-        fxtime     =  0,
-        channel    =  4,
-        message    =  "",
-        spawnflags =  0,
+        targetname = "__pzi_hud_text_name" + this.entindex()
+        x          =  ZHUD_X_POS
+        y          =  0.80
+        effect     =  0
+        color      =  "255 255 255"
+        color2     =  "0 0 0"
+        fadein     =  0
+        fadeout    =  0
+        holdtime   =  10
+        fxtime     =  0
+        channel    =  4
+        message    =  ""
+        spawnflags =  0
     } )
 
     _sc.m_hHUDText             <- _hAbilityHUDText
     _sc.m_hHUDTextAbilityName  <- _hAbilityNameHUDText
 
-    if ( _sc.m_hHUDText ) {
-
-        return true
-    }
-    else {
-
-        return false
-    }
-
-    return false
+    return _sc.m_hHUDText
 }
 
 function CTFPlayer_CheckIfLoser() {
@@ -1184,9 +1177,9 @@ function CTFPlayer_RemoveEventFomQueue ( _event ) {
     }
     else {
 
-        while ( _sc.m_tblEventQueue.rawin( _event ) ) {
+        while ( _event in _sc.m_tblEventQueue ) {
 
-            _sc.m_tblEventQueue.rawdelete( _event )
+            delete _sc.m_tblEventQueue[ _event ]
         }
     }
 
@@ -1200,13 +1193,13 @@ function CTFPlayer_AddEventToQueue ( _event, _delay ) {
 
     // if ( !_sc ) return
 
-    if ( _sc.m_tblEventQueue.rawin( _event ) ) {
+    if ( _event in _sc.m_tblEventQueue ) {
 
         _sc.m_tblEventQueue[ _event ] = _fireTime
     }
     else {
 
-        _sc.m_tblEventQueue.rawset( _event, _fireTime )
+        _sc.m_tblEventQueue[ _event ] <- _fireTime
     }
 
     return

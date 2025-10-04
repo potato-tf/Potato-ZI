@@ -409,12 +409,12 @@ function PZI_PlayerThink() {
 
             if ( self.GetPlayerClass() == TF_CLASS_DEMOMAN && ( m_iFlags & ZBIT_MUST_EXPLODE ) ) {
 
-                if ( ( m_tblEventQueue.rawin( EVENT_DEMO_CHARGE_EXIT ) ) && !self.InCond( TF_COND_INVULNERABLE_USER_BUFF ) ) {
+                if ( EVENT_DEMO_CHARGE_EXIT in m_tblEventQueue && !self.InCond( TF_COND_INVULNERABLE_USER_BUFF ) ) {
 
                     if ( ( !self.InCond( TF_COND_SHIELD_CHARGE ) ) || ( abs( self.GetAbsVelocity().y ) < ( abs( m_vecVelocityPrevious.y ) - 100 ) ) ) {
 
                         m_hZombieAbility.ExitDemoCharge ()
-                        m_tblEventQueue.rawdelete       ( EVENT_DEMO_CHARGE_EXIT )
+                        delete m_tblEventQueue[ EVENT_DEMO_CHARGE_EXIT ]
                     }
                 }
 
@@ -548,7 +548,7 @@ function PZI_PlayerThink() {
                 }
                 else if ( _bPressingAttack2 ) { // if we're holding right click while charging spit
 
-                    if ( !m_tblEventQueue.rawin( EVENT_SNIPER_SPITBALL ) ) {
+                    if ( !( EVENT_SNIPER_SPITBALL in m_tblEventQueue ) ) {
 
                         // make sure we have the event queued
                         self.AddEventToQueue( EVENT_SNIPER_SPITBALL, MIN_TIME_BETWEEN_SPIT_START_END )
@@ -575,12 +575,12 @@ function PZI_PlayerThink() {
 
                         self.ViewPunch( QAngle( _randArr[ 0 ], _randArr[ 1 ], _randArr[ 2 ] ) )
 
-                        m_tblEventQueue[ EVENT_SNIPER_SPITBALL ] += 0.1
+                        m_tblEventQueue[ EVENT_SNIPER_SPITBALL ] += 0.034
                     }
                     else {
 
                         // normal spitball charging, push event back a bit
-                        m_tblEventQueue[ EVENT_SNIPER_SPITBALL ] += 0.1
+                        m_tblEventQueue[ EVENT_SNIPER_SPITBALL ] += 0.034
                     }
                 }
                 else if ( !_bPressingAttack2 ) { // right click released while charging

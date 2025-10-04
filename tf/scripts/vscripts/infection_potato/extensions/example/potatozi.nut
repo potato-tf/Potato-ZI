@@ -37,7 +37,7 @@ local global_win_blu = null
 
 // Creating this now instead of later allows it to override other non master controllers
 local backup_fog = CreateByClassname( "env_fog_controller" )
-backup_fog.DispatchSpawn()
+::DispatchSpawn( backup_fog )
 
 // These can die at the end of the frame of HandleMapSpawn
 local MAPSPAWN_ENT_KILL_LIST = [
@@ -223,7 +223,7 @@ function PZI_PotatoZI::HandleMapSpawn() {
 	global_fog.KeyValueFromFloat( "fogmaxdensity", 1.0 )
 	global_fog.KeyValueFromString( "fogcolor", "77 82 71" )
 	global_fog.KeyValueFromInt( "fogblend", 0 )
-	global_fog.DispatchSpawn()
+	::DispatchSpawn( global_fog )
 
 	// Skybox fog
 	if ( SKY_CAMERA ) {

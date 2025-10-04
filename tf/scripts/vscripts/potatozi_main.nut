@@ -56,6 +56,6 @@ local function IncludeGen( include ) {
 
 local gen = IncludeGen( include )
 while ( gen.getstatus() != "dead" )
-    printl( resume gen )
+    resume gen
 
 // IncludeGen( include )

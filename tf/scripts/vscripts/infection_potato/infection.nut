@@ -341,14 +341,13 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
 
     function ConvertPlayers() {
 
-        for ( local ahead = _zombieArr_len >> 1, behind = _zombieArr_len >> 1; ahead < _zombieArr_len; ahead++, behind-- ) {
+        for ( local i = 0; i < _zombieArr_len; i += 2 ) {
 
-            if ( !behind )
-                if ( _zombieArr_len != 1 && _zombieArr_len % 2 == 1 )
-                    ahead++, behind++
+            if ( i + 1 >= _zombieArr_len )
+                break
 
-            local _nextPlayer1 = _zombieArr[ahead]
-            local _nextPlayer2 = _zombieArr[behind]
+            local _nextPlayer1 = _zombieArr[i]
+            local _nextPlayer2 = _zombieArr[i + 1]
 
             if ( !_nextPlayer1 || !_nextPlayer1.IsValid() )
                 _nextPlayer1 = GetRandomPlayers( 1, TEAM_HUMAN )[0]
@@ -442,11 +441,11 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
             // build string for chat notification          //
             // ------------------------------------------- //
 
-            if ( !behind ) { // first player in the message
+            if ( !i ) { // first player in the message
 
                 _szZombieNetNames = "\x07FF3F3F" + NetName( _nextPlayer1 ) + "\x07FBECCB" + NetName( _nextPlayer2 ) + "\x07FBECCB"
             }
-            else if ( ahead == _zombieArr_len - 1 ) { // last player in the message
+            else if ( i + 1 == _zombieArr_len ) { // last player in the message
 
                 if ( _zombieArr_len > 1 ) 
                     _szZombieNetNames += ( "\x07FBECCB " + STRING_UI_AND + " \x07FF3F3F" + NetName( _nextPlayer2 ) + "\x07FBECCB" )
@@ -519,11 +518,7 @@ PZI_EVENT( "teamplay_restart_round", "Infection_RestartRound", function( params 
         _hNextPlayer.SetHealth( _hNextPlayer.GetMaxHealth() )
     }
 
-    local _hGameTextEntity = null
-    while ( _hGameTextEntity = FindByClassname( _hGameTextEntity, "game_text" ) ) {
-
-        _hGameTextEntity.Destroy()
-    }
+    EntFire("game_text", "Kill")
 
     return
 }, EVENT_WRAPPER_MAIN )
