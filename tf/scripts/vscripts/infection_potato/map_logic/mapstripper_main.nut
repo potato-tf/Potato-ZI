@@ -134,8 +134,9 @@ local function SetupRoundTimer() {
         start_paused        = 0
         timer_length        = 480
         StartDisabled       = 0
-        "OnFinished#1"      : "__pzi_util,CallScriptFunction,RoundWin,1"
-        "OnFinished#2"      : "__pzi_util,RunScriptCode,SetValue(`mp_humans_must_join_team` `red`),1"
+        "OnFinished#1"      : "__pzi_util,CallScriptFunction,RoundWin,1,-1"
+        "OnFinished#2"      : "__pzi_util,RunScriptCode,SetValue(`mp_humans_must_join_team` `red`),1,-1"
+        "OnSetupFinished#1" : "self,RunScriptCode,base_timestamp = GetPropFloat(self `m_flTimeRemaining`),1,-1"
     })
 
     if ( PlayerCount(TEAM_HUMAN) + PlayerCount(TEAM_ZOMBIE) )
