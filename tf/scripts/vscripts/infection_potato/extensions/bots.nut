@@ -671,8 +671,11 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
     local bot = GetPlayerFromUserID( params.userid )
 
-    if ( !IsPlayerABot( bot ) || bot.GetTeam() != TEAM_ZOMBIE || bot.GetPlayerClass() == TF_CLASS_MEDIC )
+    if ( !IsPlayerABot( bot ) || bot.GetPlayerClass() == TF_CLASS_MEDIC )
 		return
+
+	if ( bot.GetTeam() != TEAM_ZOMBIE )
+		bot.SetMission( MISSION_SNIPER, true )
 	
     local scope = PZI_Util.GetEntScope( bot )
 
