@@ -1917,7 +1917,7 @@ function PZI_Util::TeleportNearVictim( ent, victim, attempt, ignore_visibility =
 	local areas = {}
 	GetNavAreasInRadius( victim.GetOrigin(), surround_travel_range, areas )
 
-	local ambush_areas = areas.filter( @( name, area ) name in SafeNavAreas && ( ignore_visibility || !area.IsPotentiallyVisibleToTeam( victim.GetTeam() ) ) ).values()
+	local ambush_areas = areas.filter( @( name, area ) name in PZI_Util.SafeNavAreas && ( ignore_visibility || !area.IsPotentiallyVisibleToTeam( victim.GetTeam() ) ) ).values()
 
 	if ( !ambush_areas.len() )
 		return false
