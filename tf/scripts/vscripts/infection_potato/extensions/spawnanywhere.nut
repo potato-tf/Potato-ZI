@@ -334,7 +334,7 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
             if ( !( 0 in players ) )
                 return
 
-            PZI_Util.TeleportNearVictim( self, players[0], 0.25)
+            PZI_Util.TeleportNearVictim( self, players[0], 0.25, true)
             PZI_SpawnAnywhere.BeginSummonSequence( self, self.GetOrigin() )
 
         ", RandomFloat( 0.1, 1.2 ) ) // random delay to avoid predictable spawn waves
@@ -345,7 +345,7 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
     if ( !( 0 in players ) )
         return
 
-    PZI_Util.TeleportNearVictim( player, players[0], 0.25 )
+    PZI_Util.TeleportNearVictim( player, players[0], 0.25, true )
 
     local spawn_hint = CreateByClassname( "move_rope" )
     spawn_hint.KeyValueFromString( "targetname", format( "spawn_hint_%d", player.entindex() ) )

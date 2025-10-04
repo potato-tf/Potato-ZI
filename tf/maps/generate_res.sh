@@ -10,4 +10,4 @@ else
     exit 1
 fi
 
-cp -au ./*.nav ../maps/
+cp -au ../zi/maps/*.nav ./

@@ -1901,7 +1901,7 @@ function PZI_Util::GetWeaponMaxAmmo( player, wep ) {
 	return base_max
 }
 
-function PZI_Util::TeleportNearVictim( ent, victim, attempt ) {
+function PZI_Util::TeleportNearVictim( ent, victim, attempt, ignore_visibility = false ) {
 
 	if ( victim == null )
 		return false
@@ -1917,19 +1917,7 @@ function PZI_Util::TeleportNearVictim( ent, victim, attempt ) {
 	local areas = {}
 	GetNavAreasInRadius( victim.GetOrigin(), surround_travel_range, areas )
 
-	// local ambush_areas = areas.filter(@(i, area) area.IsValidForWanderingPopulation() && !area.IsPotentiallyVisibleToTeam( victim.GetTeam() ))
-	local ambush_areas = []
-
-	foreach ( area in areas ) {
-
-		if ( !area.IsValidForWanderingPopulation() || IsPointInTrigger( area.GetCenter(), "trigger_hurt" ) )
-			continue
-
-		else if ( area.IsPotentiallyVisibleToTeam( victim.GetTeam() ) )
-			continue
-
-		ambush_areas.append( area )
-	}
+	local ambush_areas = areas.filter( @( name, area ) name in SafeNavAreas && ( ignore_visibility || !area.IsPotentiallyVisibleToTeam( victim.GetTeam() ) ) ).values()
 
 	if ( !ambush_areas.len() )
 		return false
