@@ -484,7 +484,7 @@ function CTFPlayer_HasThisWearable ( _WearableClassname ) {
     local _wearable = null
     while ( _wearable = FindByClassname( _wearable, "tf_wearable*" ) ) {
 
-        if (  _wearable != null && _wearable.GetOwner() == this ) {
+        if (  _wearable && _wearable.GetOwner() == this ) {
 
             if ( _wearable.GetClassname() == _WearableClassname ) {
 
@@ -576,7 +576,7 @@ function CTFPlayer_GiveZombieCosmetics_OLD() {
 
 	// if ( !_sc ) return
 
-    if ( "m_hZombieWearable" in _sc && _sc.m_hZombieWearable != null && _sc.m_hZombieWearable.IsValid() )
+    if ( "m_hZombieWearable" in _sc && _sc.m_hZombieWearable && _sc.m_hZombieWearable.IsValid() )
     _sc.m_hZombieWearable.Destroy()
 
     local _zombieCosmetic  =  CreateByClassname( "tf_wearable" )
@@ -612,7 +612,7 @@ function CTFPlayer_GiveZombieFXWearable() {
 
     if ( !_sc ) return
 
-    if ( _sc.m_hZombieFXWearable != null && _sc.m_hZombieFXWearable.IsValid() )
+    if ( _sc.m_hZombieFXWearable && _sc.m_hZombieFXWearable.IsValid() )
         _sc.m_hZombieFXWearable.Destroy()
 
     local _zombieFXWearable = CreateByClassname( "tf_wearable" )
@@ -694,10 +694,10 @@ function CTFPlayer_GiveZombieWeapon() {
 
 	// if ( !_sc ) return
 
-    if ( _sc.m_hZombieWep != null && _sc.m_hZombieWep.IsValid() )
+    if ( _sc.m_hZombieWep && _sc.m_hZombieWep.IsValid() )
         _sc.m_hZombieWep.Destroy()
 
-    if ( _sc.m_hZombieArms != null && _sc.m_hZombieArms.IsValid() )
+    if ( _sc.m_hZombieArms && _sc.m_hZombieArms.IsValid() )
         _sc.m_hZombieArms.Destroy()
 
     local _playerClass  =  this.GetPlayerClass()
@@ -1101,7 +1101,7 @@ function CTFPlayer_ProcessEventQueue (  ) {
 
             case EVENT_KILL_TEMP_ENTITY: // todo mess
 
-                if ( "m_hTempEntity" in _sc && _sc.m_hTempEntity != null && _sc.m_hTempEntity.IsValid() )
+                if ( "m_hTempEntity" in _sc && _sc.m_hTempEntity && _sc.m_hTempEntity.IsValid() )
                     _sc.m_hTempEntity.Destroy()
 
                 this.SetForcedTauntCam ( 0 )
@@ -1126,10 +1126,10 @@ function CTFPlayer_ProcessEventQueue (  ) {
 
             case EVENT_DEMO_CHARGE_RESET:
 
-                if ( _sc.m_hZombieFXWearable != null && _sc.m_hZombieFXWearable.IsValid() )
+                if ( _sc.m_hZombieFXWearable && _sc.m_hZombieFXWearable.IsValid() )
                     _sc.m_hZombieFXWearable.Destroy()
 
-                if ( _sc.m_hZombieWearable != null && _sc.m_hZombieWearable.IsValid() )
+                if ( _sc.m_hZombieWearable && _sc.m_hZombieWearable.IsValid() )
                     _sc.m_hZombieWearable.Destroy()
 
                 // this.GiveZombieFXWearable()
@@ -1443,16 +1443,16 @@ function CTFPlayer_ClearZombieEntities() {
 
 	// if ( !_sc ) return
 
-    if ( "m_hZombieWep" in _sc && _sc.m_hZombieWep != null && _sc.m_hZombieWep.IsValid() )
+    if ( "m_hZombieWep" in _sc && _sc.m_hZombieWep && _sc.m_hZombieWep.IsValid() )
         _sc.m_hZombieWep.Destroy()
 
-    if ( "m_hZombieFXWearable" in _sc && _sc.m_hZombieFXWearable != null && _sc.m_hZombieFXWearable.IsValid() )
+    if ( "m_hZombieFXWearable" in _sc && _sc.m_hZombieFXWearable && _sc.m_hZombieFXWearable.IsValid() )
         _sc.m_hZombieFXWearable.Destroy()
 
-    if ( "m_hZombieWearable" in _sc && _sc.m_hZombieWearable != null && _sc.m_hZombieWearable.IsValid() )
+    if ( "m_hZombieWearable" in _sc && _sc.m_hZombieWearable && _sc.m_hZombieWearable.IsValid() )
         _sc.m_hZombieWearable.Destroy()
 
-    if ( "m_hZombieWearable" in _sc && _sc.m_hZombieWearable != null && _sc.m_hZombieWearable.IsValid() )
+    if ( "m_hZombieWearable" in _sc && _sc.m_hZombieWearable && _sc.m_hZombieWearable.IsValid() )
         _sc.m_hZombieWearable.Destroy()
 
     return
@@ -1477,7 +1477,7 @@ function CTFPlayer_GetLinkedSpitPoolEnt() {
     if ( !_sc.m_bStandingOnSpit )
         return null
 
-    if ( _sc.m_hLinkedSpitPool != null && _sc.m_hLinkedSpitPool.IsValid() )
+    if ( _sc.m_hLinkedSpitPool && _sc.m_hLinkedSpitPool.IsValid() )
         return _sc.m_hLinkedSpitPool
 
     return null

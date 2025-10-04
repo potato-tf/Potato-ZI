@@ -451,7 +451,7 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
 
                 for ( local survivor; survivor = FindByClassnameWithin( survivor, "player", tracepos, SUMMON_RADIUS ); )
                     if ( survivor.GetTeam() == TEAM_HUMAN )
-                        return ClientPrint( player, HUD_PRINTTALK, "Too close to a survivor!" )
+                        return ClientPrint( player, HUD_PRINTCENTER, "Too close to a survivor!" )
 
                 PZI_SpawnAnywhere.BeginSummonSequence( player, spawnpos )
             }
