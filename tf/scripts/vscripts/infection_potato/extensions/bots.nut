@@ -384,7 +384,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 				for ( local i = 0; i < path_count; i++ ) {
 
 					local path_from = path_points[i]
-					local path_to = ( i < path_count - 1 ) ? path_points[i + 1] : null
+					local path_to = ( i < path_count - 1 ) && i + 1 in path_points ? path_points[i + 1] : null
 
 					if ( path_to ) {
 						local dir_to_from = path_to.area.ComputeDirection( path_from.area.GetCenter() )
@@ -668,7 +668,7 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
     local bot = GetPlayerFromUserID( params.userid )
 
-    if ( !IsPlayerABot( bot ) || bot.GetPlayerClass() == TF_CLASS_MEDIC )
+    if ( !IsPlayerABot( bot ) || bot.GetTeam() != TEAM_ZOMBIE || bot.GetPlayerClass() == TF_CLASS_MEDIC )
 		return
 	
     local scope = PZI_Util.GetEntScope( bot )
