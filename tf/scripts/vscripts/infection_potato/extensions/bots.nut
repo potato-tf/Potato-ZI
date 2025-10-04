@@ -293,6 +293,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 		}
 	}
 	function OnUpdate() {
+
 		cur_pos     = bot.GetOrigin()
 		cur_vel     = bot.GetAbsVelocity()
 		cur_speed   = cur_vel.Length()
@@ -667,11 +668,14 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
     local bot = GetPlayerFromUserID( params.userid )
 
-    if ( !IsPlayerABot( bot ) ) return
+    if ( !IsPlayerABot( bot ) || bot.GetPlayerClass() == TF_CLASS_MEDIC )
+		return
 	
     local scope = PZI_Util.GetEntScope( bot )
 
     scope.PZI_BotBehavior <- PZI_Bots.PZI_BotBehavior( bot )
+
+	PZI_Util.AddThink( bot, scope.PZI_BotBehavior.OnUpdate )
 
 	// local func_name = PZI_Bots.ZombieTypes[bot.GetPlayerClass()]
 
