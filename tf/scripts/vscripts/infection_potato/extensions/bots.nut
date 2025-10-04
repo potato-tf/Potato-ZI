@@ -533,7 +533,7 @@ function PZI_Bots::PrepareNavmesh() {
 	local sniper_chance = PZI_Bots.NAV_SNIPER_SPOT_FACTOR
 	local sentry_chance = PZI_Bots.NAV_SENTRY_SPOT_FACTOR
 
-	foreach ( nav in PZI_Util.AllNavAreas ) {
+	foreach ( nav in PZI_Util.SafeNavAreas ) {
 
 		if ( nav.IsValidForWanderingPopulation() ) {
 
@@ -546,7 +546,7 @@ function PZI_Bots::PrepareNavmesh() {
 				nav.SetAttributeTF( TF_NAV_SENTRY_SPOT )
 		}
 
-		yield nav
+		// yield nav
 	}
 }
 
@@ -660,7 +660,7 @@ function PZI_Bots::EngineerZombie( bot ) {
 
 PZI_Event( "teamplay_round_start", "PZI_Bots_TeamplayRoundStart", function( params ) {
 	
-	PZI_Bots.PrepareNavmesh()
+	EntFire( "__pzi_bots", "CallScriptFunction", "PrepareNavmesh" )
 })
 
 PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
@@ -673,12 +673,12 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
     scope.PZI_BotBehavior <- PZI_Bots.PZI_BotBehavior( bot )
 
-	local func_name = PZI_Bots.ZombieTypes[bot.GetPlayerClass()]
+	// local func_name = PZI_Bots.ZombieTypes[bot.GetPlayerClass()]
 
-	if ( func_name == "GenericZombie" )
-		PZI_Bots[ PZI_Bots.ZombieTypes[bot.GetPlayerClass()] ]( bot, RandomInt( 0, 2 ) ? "closest" : "random" )
-	else
-		PZI_Bots[ PZI_Bots.ZombieTypes[bot.GetPlayerClass()] ]( bot )
+	// if ( func_name == "GenericZombie" )
+		PZI_Bots.GenericZombie( bot, RandomInt( 0, 2 ) ? "closest" : "random" )
+	// else
+		// PZI_Bots[ PZI_Bots.ZombieTypes[bot.GetPlayerClass()] ]( bot )
 
 })
 

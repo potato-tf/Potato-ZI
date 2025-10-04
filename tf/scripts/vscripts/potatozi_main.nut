@@ -2,7 +2,8 @@
 // extensions will be loaded in the order they are defined.
 ::PZI_ACTIVE_EXTENSIONS <- [
     {"infection_potato/extensions/spawnanywhere"    : null } // single file
-    {"infection_potato/extensions/damageradiusmult" : null } // single file
+    {"infection_potato/extensions/bots"             : null }
+    {"infection_potato/extensions/damageradiusmult" : null }
     // { "infection_potato/extensions/example/"         : [ "misc", "navmesh", "potatozi" ] } // multiple files in the example dir
 ]
 
