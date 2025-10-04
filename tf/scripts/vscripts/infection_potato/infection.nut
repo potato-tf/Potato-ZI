@@ -441,30 +441,30 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
             // build string for chat notification          //
             // ------------------------------------------- //
 
-            if ( !i ) { // first player in the message
+            // if ( !i ) { // first player in the message
 
-                _szZombieNetNames = "\x07FF3F3F" + NetName( _nextPlayer1 ) + "\x07FBECCB" + NetName( _nextPlayer2 ) + "\x07FBECCB"
-            }
-            else if ( i + 1 == _zombieArr_len ) { // last player in the message
+            //     _szZombieNetNames = "\x07FF3F3F" + NetName( _nextPlayer1 ) + "\x07FBECCB" + NetName( _nextPlayer2 ) + "\x07FBECCB"
+            // }
+            // else if ( i + 1 == _zombieArr_len ) { // last player in the message
 
-                if ( _zombieArr_len > 1 ) 
-                    _szZombieNetNames += ( "\x07FBECCB " + STRING_UI_AND + " \x07FF3F3F" + NetName( _nextPlayer2 ) + "\x07FBECCB" )
-                else
-                    _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" + NetName( _nextPlayer2 ) + "\x07FBECCB" )
+            //     if ( _zombieArr_len > 1 ) 
+            //         _szZombieNetNames += ( "\x07FBECCB " + STRING_UI_AND + " \x07FF3F3F" + NetName( _nextPlayer2 ) + "\x07FBECCB" )
+            //     else
+            //         _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" + NetName( _nextPlayer2 ) + "\x07FBECCB" )
 
-                _szZombieNetNames += ( NetName( _nextPlayer1 ) + "\x07FBECCB" + NetName( _nextPlayer2 ) + "\x07FBECCB" )
-            }
-            else { // players in the middle get commas
+            //     _szZombieNetNames += ( NetName( _nextPlayer1 ) + "\x07FBECCB" + NetName( _nextPlayer2 ) + "\x07FBECCB" )
+            // }
+            // else { // players in the middle get commas
 
-                _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" + NetName( _nextPlayer1 ) + "\x07FBECCB" + NetName( _nextPlayer2 ) + "\x07FBECCB" )
-            }
+            //     _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" + NetName( _nextPlayer1 ) + "\x07FBECCB" + NetName( _nextPlayer2 ) + "\x07FBECCB" )
+            // }
             yield _nextPlayer2
         }
 
         PlayGlobalBell( false )
 
         // show the first infected announce message to all players
-        PrintToChat( _szZombieNetNames + ( _zombieArr_len > 1 ? STRING_UI_CHAT_FIRST_WAVE_MSG_PLURAL : STRING_UI_CHAT_FIRST_WAVE_MSG ) )
+        // PrintToChat( _szZombieNetNames + ( _zombieArr_len > 1 ? STRING_UI_CHAT_FIRST_WAVE_MSG_PLURAL : STRING_UI_CHAT_FIRST_WAVE_MSG ) )
         return
     }
 
