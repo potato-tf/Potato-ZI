@@ -675,7 +675,9 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
     scope.PZI_BotBehavior <- PZI_Bots.PZI_BotBehavior( bot )
 
-	PZI_Util.AddThink( bot, scope.PZI_BotBehavior.OnUpdate )
+	function BotThink() { scope.PZI_BotBehavior.OnUpdate() }
+
+	PZI_Util.AddThink( bot, BotThink )
 
 	// local func_name = PZI_Bots.ZombieTypes[bot.GetPlayerClass()]
 
