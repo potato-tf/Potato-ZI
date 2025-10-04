@@ -370,13 +370,13 @@ PZI_Bots.PZI_BotBehavior <- class {
 				for ( local i = 0; i < area_count && area; i++ ) {
 					// Don't add a point for the end area
 					if ( i > 0 )
-						path_points.append( PZI_PathPoint( area, area.GetCenter(), area.GetParentHow() ) )
+						path_points.append( PZI_Bots.PZI_PathPoint( area, area.GetCenter(), area.GetParentHow() ) )
 
 					area = area.GetParent()
 				}
 
 				path_points.reverse()
-				path_points.append( PZI_PathPoint( area_end, pos_end, 9 ) ) // NUM_TRAVERSE_TYPES
+				path_points.append( PZI_Bots.PZI_PathPoint( area_end, pos_end, 9 ) ) // NUM_TRAVERSE_TYPES
 
 				// Go through again and replace center with border point of next area
 
