@@ -90,9 +90,9 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
 	SetPropBool( ent, STRING_NETPROP_PURGESTRINGS, true )
 	__pzi_active_scopes[ ent ] <- namespace
 
-	// don't spawn an actual move_rope to save an edict
+	// don't spawn an actual preserved ent to save an edict
 	if ( !classname )
-		SetPropString( ent, "m_iClassname", "move_rope" )
+		SetPropString( ent, "m_iClassname", "entity_saucer" )
 
 	local ent_scope = ent.GetScriptScope()
 

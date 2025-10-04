@@ -51,7 +51,7 @@ function PZI_GameStrings::_OnDestroy() {
     if ( "_SpawnEntityFromTable" in ROOT ) {
 
         ::SpawnEntityFromTable <- _SpawnEntityFromTable
-        delete _SpawnEntityFromTable
+        delete ::_SpawnEntityFromTable
     }
 }
 
