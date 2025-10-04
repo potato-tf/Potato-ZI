@@ -435,7 +435,8 @@ const FX_EMP_SPARK                   = "halloween_boss_axe_hit_sparks"
 // const FX_SPIT_IMPACT_SPLAT          = "zombie_spit_impact_splat"
 // const FX_SPIT_IMPACT_SPURTS         = "zombie_spit_impact_spurts"
 
-const FX_SPIT_SMOKE                 = "utaunt_spirit_festive_parent"
+// const FX_SPIT_SMOKE                 = "utaunt_spirit_festive_parent"
+const FX_SPIT_SMOKE                 = "superrare_flies"
 const FX_SPIT_TRAIL                 = "unusual_robot_radioactive"
 const FX_SPIT_TRAIL2                = "unusual_robot_radioactive"
 const FX_SPIT_IMPACT                = false

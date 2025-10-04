@@ -413,8 +413,9 @@ function PZI_PlayerThink() {
 
                     if ( ( !self.InCond( TF_COND_SHIELD_CHARGE ) ) || ( abs( self.GetAbsVelocity().y ) < ( abs( m_vecVelocityPrevious.y ) - 100 ) ) ) {
 
-                        m_hZombieAbility.ExitDemoCharge ()
-                        delete m_tblEventQueue[ EVENT_DEMO_CHARGE_EXIT ]
+                        m_hZombieAbility.ExitDemoCharge()
+                        // TODO: why is this here? ExitDemoCharge already wipes out the event queue
+                        // delete m_tblEventQueue[ EVENT_DEMO_CHARGE_EXIT ]
                     }
                 }
 
@@ -1315,5 +1316,5 @@ function PyroFireballThink() {
     PZI_Util.DispatchEffect( self, FX_FIREBALL_SMOKEBALL )
     PZI_Util.DispatchEffect( self, FX_FIREBALL_TRAIL )
 
-    return 0.03
+    // return 0.03
 }

@@ -622,7 +622,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
             // ---------------------------------------- //
 
             DemomanExplosionPreCheck( _hPlayer.GetOrigin(),
-                                    DEMOMAN_CHARGE_DAMAGE,
+                                    DEMOMAN_CHARGE_BASE_DAMAGE,
                                     DEMOMAN_CHARGE_RADIUS,
                                     _hPlayer,
                                     DEMOMAN_CHARGE_FORCE,
