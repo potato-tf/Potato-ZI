@@ -151,8 +151,9 @@ local function SetupRoundTimer() {
             local time_left = (base_timestamp - Time()).tointeger()
             if ( !(time_left % 10) )
             {
+                local players = PlayerCount( TEAM_HUMAN ) + PlayerCount( TEAM_ZOMBIE )
 
-                if ( !( PlayerCount( TEAM_HUMAN ) + PlayerCount( TEAM_ZOMBIE ) ) )
+                if ( players <= 1 )
                     timer.AcceptInput("SetTime", "60", null, null)
 
                 // printl((base_timestamp - Time()).tointeger())
