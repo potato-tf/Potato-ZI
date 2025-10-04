@@ -184,11 +184,18 @@ function OnPostSpawn() {
 
 PZI_EVENT( "player_spawn", "Infection_PlayerSpawn", function( params ) {
 
-    local _hPlayer     = GetPlayerFromUserID( params.userid )
-    local _iRoundState = GetPropInt( GameRules, "m_iRoundState" )
+    local _hPlayer = GetPlayerFromUserID( params.userid )
 
     if ( !_hPlayer )
         return
+
+    if ( params.team == 0 ) {
+
+        _hPlayer.ValidateScriptScope()
+        return
+    }
+
+    local _iRoundState = GetPropInt( GameRules, "m_iRoundState" )
 
     _sc <- _hPlayer.GetScriptScope() || (_hPlayer.ValidateScriptScope(), _hPlayer.GetScriptScope())
 
