@@ -528,8 +528,8 @@ function CTFPlayer_GiveZombieAbility() {
 
 function CTFPlayer_RemovePlayerWearables() {
 
-    for ( local child = this.FirstMoveChild(); child && child instanceof CEconEntity; child = child.NextMovePeer() )
-        if ( child.GetClassname() == "tf_wearable" )
+    for ( local child = this.FirstMoveChild(); child; child = child.NextMovePeer() )
+        if ( !(child instanceof CBaseCombatWeapon) && child instanceof CEconEntity )
             EntFireByHandle( child, "Kill", null, -1, null, null )
 }
 
