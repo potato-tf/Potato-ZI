@@ -128,7 +128,7 @@ local function SetupRoundTimer() {
         auto_countdown      = 1
         max_length          = 720
         reset_time          = 1
-        setup_length        = 60
+        setup_length        = 9999
         show_in_hud         = 1
         show_time_remaining = 1
         start_paused        = 0

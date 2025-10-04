@@ -74,10 +74,11 @@ PZI_Util.Classes 	 <- ["", "scout", "sniper", "soldier", "demo", "medic", "heavy
 PZI_Util.ClassesCaps <- ["", "Scout", "Sniper", "Soldier", "Demoman", "Medic", "Heavy", "Pyro", "Spy", "Engineer", "Civilian"]
 PZI_Util.Slots   	 <- ["slot_primary", "slot_secondary", "slot_melee", "slot_utility", "slot_building", "slot_pda", "slot_pda2"]
 
-PZI_Util.AllNavAreas <-  {} // gets filled by GetAllAreas at the end of this file
+PZI_Util.ConVars      <- {} // convar tracking to revert to original values
+PZI_Util.EntShredder  <- [] // entity shredder.  Fixed number of entities deleted per tick.
+PZI_Util.AllNavAreas  <- {} // gets filled by GetAllAreas at the end of this file
 PZI_Util.SafeNavAreas <- {} // gets filled by GetAllAreas at the end of this file
-PZI_Util.ConVars     <-  {} // convar tracking to revert to original values
-PZI_Util.EntShredder <-  [] // entity shredder. One entity is deleted per think.
+PZI_Util.NAV_DEBUG    <- false // draw nav areas
 
 
 PZI_Util.ROBOT_ARM_PATHS <- [
@@ -269,26 +270,17 @@ function PZI_Util::_OnDestroy() {
 
 function PZI_Util::EntityManager() {
 
-
-	local entshredder_len = EntShredder.len()
-
-	foreach( ent in EntShredder ) {
-
-		if ( entshredder_len && entshredder_len < ( MAX_EDICTS / 8 ) )
-			yield ent
-
-		if ( ent && ent.IsValid() ) {
-
-			printl(ent + " : " + entshredder_len)
-
-			SetPropBool( ent, STRING_NETPROP_PURGESTRINGS, true )
-			EntFireByHandle( ent, "Kill", "", -1, null, null )
-		}
-	}
-
+	// strip out leftover nulls
 	EntShredder = EntShredder.filter(@(_, ent) ent && ent.IsValid())
 
-	return null
+	foreach( i, ent in EntShredder ) {
+
+		if ( !(i % 10) )
+			yield ent
+
+		SetPropBool( ent, STRING_NETPROP_PURGESTRINGS, true )
+		EntFireByHandle( ent, "Kill", "", -1, null, null )
+	}
 }
 
 local gen = null
@@ -301,8 +293,6 @@ function PZI_Util::ThinkTable::EntityManagerThink() {
 		gen = EntityManager()
 
 	local result = resume gen
-	// if ( result )
-		// printf( "ents %d, strings %d\n", EntShredder.len(), GameStrings.len() )
 	return -1
 }
 
@@ -1250,10 +1240,11 @@ function PZI_Util::IsPointInTrigger( point, classname = "func_respawnroom" ) {
 
 	local trace = {
 
-		start = point,
-		end = point,
-		mask = 0
+		start = point
+		end   = point
+		mask  = 0
 	}
+
 	TraceLineEx( trace )
 
 	foreach ( trigger in triggers ) {
@@ -1264,7 +1255,11 @@ function PZI_Util::IsPointInTrigger( point, classname = "func_respawnroom" ) {
 		trigger.AddSolidFlags( FSOLID_NOT_SOLID )
 	}
 
-	return trace.hit && trace.enthit.GetClassname() == classname
+	if ( trace.hit )
+		if ( trace.enthit.GetClassname() == classname )
+			return true
+
+	return false
 }
 
 function PZI_Util::GetItemInSlot( player, slot ) {
@@ -2531,7 +2526,14 @@ function PZI_Util::CheckBitwise( num ) {
 	return num && !( num & ( num - 1 ) )
 }
 
-PZI_EVENT( "teamplay_setup_finished", "UtilSetupStatus", function ( params ) { PZI_Util.IsInSetup = false }, EVENT_WRAPPER_UTIL )
+PZI_EVENT( "teamplay_setup_finished", "UtilSetupStatus", function ( params ) {
+
+	PZI_Util.IsInSetup = false
+
+	// delay GC call so we don't eat into the budget of other round start scripts
+	EntFire( "__pzi_util", "CallScriptFunction", "collectgarbage" )
+
+}, EVENT_WRAPPER_UTIL )
 
 PZI_EVENT( "teamplay_round_start", "UtilRoundStart", function ( params ) {
 
@@ -2552,7 +2554,8 @@ PZI_EVENT( "teamplay_round_start", "UtilRoundStart", function ( params ) {
 	PZI_Util.kill_on_spawn.clear()
 	PZI_Util.kill_on_death.clear()
 
-	collectgarbage()
+	// delay GC call so we don't eat into the budget of other round reset scripts
+	EntFire( "__pzi_util", "CallScriptFunction", "collectgarbage" )
 
 }, EVENT_WRAPPER_UTIL )
 
@@ -2698,5 +2701,55 @@ PZI_EVENT( "post_inventory_application", "UtilPostInventoryApplication", functio
 }, EVENT_WRAPPER_UTIL )
 
 GetAllAreas( PZI_Util.AllNavAreas )
-PZI_Util.SafeNavAreas <- PZI_Util.AllNavAreas.filter(@(_, area) !PZI_Util.IsPointInTrigger( area.GetCenter(), "trigger_hurt" ) )
+
+// pre-collect safe nav areas on load
+function PZI_Util::GetSafeNavAreas() {
+
+	if ( !AllNavAreas.len() )
+		return
+
+	ScriptEntFireSafe( self, "print( `\\n\\n Collecting nav areas, performance warnings will go away shortly...\\n\\n`)", 0.1)
+
+	local i = 0
+	local color = [0, 180, 20, 50]
+
+	// filter out areas that are too small or inside a trigger_hurt
+	foreach( name, area in AllNavAreas ) {
+
+		if ( area.GetSizeX() < 50 )
+			color = [0, 0, 255, 150]
+
+		else if ( area.GetSizeY() < 50 )
+			color = [0, 0, 255, 150]
+
+		else if ( IsPointInTrigger( area.GetCenter(), "trigger_hurt" ) )
+			color = [180, 0, 20, 80]
+
+		else
+			color = [0, 180, 20, 50], SafeNavAreas[name] <- area
+
+		if ( NAV_DEBUG )
+			area.DebugDrawFilled( color[0], color[1], color[2], color[3], 5.0, true, 0.0 )
+		i++
+
+		if ( !(i % 500) ) // process this many nav areas per tick
+			yield SafeNavAreas.len()
+	}
+	print("\n\nSafe nav areas collected\n\n")
+	EntFire( "__pzi_util", "CallScriptFunction", "collectgarbage" )
+}
+
+local gen = PZI_Util.GetSafeNavAreas()
+resume gen // do one step right away before thinking
+
+function PZI_Util::ThinkTable::PopulateSafeNav() {
+
+	if ( gen.getstatus() == "dead" ) {
+
+		delete PZI_Util.ThinkTable.PopulateSafeNav
+		return
+	}
+	resume gen
+}
+
 PZI_Util.ForEachEnt( null, null, null, null, true )

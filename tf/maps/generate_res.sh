@@ -9,3 +9,5 @@ else
     ls -la ../cfg/*.txt
     exit 1
 fi
+
+cp -au ./*.nav ../maps/
