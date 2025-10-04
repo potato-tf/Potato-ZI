@@ -325,7 +325,7 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
 
     EntFire( "player", "RunScriptCode", "if ( self.GetTeam() == TEAM_HUMAN ) SetPropBool( self, `m_bGlowEnabled`, true )" )
 
-    local _szZombieNetNames  =  ""
+    // local _szZombieNetNames  =  ""
     local _zombieArr         =  GetRandomPlayers( _numStartingZombies, TEAM_HUMAN )
     local _zombieArr_len     = _zombieArr.len()
 
@@ -341,22 +341,12 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
 
     function ConvertPlayers() {
 
-        for ( local i = 0; i < _zombieArr_len; i += 2 ) {
-
-            if ( i + 1 >= _zombieArr_len )
-                break
-
-            local _nextPlayer1 = _zombieArr[i]
-            local _nextPlayer2 = _zombieArr[i + 1]
+        foreach ( i, _nextPlayer1 in _ZombieArr ) {
 
             if ( !_nextPlayer1 || !_nextPlayer1.IsValid() )
                 _nextPlayer1 = GetRandomPlayers( 1, TEAM_HUMAN )[0]
-            if ( !_nextPlayer2 || !_nextPlayer2.IsValid() )
-                _nextPlayer2 = GetRandomPlayers( 1, TEAM_HUMAN )[0]
 
             local _sc = _nextPlayer1.GetScriptScope()
-            local _sc2 = _nextPlayer2.GetScriptScope()
-
             // ------------------------------------------- //
             // make sure heavy doesn't get stuck in t-pose //
             // ------------------------------------------- //
@@ -369,73 +359,45 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
                     SetPropInt( _activeWeapon, "m_iWeaponState", 0 )
                 }
             }
-
-            if ( _nextPlayer2.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS ) {
-
-                local _activeWeapon = _nextPlayer2.GetActiveWeapon()
-                if ( _activeWeapon && _activeWeapon.GetClassname() == "tf_weapon_minigun" ) {
-
-                    SetPropInt( _activeWeapon, "m_iWeaponState", 0 )
-                }
-            }
-
             // remove player conditions that will cause problems
             // when switching to zombie
             _nextPlayer1.ClearProblematicConds()
-            _nextPlayer2.ClearProblematicConds()
 
             // reset all gamemode specific variables
             _nextPlayer1.ResetInfectionVars()
-            _nextPlayer2.ResetInfectionVars()
 
             ChangeTeamSafe( _nextPlayer1, TEAM_ZOMBIE, false )
-            ChangeTeamSafe( _nextPlayer2, TEAM_ZOMBIE, false )
 
             if ( bZombiesDontSwitchInPlace ) {
 
                 if ( _nextPlayer1.GetPlayerClass() == TF_CLASS_PYRO )
                     _sc.m_iFlags = _sc.m_iFlags | ZBIT_PYRO_DONT_EXPLODE
 
-                if ( _nextPlayer2.GetPlayerClass() == TF_CLASS_PYRO )
-                    _sc2.m_iFlags = _sc2.m_iFlags | ZBIT_PYRO_DONT_EXPLODE
-
-                _nextPlayer1.TakeDamage( INT_MAX, DMG_GENERIC, null )
-                _nextPlayer1.ForceRespawn()
-                _nextPlayer2.TakeDamage( INT_MAX, DMG_GENERIC, null )
-                _nextPlayer2.ForceRespawn()
+                PZI_Util.ScriptEntFireSafe(_nextPlayer1, "self.TakeDamage( INT_MAX, DMG_GENERIC, null ); self.ForceRespawn()", 0.1)
                 yield _nextPlayer1
             }
 
             // remove all of the player's existing items
             _nextPlayer1.RemovePlayerWearables()
-            _nextPlayer2.RemovePlayerWearables()
 
             // add the zombie cosmetics/skin modifications
             _nextPlayer1.GiveZombieCosmetics()
-            _nextPlayer2.GiveZombieCosmetics()
 
             _nextPlayer1.GiveZombieEyeParticles()
-            _nextPlayer2.GiveZombieEyeParticles()
             // _nextPlayer1.GiveZombieFXWearable()
             // _nextPlayer2.GiveZombieFXWearable()
 
             _nextPlayer1.SetEFlags( EFL_IS_BEING_LIFTED_BY_BARNACLE )
-            _nextPlayer2.SetEFlags( EFL_IS_BEING_LIFTED_BY_BARNACLE )
             SendGlobalGameEvent( "post_inventory_application", { userid = GetPlayerUserID( _nextPlayer1 ) } )
-            SendGlobalGameEvent( "post_inventory_application", { userid = GetPlayerUserID( _nextPlayer2 ) } )
             _nextPlayer1.RemoveEFlags( EFL_IS_BEING_LIFTED_BY_BARNACLE )
-            _nextPlayer2.RemoveEFlags( EFL_IS_BEING_LIFTED_BY_BARNACLE )
 
             // add the pending zombie flag
             // the actual zombie conversion is handled in the player's think script
             _sc.m_iFlags <- ( ( _sc.m_iFlags | ZBIT_PENDING_ZOMBIE ) )
-            _sc2.m_iFlags <- ( ( _sc2.m_iFlags | ZBIT_PENDING_ZOMBIE ) )
 
             // don't delay zombie conversion when the player is alive.
             _nextPlayer1.SetNextActTime ( ZOMBIE_BECOME_ZOMBIE, INSTANT )
             _nextPlayer1.SetNextActTime ( ZOMBIE_ABILITY_CAST, 0.1 )
-            _nextPlayer2.SetNextActTime ( ZOMBIE_BECOME_ZOMBIE, INSTANT )
-            _nextPlayer2.SetNextActTime ( ZOMBIE_ABILITY_CAST, 0.1 )
 
             // ------------------------------------------- //
             // build string for chat notification          //
@@ -443,22 +405,22 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
 
             // if ( !i ) { // first player in the message
 
-            //     _szZombieNetNames = "\x07FF3F3F" + NetName( _nextPlayer1 ) + "\x07FBECCB" + NetName( _nextPlayer2 ) + "\x07FBECCB"
+            //     _szZombieNetNames = "\x07FF3F3F" + NetName( _nextPlayer1 ) + "\x07FBECCB" + "\x07FBECCB"
             // }
             // else if ( i + 1 == _zombieArr_len ) { // last player in the message
 
             //     if ( _zombieArr_len > 1 ) 
-            //         _szZombieNetNames += ( "\x07FBECCB " + STRING_UI_AND + " \x07FF3F3F" + NetName( _nextPlayer2 ) + "\x07FBECCB" )
+            //         _szZombieNetNames += ( "\x07FBECCB " + STRING_UI_AND + " \x07FF3F3F" + NetName( _nextPlayer1 ) + "\x07FBECCB" )
             //     else
-            //         _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" + NetName( _nextPlayer2 ) + "\x07FBECCB" )
+            //         _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" + NetName( _nextPlayer1 ) + "\x07FBECCB" )
 
-            //     _szZombieNetNames += ( NetName( _nextPlayer1 ) + "\x07FBECCB" + NetName( _nextPlayer2 ) + "\x07FBECCB" )
+            //     _szZombieNetNames += ( NetName( _nextPlayer1 ) + "\x07FBECCB" )
             // }
             // else { // players in the middle get commas
 
-            //     _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" + NetName( _nextPlayer1 ) + "\x07FBECCB" + NetName( _nextPlayer2 ) + "\x07FBECCB" )
+            //     _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" + NetName( _nextPlayer1 ) + "\x07FBECCB" )
             // }
-            yield _nextPlayer2
+            yield _nextPlayer1
         }
 
         PlayGlobalBell( false )
