@@ -10,7 +10,6 @@ const NEST_EXPLODE_RADIUS   = 200
 const NEST_EXPLODE_HEALTH   = 650
 
 const MAX_SPAWN_DISTANCE   = 2048
-const NEAREST_NAV_RADIUS   = 1024
 const MAX_NAV_VIEW_DISTANCE = 2048
 
 const SUMMON_ANIM_MULT = 0.7
@@ -19,6 +18,8 @@ const SUMMON_MAX_OVERHEAL_MULT = 1
 const SUMMON_RADIUS = 512
 
 const PLAYER_HULL_HEIGHT = 82
+
+local USE_NAV_FOR_SPAWN = PZI_Util.AllNavAreas.len()
 
 CONST.HIDEHUD_GHOST <- ( HIDEHUD_CROSSHAIR|HIDEHUD_HEALTH|HIDEHUD_WEAPONSELECTION|HIDEHUD_METAL|HIDEHUD_BUILDING_STATUS|HIDEHUD_CLOAK_AND_FEIGN|HIDEHUD_PIPES_AND_CHARGE )
 CONST.TRACEMASK <- ( CONTENTS_SOLID|CONTENTS_MOVEABLE|CONTENTS_PLAYERCLIP|CONTENTS_WINDOW|CONTENTS_MONSTER|CONTENTS_GRATE )
@@ -319,7 +320,7 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
 
     scope.spawn_nests <- []
     scope.tracepos    <- Vector()
-    scope.spawn_area  <- null
+    scope.spawnpos    <- null
 
     // PZI_Util.ScriptEntFireSafe( player, "PZI_SpawnAnywhere.SetGhostMode( self )", -1 )
     PZI_SpawnAnywhere.SetGhostMode( player )
@@ -387,40 +388,56 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
         TraceLineEx( nav_trace )
 
         // no world geometry found
-        if ( !nav_trace.hit ) return
+        if ( !nav_trace.hit ) 
+            return
 
         tracepos = nav_trace.pos
 
         // trace too far away
-        if ( ( player.GetOrigin() - tracepos ).Length2D() > MAX_SPAWN_DISTANCE ) return
-
-        local nav_area = GetNearestNavArea( tracepos, NEAREST_NAV_RADIUS, false, true )
+        if ( ( player.GetOrigin() - tracepos ).Length2D() > MAX_SPAWN_DISTANCE ) 
+            return
 
         // not a valid area
-        if ( !nav_area || !nav_area.IsFlat() || PZI_Util.IsPointInTrigger( nav_area.GetCenter() + Vector( 0, 0, 64 ), "trigger_hurt" ) ) return
+        if ( USE_NAV_FOR_SPAWN ) {
 
-        // smooth movement for the annotation instead of snapping
-        // spawn_hint.KeyValueFromVector( "origin", hull_trace.pos + Vector( 0, 0, 20 ) )
+            local nav_area = GetNearestNavArea( tracepos, SUMMON_RADIUS * 2, true, true )
+
+            if ( !nav_area || !nav_area.IsFlat() )
+                return
+
+            spawnpos = nav_area.GetCenter()    
+        }
+        else 
+            // no nav, fallback to just the normal trace pos
+            // All maps should use the nav and not rely on this 
+            // but this atleast stops the gamemode from softlocking
+            spawnpos = tracepos
+
+        if ( !spawnpos )
+            return
+
+        // avoid lambdas for perf counter.
+        local function in_triggerhurt( pos ) { return PZI_Util.IsPointInTrigger( pos, "trigger_hurt" ) }
+
+        if ( in_triggerhurt( spawnpos ) || in_triggerhurt( spawnpos + Vector( 0, 0, 64 ) ) )
+            return
 
         // check if we can fit here
         local hull_trace = {
 
             start   = nav_trace.pos
             end     = nav_trace.pos
-            hullmin = Vector( -24, -24, 20 )
-            hullmax = Vector( 24, 24, 84 )
+            hullmin = Vector( -24, -24, 20 ) // hardcode a generic hull size instead of fetching player hull.  We never change these anyway
+            hullmax = Vector( 24, 24, 84 ) // yes I know scout/engi are slightly smaller, just assume the larger hull size to be safe
             mask    = CONST.TRACEMASK
             ignore  = player
         }
 
         TraceHull( hull_trace )
 
-        spawn_area = hull_trace.hit ? null : nav_area
+        spawn_hint.KeyValueFromVector( "origin", spawnpos + Vector( 0, 0, 20 ) )
 
-        if ( spawn_area )
-            spawn_hint.KeyValueFromVector( "origin", spawn_area.GetCenter() + Vector( 0, 0, 20 ) )
-
-        // DebugDrawBox( nav_area.GetCenter(), hull_trace.hullmin, hull_trace.hullmax, spawn_area ? 0 : 255, spawn_area ? 255 : 0, 0, 255, 0.1 )
+        // DebugDrawBox( nav_area.GetCenter(), hull_trace.hullmin, hull_trace.hullmax, spawnpos ? 0 : 255, spawnpos ? 255 : 0, 0, 255, 0.1 )
 
         local buttons = GetPropInt( player, "m_nButtons" )
 
@@ -428,13 +445,13 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
 
             // NORMAL GROUND SPAWN
             // snap the spawn point to the nav area center
-            if ( spawn_area && buttons & IN_ATTACK && !( buttons & IN_ATTACK2 ) ) {
+            if ( buttons & IN_ATTACK && !( buttons & IN_ATTACK2 ) ) {
 
                 for ( local survivor; survivor = FindByClassnameWithin( survivor, "player", tracepos, SUMMON_RADIUS ); )
                     if ( survivor.GetTeam() == TEAM_HUMAN )
                         return ClientPrint( player, HUD_PRINTTALK, "Too close to a survivor!" )
 
-                PZI_SpawnAnywhere.BeginSummonSequence( player, spawn_area.GetCenter() )
+                PZI_SpawnAnywhere.BeginSummonSequence( player, spawnpos )
             }
 
             // NEST SPAWN
