@@ -11,3 +11,4 @@ else
 fi
 
 cp -au ../zi/maps/*.nav ./
+rm ../zi/maps/*.nav
