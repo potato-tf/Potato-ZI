@@ -237,6 +237,7 @@ local gamemode_funcs = {
                 else if ( altpath = FindByName( null, GetPropString( prev, "m_altName" ) ) )
                     shredder.append( altpath )
             }
+            shredder.append( watcher )
         }
     }
 
