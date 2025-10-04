@@ -197,6 +197,7 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
 
             SetPropInt( player, "m_afButtonDisabled", 0 )
             player.GiveZombieCosmetics()
+            player.GiveZombieEyeParticles()
             // PZI_Util.ScriptEntFireSafe( player, "self.GiveZombieCosmetics(); self.GiveZombieEyeParticles()" )
 
             EntFireByHandle( self, "Kill", "", -1, null, null )

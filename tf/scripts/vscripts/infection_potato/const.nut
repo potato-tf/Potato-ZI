@@ -363,11 +363,7 @@ szArrZombiePlayerModels <-
     "models/player/engineer_infected.mdl",
 ]
 szEyeParticles <- [
-    // "killstreak_eyes_level1",
-    // "killstreak_eyes_base",
-    // "killstreak_eyes_trails01",
-    // "killstreak_eyes_rays",
-    "eye_powerup_red_lvl_3",
+    "eye_powerup_red_lvl_3"
     "eye_powerup_red_lvl_2"
 ]
 

@@ -393,8 +393,6 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
             _nextPlayer1.GiveZombieCosmetics()
 
             _nextPlayer1.GiveZombieEyeParticles()
-            // _nextPlayer1.GiveZombieFXWearable()
-            // _nextPlayer2.GiveZombieFXWearable()
 
             _nextPlayer1.SetEFlags( EFL_IS_BEING_LIFTED_BY_BARNACLE )
             SendGlobalGameEvent( "post_inventory_application", { userid = GetPlayerUserID( _nextPlayer1 ) } )
