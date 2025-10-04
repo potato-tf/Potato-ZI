@@ -134,7 +134,7 @@ local function SetupRoundTimer() {
         start_paused        = 0
         timer_length        = 480
         StartDisabled       = 0
-        "OnFinished#1"      : "__pzi_util,CallScriptFunction,RoundWin,1,-1"
+        "OnFinished#1"      : "__pzi_util,CallScriptFunction,RoundWin,0,-1"
         "OnFinished#2"      : "__pzi_util,RunScriptCode,SetValue(`mp_humans_must_join_team` `red`),1,-1"
         "OnSetupFinished#1" : "self,RunScriptCode,base_timestamp = GetPropFloat(self `m_flTimeRemaining`),1,-1"
     })
@@ -166,9 +166,10 @@ local function SetupRoundTimer() {
                 local spectators = 0
                 foreach (player, userid in PZI_Util.PlayerTable)
                 {
-                    if (!player || !player.IsValid() || player.IsFakeClient()) continue
+                    if (!player || !player.IsValid()) 
+                        continue
 
-                    if (player.GetTeam() == TEAM_SPECTATOR)
+                    if (player.GetTeam() == TEAM_SPECTATOR || player.IsFakeClient())
                         spectators++
                     else
                         players[player.GetTeam() == TEAM_HUMAN ? 0 : 1]++
