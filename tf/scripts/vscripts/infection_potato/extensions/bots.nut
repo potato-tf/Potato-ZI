@@ -383,8 +383,11 @@ PZI_Bots.PZI_BotBehavior <- class {
 
 				for ( local i = 0; i < path_count; i++ ) {
 
+					if ( !( i + 1 in path_points) )
+						continue
+
 					local path_from = path_points[i]
-					local path_to = ( i < path_count - 1 ) && i + 1 in path_points ? path_points[i + 1] : null
+					local path_to = ( i < path_count - 1 ) ? path_points[i + 1] : null
 
 					if ( path_to ) {
 						local dir_to_from = path_to.area.ComputeDirection( path_from.area.GetCenter() )
