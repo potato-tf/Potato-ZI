@@ -658,7 +658,7 @@ function PZI_Bots::EngineerZombie( bot ) {
     }
 }
 
-PZI_Event( "teamplay_round_start", "PZI_Bots_TeamplayRoundStart", function( params ) {
+PZI_EVENT( "teamplay_round_start", "PZI_Bots_TeamplayRoundStart", function( params ) {
 	
 	EntFire( "__pzi_bots", "CallScriptFunction", "PrepareNavmesh" )
 })
