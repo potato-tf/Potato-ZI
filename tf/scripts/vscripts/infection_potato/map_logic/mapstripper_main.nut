@@ -217,7 +217,10 @@ local gamemode_funcs = {
     function PL() {
 
         // delete payload cart and tracks
+        EntFire( "mapobj_cart_dispenser", "Kill" )
         for ( local watcher; watcher = FindByClassname( watcher, "team_train_watcher" ); ) {
+
+            EntFire( GetPropString( watcher, "m_iszTrain" ), "Kill" )
 
             local last  = FindByName( null, GetPropString( watcher, "m_iszGoalNode" ) )
             local prev   = GetPropEntity( last, "m_pprevious" )
@@ -225,19 +228,14 @@ local gamemode_funcs = {
 
             while ( prev = GetPropEntity( prev, "m_pprevious" ) ) {
 
-                if ( prev in PZI_Util.EntShredder )
-                    continue
-
                 PZI_Util.EntShredder.append( prev )
+
                 local altpath = GetPropEntity( prev, "m_paltpath" )
                 if ( altpath )
                     PZI_Util.EntShredder.append( altpath )
                 else if ( altpath = FindByName( null, GetPropString( prev, "m_altName" ) ) )
                     PZI_Util.EntShredder.append( altpath )
-
             }
-
-            EntFire( GetPropString( watcher, "m_iszTrain" ), "Kill" )
         }
     }
 
