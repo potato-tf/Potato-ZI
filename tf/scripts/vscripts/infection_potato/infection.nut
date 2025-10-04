@@ -341,7 +341,7 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
 
     function ConvertPlayers() {
 
-        foreach ( i, _nextPlayer1 in _ZombieArr ) {
+        foreach ( i, _nextPlayer1 in _zombieArr ) {
 
             if ( !_nextPlayer1 || !_nextPlayer1.IsValid() )
                 _nextPlayer1 = GetRandomPlayers( 1, TEAM_HUMAN )[0]
