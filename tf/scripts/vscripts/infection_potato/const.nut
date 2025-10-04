@@ -363,7 +363,7 @@ szArrZombiePlayerModels <-
     "models/player/engineer_infected.mdl",
 ]
 szEyeParticles <- [
-    "eye_powerup_red_lvl_3"
+    "eye_powerup_red_lvl_3",
     "eye_powerup_red_lvl_2"
 ]
 
@@ -618,3 +618,6 @@ const HIDEHUD_BUILDING_STATUS     =  0x1000
 const HIDEHUD_CLOAK_AND_FEIGN     =  0x2000
 const HIDEHUD_PIPES_AND_CHARGE    =  0x4000
 const HIDEHUD_METAL               =  0x8000
+
+foreach(k, v in CONST)
+    ROOT[k] <- v
