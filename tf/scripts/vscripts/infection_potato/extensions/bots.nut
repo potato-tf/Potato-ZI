@@ -1,4 +1,4 @@
-PZI_CREATE_SCOPE( "__pzi_bots", "PZI_Bots", "PZI_BotSpawner", "PZI_BotSpawnerThink", "bot_generator" )
+PZI_CREATE_SCOPE( "__pzi_bots", "PZI_Bots", "PZI_BotSpawner", "PZI_BotSpawnerThink" )
 
 PZI_Bots.MAX_THREAT_DISTANCE <- 256*256
 PZI_Bots.NAV_SNIPER_SPOT_FACTOR <- 3 // higher value = lower chance.  1/3 chance to be a sniper spot
