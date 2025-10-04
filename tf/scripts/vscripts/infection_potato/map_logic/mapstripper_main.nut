@@ -155,7 +155,7 @@ local function SetupRoundTimer() {
                 if ( !( PlayerCount( TEAM_HUMAN ) + PlayerCount( TEAM_ZOMBIE ) ) )
                     timer.AcceptInput("SetTime", "60", null, null)
 
-                printl((base_timestamp - Time()).tointeger())
+                // printl((base_timestamp - Time()).tointeger())
                 LocalTime(LOCALTIME)
                 SERVER_DATA.update_time = LOCALTIME
                 SERVER_DATA.max_wave = time_left
