@@ -915,7 +915,7 @@ function CTFPlayer_ZombieInitialTooltip() {
         channel    =  1,
         message    =  "",
         spawnflags =  0,
-    } )
+    })
 
     return _hAbilityHUDText
 }
@@ -924,7 +924,16 @@ function CTFPlayer_InitializeZombieHUD() {
 
     local _sc = this.GetScriptScope()
 
-	// if ( !_sc ) return
+    if ( "m_hHUDText" in _sc && _sc.m_hHUDText )
+        EntFireByHandle( _sc.m_hHUDText, "Kill", "", -1, this, this )
+
+    if ( "m_hHUDTextAbilityName" in _sc && _sc.m_hHUDTextAbilityName )
+        EntFireByHandle( _sc.m_hHUDTextAbilityName, "Kill", "", -1, this, this )
+
+    // previous checks apparently don't work, just kill by targetname
+    for (local txt; txt = FindByClassname( txt, "game_text"); )
+        if ( endswith(txt.GetName(), this.entindex().tostring()) )
+            EntFireByHandle( txt, "Kill", "", -1, null, null )
 
     local _hAbilityHUDText = SpawnEntityFromTable( "game_text", {
 

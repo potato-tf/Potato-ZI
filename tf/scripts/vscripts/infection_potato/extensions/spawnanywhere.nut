@@ -60,6 +60,8 @@ function PZI_SpawnAnywhere::SetGhostMode( player ) {
     PZI_Util.ScriptEntFireSafe( player, "self.AddCustomAttribute( `major increased jump height`, 3, -1 )", -1 )
     PZI_Util.ScriptEntFireSafe( player, "self.AddCustomAttribute( `voice pitch scale`, 0, -1 )", -1 )
 
+    // TODO: this sucks
+    // Other players won't collide with us, but we still get stuck on them trying to pass through
     player.SetCollisionGroup( COLLISION_GROUP_DEBRIS )
     player.SetSolidFlags( FSOLID_NOT_SOLID )
     player.SetSolid( SOLID_NONE )
@@ -87,6 +89,7 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
     player.AcceptInput( "SetForcedTauntCam", "1", null, null )
     player.AddCustomAttribute( "no_jump", 1, -1 )
     player.GiveZombieEyeParticles()
+    EntFire("spawn_hint_" + player.entindex(), "Kill")
 
     scope.m_iFlags = scope.m_iFlags | ZBIT_PENDING_ZOMBIE
 
@@ -137,9 +140,8 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
     player.RemoveHudHideFlags( CONST.HIDEHUD_GHOST )
     player.RemoveFlag( FL_NOTARGET|FL_DONTTOUCH )
     player.SetSolid( SOLID_BBOX )
-    player.SetSolidFlags( 0 )
-    // player.SetCollisionGroup( COLLISION_GROUP_PLAYER_MOVEMENT )
-    player.SetCollisionGroup( TFCOLLISION_GROUP_COMBATOBJECT )
+    player.SetSolidFlags( FSOLID_NOT_STANDABLE )
+    player.SetCollisionGroup( COLLISION_GROUP_PLAYER )
 
     PZI_Util.ScriptEntFireSafe( player, "self.AddCond( TF_COND_HALLOWEEN_QUICK_HEAL )", SUMMON_HEAL_DELAY )
 
@@ -304,6 +306,9 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
     local player = GetPlayerFromUserID( params.userid )
 
     // make everyone non-solid
+    // TODO: this is a hack because the ghost mode solidity changes shown above are useless
+    // the only way to make an individual non-solid player is to use TF_COND_GHOST_MODE
+    // which has a ton of side-effects I'm not interested in dealing with right now
     player.SetCollisionGroup( TFCOLLISION_GROUP_COMBATOBJECT )
 
     local scope = player.GetScriptScope() || ( player.ValidateScriptScope(), player.GetScriptScope() )

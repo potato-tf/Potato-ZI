@@ -120,8 +120,7 @@ function PZI_PlayerThink() {
 
                     local _me = self
 
-                    local _hExistingDispenser = null
-                    while ( _hExistingDispenser = FindByClassname( _hExistingDispenser, "pd_dispenser" ) ) {
+                    for (local _hExistingDispenser; _hExistingDispenser = FindByClassname( _hExistingDispenser, "pd_dispenser" ); ) {
 
                         if ( _hExistingDispenser.GetOwner() == _me ) {
 
@@ -132,16 +131,16 @@ function PZI_PlayerThink() {
                     local _hDispenserTouchTrigger = SpawnEntityFromTable( "dispenser_touch_trigger", {
                         origin = _me.GetOrigin(),
                         spawnflags = 1,
-                    } )
+                    })
 
                     _hDispenserTouchTrigger.KeyValueFromString( "targetname", "zmedic_dispenser_trigger" )
 
-                    _hDispenserTouchTrigger.SetSize   ( Vector( -ZOMBIE_MEDIC_DISPENSER_RANGE,
-                                                                -ZOMBIE_MEDIC_DISPENSER_RANGE,
-                                                                -ZOMBIE_MEDIC_DISPENSER_RANGE ),
-                                                        Vector( ZOMBIE_MEDIC_DISPENSER_RANGE,
-                                                                ZOMBIE_MEDIC_DISPENSER_RANGE,
-                                                                ZOMBIE_MEDIC_DISPENSER_RANGE ) )
+                    _hDispenserTouchTrigger.SetSize( Vector(-ZOMBIE_MEDIC_DISPENSER_RANGE,
+                                                            -ZOMBIE_MEDIC_DISPENSER_RANGE,
+                                                            -ZOMBIE_MEDIC_DISPENSER_RANGE ),
+                                                            Vector( ZOMBIE_MEDIC_DISPENSER_RANGE,
+                                                            ZOMBIE_MEDIC_DISPENSER_RANGE,
+                                                            ZOMBIE_MEDIC_DISPENSER_RANGE ) )
                     _hDispenserTouchTrigger.SetSolid( 2 )
 
                     local _hDispenser = SpawnEntityFromTable( "pd_dispenser", {
@@ -151,10 +150,10 @@ function PZI_PlayerThink() {
                         touch_trigger = "zmedic_dispenser_trigger",
                     } )
 
-                    _hDispenser.KeyValueFromString              ( "targetname", "" )
-                    _hDispenserTouchTrigger.KeyValueFromString  ( "targetname", "" )
-                    _hDispenser.AcceptInput                     ( "SetParent", "!activator", self, self )
-                    _hDispenserTouchTrigger.AcceptInput         ( "SetParent", "!activator", self, self )
+                    _hDispenser.KeyValueFromString( "targetname", "" )
+                    _hDispenserTouchTrigger.KeyValueFromString( "targetname", "" )
+                    _hDispenser.AcceptInput( "SetParent", "!activator", self, self )
+                    _hDispenserTouchTrigger.AcceptInput( "SetParent", "!activator", self, self )
                     _hDispenser.SetOwner( _me )
 
                     m_hMedicDispenser             <- _hDispenser
@@ -181,9 +180,9 @@ function PZI_PlayerThink() {
                 //    m_hPyroBomb <- _hBomb
                 }
 
-                SetPropFloat        ( m_hZombieWep, "m_flNextSecondaryAttack", FLT_MAX )
-                SetPropBool         ( self, "m_Shared.m_bShieldEquipped", false )
-                SendGlobalGameEvent ( "localplayer_pickup_weapon", self )
+                SetPropFloat( m_hZombieWep, "m_flNextSecondaryAttack", FLT_MAX )
+                SetPropBool( self, "m_Shared.m_bShieldEquipped", false )
+                SendGlobalGameEvent( "localplayer_pickup_weapon", self )
 
                 // zombie spy can cloak now
                 if ( self.GetPlayerClass() == TF_CLASS_SPY ) {
@@ -193,12 +192,16 @@ function PZI_PlayerThink() {
 
                 m_vecVelocityPrevious <- self.GetAbsVelocity()
 
-                local _hTooltip = self.ZombieInitialTooltip()
+                if (!IsPlayerABot(self)) {
 
-                _hTooltip.KeyValueFromString( "message", _szAbilityTooltip )
+                    local _hTooltip = self.ZombieInitialTooltip()
 
-                EntFireByHandle     ( _hTooltip,  "Display", "", -1, self, self )
-                EntFireByHandle     ( _hTooltip,  "Kill", "", 15.5, self, self )
+                    _hTooltip.KeyValueFromString( "message", _szAbilityTooltip )
+
+                    EntFireByHandle( _hTooltip,  "Display", "", -1, self, self )
+                    EntFireByHandle( _hTooltip,  "Kill", "", 15.5, self, self )
+                    
+                }
 
                 // removed with new spawn mechanic
                 // self.SetHealth      ( self.GetMaxHealth() )
@@ -309,52 +312,14 @@ function PZI_PlayerThink() {
             // Zombie ability "vgui"                                                          //
             // ------------------------------------------------------------------------------ //
 
-            if ( !( _buttons & IN_SCORE ) ) {
+            if ( !IsPlayerABot( self ) ) {
 
-                if ( self.GetScriptOverlayMaterial() != ( szArrZombieAbilityUI[ _iClassnum ] + self.AbilityStateToString() ) )
-                    m_bZombieHUDInitialized = false
-
-                if ( !m_bZombieHUDInitialized ) {
-
-                    try { m_hHUDText.Destroy(); } catch ( e ) { }
-
-                    local _szAbilityIconPath = ( szArrZombieAbilityUI[ _iClassnum ] + self.AbilityStateToString() )
-
-                    self.SetScriptOverlayMaterial( _szAbilityIconPath )
-                    m_bZombieHUDInitialized  = self.InitializeZombieHUD()
-
-                    EntFireByHandle( m_hHUDText, "Display", "", -1, self, self )
-                    EntFireByHandle( m_hHUDTextAbilityName,  "Display", "", -1, self, self )
-                }
-
-                if ( m_iCurrentAbilityType == ZABILITY_PASSIVE ) {
-
-                    if ( m_fTimeNextClientPrint <= Time() ) {
-
-                        m_hHUDText.KeyValueFromString            ( "message", STRING_UI_PASSIVE )
-                        m_hHUDTextAbilityName.KeyValueFromString ( "message", m_hZombieAbility.m_szAbilityName )
-
-                        EntFireByHandle      ( m_hHUDText, "Display", "", -1, self, self )
-                        EntFireByHandle      ( m_hHUDTextAbilityName, "Display", "", -1, self, self )
-                        self.SetNextActTime  ( ZOMBIE_CAN_CLIENTPRINT, 1 )
-
-                        m_hHUDText.KeyValueFromString            ( "x", ( ZHUD_X_POS + 0.015 ).tostring() )
-                        m_hHUDText.KeyValueFromString            ( "y", ( ZHUD_Y_POS + 0.023 ).tostring() )
-                        m_hHUDTextAbilityName.KeyValueFromString ( "x", ( ZHUD_X_POS + arrHUDTextClassXOffsets[ _iClassnum ] ).tostring() )
-                        m_hHUDTextAbilityName.KeyValueFromString ( "y", ( ZHUD_Y_POS - arrHUDTextClassYOffsets[ _iClassnum ] ).tostring() )
-                    }
-                }
-                else {
-
-                    local _fNextActTime = self.HowLongUntilAct( ZOMBIE_ABILITY_CAST )
+                if ( !( _buttons & IN_SCORE ) ) {
 
                     if ( self.GetScriptOverlayMaterial() != ( szArrZombieAbilityUI[ _iClassnum ] + self.AbilityStateToString() ) )
                         m_bZombieHUDInitialized = false
 
                     if ( !m_bZombieHUDInitialized ) {
-
-                        if ( m_hHUDText )
-                            m_hHUDText.Destroy()
 
                         local _szAbilityIconPath = ( szArrZombieAbilityUI[ _iClassnum ] + self.AbilityStateToString() )
 
@@ -362,45 +327,81 @@ function PZI_PlayerThink() {
                         m_bZombieHUDInitialized  = self.InitializeZombieHUD()
 
                         EntFireByHandle( m_hHUDText, "Display", "", -1, self, self )
+                        EntFireByHandle( m_hHUDTextAbilityName,  "Display", "", -1, self, self )
                     }
 
-                    if ( !_bCanCast || _bCanCast && m_szCurrentHUDString != STRING_UI_READY ) {
+                    if ( m_iCurrentAbilityType == ZABILITY_PASSIVE ) {
 
-                        m_fTimeNextClientPrint = Time()
-                        self.BuildZombieHUDString()
-                    }
+                        if ( m_fTimeNextClientPrint <= Time() ) {
 
-                    if ( m_fTimeNextClientPrint <= Time() ) {
+                            m_hHUDText.KeyValueFromString( "message", STRING_UI_PASSIVE )
+                            m_hHUDTextAbilityName.KeyValueFromString( "message", m_hZombieAbility.m_szAbilityName )
 
-                        m_hHUDText.KeyValueFromString ( "message", m_szCurrentHUDString )
-                        self.SetNextActTime           ( ZOMBIE_CAN_CLIENTPRINT, 0.1 )
+                            EntFireByHandle( m_hHUDText, "Display", "", -1, self, self )
+                            EntFireByHandle( m_hHUDTextAbilityName, "Display", "", -1, self, self )
+                            self.SetNextActTime( ZOMBIE_CAN_CLIENTPRINT, 1 )
 
-                        if ( m_szCurrentHUDString == STRING_UI_READY ) {
-
-                            m_hHUDText.KeyValueFromString ( "x", ( ZHUD_X_POS + 0.015 ).tostring() )
-                            m_hHUDText.KeyValueFromString ( "y", ( ZHUD_Y_POS + 0.020 ).tostring() )
-
-                            m_hHUDTextAbilityName.KeyValueFromString ( "message", m_hZombieAbility.m_szAbilityName )
-                            m_hHUDTextAbilityName.KeyValueFromString ( "x", ( ZHUD_X_POS + arrHUDTextClassXOffsets[ _iClassnum ] ).tostring() )
-                            m_hHUDTextAbilityName.KeyValueFromString ( "y", ( ZHUD_Y_POS - arrHUDTextClassYOffsets[ _iClassnum ] ).tostring() )
-                            EntFireByHandle ( m_hHUDTextAbilityName, "Display", "", -1, self, self )
-                            EntFireByHandle ( m_hHUDText,  "Display", "", -1, self, self )
-                            m_fTimeNextClientPrint = Time() + 1.0
+                            m_hHUDText.KeyValueFromString( "x", ( ZHUD_X_POS + 0.015 ).tostring() )
+                            m_hHUDText.KeyValueFromString( "y", ( ZHUD_Y_POS + 0.023 ).tostring() )
+                            m_hHUDTextAbilityName.KeyValueFromString( "x", ( ZHUD_X_POS + arrHUDTextClassXOffsets[ _iClassnum ] ).tostring() )
+                            m_hHUDTextAbilityName.KeyValueFromString( "y", ( ZHUD_Y_POS - arrHUDTextClassYOffsets[ _iClassnum ] ).tostring() )
                         }
-                        else {
+                    }
+                    else {
 
-                            m_hHUDTextAbilityName.KeyValueFromString ( "message", "" )
-                            m_hHUDText.KeyValueFromString ( "x", ZHUD_X_POS.tostring() )
-                            m_hHUDText.KeyValueFromString ( "y", ZHUD_Y_POS.tostring() )
-                            EntFireByHandle ( m_hHUDTextAbilityName, "Display", "", -1, self, self )
-                            EntFireByHandle ( m_hHUDText,  "Display", "", -1, self, self )
+                        local _fNextActTime = self.HowLongUntilAct( ZOMBIE_ABILITY_CAST )
+
+                        if ( self.GetScriptOverlayMaterial() != ( szArrZombieAbilityUI[ _iClassnum ] + self.AbilityStateToString() ) )
+                            m_bZombieHUDInitialized = false
+
+                        if ( !m_bZombieHUDInitialized ) {
+
+                            local _szAbilityIconPath = ( szArrZombieAbilityUI[ _iClassnum ] + self.AbilityStateToString() )
+
+                            self.SetScriptOverlayMaterial( _szAbilityIconPath )
+                            m_bZombieHUDInitialized  = self.InitializeZombieHUD()
+
+                            EntFireByHandle( m_hHUDText, "Display", "", -1, self, self )
+                        }
+
+                        if ( !_bCanCast || _bCanCast && m_szCurrentHUDString != STRING_UI_READY ) {
+
+                            m_fTimeNextClientPrint = Time()
+                            self.BuildZombieHUDString()
+                        }
+
+                        if ( m_fTimeNextClientPrint <= Time() ) {
+
+                            m_hHUDText.KeyValueFromString ( "message", m_szCurrentHUDString )
+                            self.SetNextActTime           ( ZOMBIE_CAN_CLIENTPRINT, 0.1 )
+
+                            if ( m_szCurrentHUDString == STRING_UI_READY ) {
+
+                                m_hHUDText.KeyValueFromString ( "x", ( ZHUD_X_POS + 0.015 ).tostring() )
+                                m_hHUDText.KeyValueFromString ( "y", ( ZHUD_Y_POS + 0.020 ).tostring() )
+
+                                m_hHUDTextAbilityName.KeyValueFromString ( "message", m_hZombieAbility.m_szAbilityName )
+                                m_hHUDTextAbilityName.KeyValueFromString ( "x", ( ZHUD_X_POS + arrHUDTextClassXOffsets[ _iClassnum ] ).tostring() )
+                                m_hHUDTextAbilityName.KeyValueFromString ( "y", ( ZHUD_Y_POS - arrHUDTextClassYOffsets[ _iClassnum ] ).tostring() )
+                                EntFireByHandle ( m_hHUDTextAbilityName, "Display", "", -1, self, self )
+                                EntFireByHandle ( m_hHUDText,  "Display", "", -1, self, self )
+                                m_fTimeNextClientPrint = Time() + 1.0
+                            }
+                            else {
+
+                                m_hHUDTextAbilityName.KeyValueFromString ( "message", "" )
+                                m_hHUDText.KeyValueFromString ( "x", ZHUD_X_POS.tostring() )
+                                m_hHUDText.KeyValueFromString ( "y", ZHUD_Y_POS.tostring() )
+                                EntFireByHandle ( m_hHUDTextAbilityName, "Display", "", -1, self, self )
+                                EntFireByHandle ( m_hHUDText,  "Display", "", -1, self, self )
+                            }
                         }
                     }
                 }
-            }
-            else {
+                else {
 
-                self.SetScriptOverlayMaterial( "" )
+                    self.SetScriptOverlayMaterial( "" )
+                }
             }
 
             // ------------------------------------------------------------------------------ //

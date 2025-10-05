@@ -709,6 +709,10 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
 	else if ( bot.GetTeam() == TEAM_ZOMBIE )
 		bot.SetMission( MISSION_SPY, true )
+
+	// give bots infinite ammo
+	PZI_Util.ScriptEntFireSafe( bot, "self.AddCustomAttribute( `ammo regen`, 9999.0, -1 )" , 0.1 )
+	PZI_Util.ScriptEntFireSafe( bot, "self.AddCustomAttribute( `metal regen`, 9999.0, -1 )", 0.1 )
 	
     local scope = PZI_Util.GetEntScope( bot )
 
