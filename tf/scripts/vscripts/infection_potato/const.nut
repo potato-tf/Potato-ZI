@@ -419,7 +419,7 @@ const FX_ZOMBIE_SPAWN_SKYFLASH       = "zombie_spawn_skyflash"
 const FX_EMP_PARENT                  = "zombie_emp_parent"
 const FX_EMP_ELECTRIC                = "zombie_emp_electric"
 const FX_EMP_GIBS                    = "zombie_emp_gibs"
-const FX_EMP_FLASH                   = "medic_resist_bullet"
+const FX_EMP_FLASH                   = "halloween_boss_axe_hit_sparks"
 const FX_EMP_BURST                   = "rd_robot_explosion_smoke_linger"
 const FX_EMP_SPARK                   = "halloween_boss_axe_hit_sparks"
 // const FX_EMP_FLASH                   = "zombie_emp_flash"
@@ -452,7 +452,8 @@ const FX_EMITTER_FX                 = "zombie_screech"
 
 const FX_DEMOGUTS                   = "zombie_demoguts_parent"
 const FX_SPIT_SPLAT                 = "utaunt_bubbles_glow_green_parent"
-const FX_SPIT_IMPACT                = "utaunt_spirit_festive_parent"
+// const FX_SPIT_IMPACT             = "utaunt_spirit_festive_parent"
+const FX_SPIT_IMPACT                = false
 
 const FX_MEDIC_HEAL                 = "zombie_heal_parent"
 // const FX_FIREBALL_FIREBALL          = "zombie_fireball_fireball"

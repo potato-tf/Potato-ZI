@@ -477,12 +477,12 @@ PZI_EVENT( "player_death", "SpawnAnywhere_PlayerDeath", function( params ) {
 
     local player = GetPlayerFromUserID( params.userid )
 
-    if ( player.GetTeam() == TEAM_ZOMBIE ) {
+    if ( player.GetTeam() == TEAM_ZOMBIE && player.IsEFlagSet( FL_DONTTOUCH ) ) {
 
         player.RemoveFlag( FL_ATCONTROLS|FL_DUCKING|FL_DONTTOUCH|FL_NOTARGET )
         player.AcceptInput( "DispatchEffect", "ParticleEffectStop", null, null )
         AddThinkToEnt( player, null )
-        PZI_Util.ScriptEntFireSafe( player, "self.ForceRespawn()", -1 )
+        PZI_Util.ScriptEntFireSafe( player, "self.ForceRespawn()", 0.1 )
     }
 } )
 

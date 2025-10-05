@@ -587,8 +587,8 @@ function PZI_Bots::GenericZombie( bot, threat_type = "closest" ) {
             local distance = PZI_BotBehavior.GetThreatDistanceSqr( threat )
             if ( distance > PZI_Bots.MAX_THREAT_DISTANCE )
                 PZI_BotBehavior.UpdatePathAndMove( threat.GetOrigin(), true, 1500, 1500 )
-            else
-                PZI_BotBehavior.LookAt( threat.EyePosition() - Vector( 0, 0, 20 ), 1500, 1500 )
+            // else
+            //     PZI_BotBehavior.LookAt( threat.EyePosition() - Vector( 0, 0, 20 ), 1500, 1500 )
         }
     }
 

@@ -1915,7 +1915,7 @@ function PZI_Util::TeleportNearVictim( ent, victim, attempt, ignore_visibility =
 	local max_surround_travel_range = 6000.0
 
 	local surround_travel_range = 1500.0 + 500.0 * attempt
-	surround_travel_range = Max( surround_travel_range, max_surround_travel_range )
+	// surround_travel_range = Max( surround_travel_range, max_surround_travel_range )
 
 	local areas = {}
 	GetNavAreasInRadius( victim.GetOrigin(), surround_travel_range, areas )
