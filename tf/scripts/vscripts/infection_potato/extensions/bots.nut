@@ -471,6 +471,10 @@ PZI_Bots.PZI_BotBehavior <- class {
 			}
 		}
 
+		if (!(path_index in path_points))
+			return
+
+
 		local point = path_points[path_index].pos
 		locomotion.Approach( point, 1.0 )
 		// locomotion.DriveTo( point )
