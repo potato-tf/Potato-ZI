@@ -817,47 +817,47 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
 
             switch ( _hAttacker.GetPlayerClass() ) {
 
-                case TF_CLASS_SNIPER:
+                // case TF_CLASS_SNIPER:
 
-                    if ( _szWeaponName == "tf_weapon_compound_bow" ) {
+                //     if ( _szWeaponName == "tf_weapon_compound_bow" ) {
 
-                        // no longer modified
-                        params.damage = ( params.damage )
-                    }
+                //         // no longer modified
+                //         params.damage = ( params.damage )
+                //     }
 
-                    break
+                //     break
 
-                case TF_CLASS_MEDIC:
+                // case TF_CLASS_MEDIC:
 
-                    if ( _szWeaponName == "tf_weapon_crossbow" ) {
+                    // if ( _szWeaponName == "tf_weapon_crossbow" ) {
 
-                        // no longer modified
-                        params.damage = ( params.damage )
-                    }
+                    //     // no longer modified
+                    //     params.damage = ( params.damage )
+                    // }
 
-                    break
+                    // break
 
                 case TF_CLASS_HEAVYWEAPONS:
 
                     if ( _szWeaponName == "tf_weapon_minigun" ) {
 
-                        params.damage = ( params.damage * TF_NERF_MINIGUN_Z_DMG )
+                        params.damage *= TF_NERF_MINIGUN_Z_DMG
                     }
 
                     break
 
-                case TF_CLASS_PYRO:
-                    if ( _hVictim.GetPlayerClass() != TF_CLASS_PYRO )
-                        return
+                // case TF_CLASS_PYRO:
+                //     if ( _hVictim.GetPlayerClass() != TF_CLASS_PYRO )
+                //         return
 
-                    if ( _szWeaponName == "tf_weapon_flamethrower" ||
-                        _szWeaponName == "tf_weapon_flamethrower_rocket" ||
-                        _szWeaponName == "tf_weapon_flaregun"  ) {
+                //     if ( _szWeaponName == "tf_weapon_flamethrower" ||
+                //         _szWeaponName == "tf_weapon_flamethrower_rocket" ||
+                //         _szWeaponName == "tf_weapon_flaregun"  ) {
 
-                        params.damage = ( params.damage * 0 )
-                    }
+                //         params.damage *= 0
+                //     }
 
-                    break
+                //     break
 
                 default:
                     break
@@ -867,7 +867,7 @@ PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
 
         if ( _szWeaponName == "obj_sentrygun" ) {
 
-        params.damage = ( params.damage * TF_NERF_SENTRY_Z_DMG )
+        params.damage *= TF_NERF_SENTRY_Z_DMG
         }
 
         if ( params.damage_type & DMG_FALL && _szWeaponName == "worldspawn" ) {

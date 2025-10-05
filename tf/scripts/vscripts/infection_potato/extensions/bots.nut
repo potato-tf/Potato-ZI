@@ -124,7 +124,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 
 		foreach ( player in PZI_Util.PlayerArray ) {
 
-			if ( player == bot || !player.IsAlive() || player.GetTeam() == team || ( must_be_visible && !IsThreatVisible( player ) ) )
+			if ( player == bot || !player.IsAlive() || player.GetTeam() == bot.GetTeam() || ( must_be_visible && !IsThreatVisible( player ) ) )
 				continue
 
 			local dist = GetThreatDistanceSqr( player )
@@ -141,12 +141,14 @@ PZI_Bots.PZI_BotBehavior <- class {
 		local threatarray = []
 		foreach ( player in PZI_Util.PlayerArray ) {
 
-			if ( player == bot ||
-				player.GetTeam() == bot.GetTeam() ||
-				( player.IsFullyInvisible() && !invisible ) ||
-				( player.IsStealthed() && !disguised ) ||
-				( alive && !player.IsAlive() ) ||
-				GetThreatDistanceSqr( player ) > maxdist )
+			if ( 
+				player == bot 
+				|| player.GetTeam() == bot.GetTeam() 
+				|| ( !invisible && player.IsFullyInvisible() ) 
+				|| ( !disguised && player.IsStealthed() ) 
+				|| ( alive && player.IsAlive() ) 
+				|| GetThreatDistanceSqr( player ) > maxdist 
+			)
 				continue
 
 			threatarray.append( player )
@@ -688,7 +690,7 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 	// local func_name = PZI_Bots.ZombieTypes[bot.GetPlayerClass()]
 
 	// if ( func_name == "GenericZombie" )
-		PZI_Bots.GenericZombie( bot, RandomInt( 0, 2 ) ? "closest" : "random" )
+		PZI_Bots.GenericZombie( bot, "random" )
 	// else
 		// PZI_Bots[ PZI_Bots.ZombieTypes[bot.GetPlayerClass()] ]( bot )
 
