@@ -352,9 +352,6 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
 
         foreach ( i, _nextPlayer1 in _zombieArr ) {
 
-            if ( !_nextPlayer1 || !_nextPlayer1.IsValid() )
-                _nextPlayer1 = GetRandomPlayers( 1, TEAM_HUMAN )[0]
-
             local _sc = _nextPlayer1.GetScriptScope()
             // ------------------------------------------- //
             // make sure heavy doesn't get stuck in t-pose //
@@ -544,7 +541,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
             local _hNextPlayer = null
             local _hKillicon = KilliconInflictor( KILLICON_PYRO_BREATH )
 
-            CreateMediumHealthKit( _hPlayer.GetOrigin() )
+            // CreateMediumHealthKit( _hPlayer.GetOrigin() )
 
             if ( !::bNoPyroExplosionMod && !( _sc.m_iFlags & ZBIT_PYRO_DONT_EXPLODE ) ) {
 
@@ -568,11 +565,11 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
 
             if ( _hPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS ) {
 
-                CreateMediumHealthKit( _hPlayer.GetOrigin() )
+                // CreateMediumHealthKit( _hPlayer.GetOrigin() )
             }
             else {
 
-                CreateSmallHealthKit( _hPlayer.GetOrigin() )
+                // CreateSmallHealthKit( _hPlayer.GetOrigin() )
             }
 
         }

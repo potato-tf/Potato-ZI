@@ -482,6 +482,7 @@ PZI_EVENT( "player_death", "SpawnAnywhere_PlayerDeath", function( params ) {
         player.RemoveFlag( FL_ATCONTROLS|FL_DUCKING|FL_DONTTOUCH|FL_NOTARGET )
         player.AcceptInput( "DispatchEffect", "ParticleEffectStop", null, null )
         AddThinkToEnt( player, null )
+        PZI_Util.ScriptEntFireSafe( player, "self.ForceRespawn()", -1 )
     }
 } )
 
