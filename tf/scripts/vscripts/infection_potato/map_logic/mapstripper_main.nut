@@ -128,7 +128,7 @@ local function SetupRoundTimer() {
         auto_countdown      = 1
         max_length          = 720
         reset_time          = 1
-        setup_length        = 60
+        setup_length        = 30
         show_in_hud         = 1
         show_time_remaining = 1
         start_paused        = 0
@@ -155,9 +155,8 @@ local function SetupRoundTimer() {
                 local players = PlayerCount( TEAM_HUMAN ) + PlayerCount( TEAM_ZOMBIE )
 
                 if ( players <= 1 )
-                    timer.AcceptInput("SetTime", "60", null, null)
+                    timer.AcceptInput("SetTime", "30", null, null)
 
-                // printl((base_timestamp - Time()).tointeger())
                 LocalTime(LOCALTIME)
                 SERVER_DATA.update_time = LOCALTIME
                 SERVER_DATA.max_wave = time_left

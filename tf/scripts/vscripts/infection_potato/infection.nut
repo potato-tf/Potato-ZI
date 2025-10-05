@@ -220,10 +220,11 @@ PZI_EVENT( "player_spawn", "Infection_PlayerSpawn", function( params ) {
     // and reset infection specific vars
     _hPlayer.ResetInfectionVars()
 
-    if ( _hPlayer.GetPlayerClass() ==  TF_CLASS_DEMOMAN || _hPlayer.GetPlayerClass() == TF_CLASS_SOLDIER ) {
+    // dumb
+    // if ( _hPlayer.GetPlayerClass() ==  TF_CLASS_DEMOMAN || _hPlayer.GetPlayerClass() == TF_CLASS_SOLDIER ) {
 
-        _hPlayer.ModifyJumperWeapons()
-    }
+    //     _hPlayer.ModifyJumperWeapons()
+    // }
 
     // game hasn't started, player should be a survivor
     if ( !bGameStarted ) {

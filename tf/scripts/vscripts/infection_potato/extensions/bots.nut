@@ -1,8 +1,8 @@
 PZI_CREATE_SCOPE( "__pzi_bots", "PZI_Bots", "PZI_BotSpawner", "PZI_BotSpawnerThink" )
 
-PZI_Bots.MAX_THREAT_DISTANCE <- 32*32
 PZI_Bots.NAV_SNIPER_SPOT_FACTOR <- 3 // higher value = lower chance.  1/3 chance to be a sniper spot
 PZI_Bots.NAV_SENTRY_SPOT_FACTOR <- 8 // higher value = lower chance.  1/8 chance to be a sentry spot
+PZI_Bots.MAX_THREAT_DISTANCE <- 64.0
 
 PZI_Bots.ZombieTypes <- {
 	
@@ -70,6 +70,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 	}
 
 	function IsLookingTowards( target, cos_tolerance ) {
+
 		local to_target = target - bot.EyePosition()
 		to_target.Norm()
 		local dot = cur_eye_fwd.Dot( to_target )
@@ -77,6 +78,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 	}
 
 	function IsInFieldOfView( target ) {
+
 		local tolerance = 0.5736 // cos( 110/2 )
 
 		local delta = target.GetOrigin() - cur_eye_pos
@@ -95,6 +97,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 	}
 
 	function IsVisible( target ) {
+
 		local trace = {
 			start  = bot.EyePosition(),
 			end    = target.EyePosition(),
@@ -109,6 +112,10 @@ PZI_Bots.PZI_BotBehavior <- class {
 		return IsInFieldOfView( target ) && IsVisible( target )
 	}
 
+	function GetThreatDistance( target ) {
+		return ( target.GetOrigin() - bot.GetOrigin() ).Length()
+	}
+
 	function GetThreatDistanceSqr( target ) {
 		return ( target.GetOrigin() - bot.GetOrigin() ).LengthSqr()
 	}
@@ -117,17 +124,17 @@ PZI_Bots.PZI_BotBehavior <- class {
         return ( target.GetOrigin() - bot.GetOrigin() ).Length2D()
     }
 
-	function FindClosestThreat( min_dist_sqr, must_be_visible = true ) {
+	function FindClosestThreat( min_dist, must_be_visible = true ) {
 
 		local closest_threat = null
-		local closest_threat_dist = min_dist_sqr
+		local closest_threat_dist = min_dist
 
 		foreach ( player in PZI_Util.PlayerArray ) {
 
 			if ( player == bot || !player.IsAlive() || player.GetTeam() == bot.GetTeam() || ( must_be_visible && !IsThreatVisible( player ) ) )
 				continue
 
-			local dist = GetThreatDistanceSqr( player )
+			local dist = GetThreatDistance( player )
 			if ( dist < closest_threat_dist ) {
 				closest_threat = player
 				closest_threat_dist = dist
@@ -147,7 +154,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 				|| ( !invisible && player.IsFullyInvisible() ) 
 				|| ( !disguised && player.IsStealthed() ) 
 				|| ( alive && player.IsAlive() ) 
-				|| GetThreatDistanceSqr( player ) > maxdist 
+				|| GetThreatDistance( player ) > maxdist 
 			)
 				continue
 
@@ -168,12 +175,13 @@ PZI_Bots.PZI_BotBehavior <- class {
 	}
 
 	function CheckForProjectileThreat() {
+
 		local projectile
 		while ( ( projectile = FindByClassname( projectile, STR_PROJECTILES ) ) != null ) {
 			if ( projectile.GetTeam() == team || !IsValidProjectile( projectile ) )
 				continue
 
-			local dist = GetThreatDistanceSqr( projectile )
+			local dist = GetThreatDistance( projectile )
 			if ( dist <= 67000 && IsVisible( projectile ) ) {
 
 				switch ( bot_level ) {
@@ -201,6 +209,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 	}
 
 	function LookAt( target_pos, min_rate, max_rate ) {
+
 		local dt  = FrameTime()
 		local dir = target_pos - cur_eye_pos
 		dir.Norm()
@@ -228,8 +237,8 @@ PZI_Bots.PZI_BotBehavior <- class {
 	function FireWeapon() {
 		if ( cur_melee ) {
 			if ( threat != null ) {
-				threat_dist = GetThreatDistanceSqr( threat )
-				if ( threat_dist < 16384.0 ) // 128
+				threat_dist = GetThreatDistance( threat )
+				if ( threat_dist < 128.0 ) // 128
 					bot.PressFireButton( 0.2 )
 			}
 
@@ -280,11 +289,11 @@ PZI_Bots.PZI_BotBehavior <- class {
 
 		if ( params.attacker != null && params.attacker != this && params.attacker.IsPlayer() ) {
 			if ( threat != null && threat.IsValid() ) {
-				threat_dist = GetThreatDistanceSqr( threat ) * 0.8
+				threat_dist = GetThreatDistance( threat ) * 0.8
 
-				if ( threat_dist > 16384.0 ) { // 128
-					local attacker_dist = GetThreatDistanceSqr( params.attacker )
-					threat_dist   = GetThreatDistanceSqr( threat ) * 0.8
+				if ( threat_dist > 128.0 ) {
+					local attacker_dist = GetThreatDistance( params.attacker )
+					threat_dist   = GetThreatDistance( threat ) * 0.8
 
 					if ( attacker_dist > threat_dist )
 						return
@@ -385,8 +394,9 @@ PZI_Bots.PZI_BotBehavior <- class {
 
 				for ( local i = 0; i < path_count; i++ ) {
 
-					if ( !( i + 1 in path_points) )
+					if ( !( i in path_points) || !(i + 1 in path_points) )
 						continue
+
 
 					local path_from = path_points[i]
 					local path_to = ( i < path_count - 1 ) ? path_points[i + 1] : null
@@ -423,7 +433,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 
 						// Get center of smaller area's edge between the two
 						local vec = minarea.area.GetCenter()
-						if ( dir_to_from == 0 || dir_to_from == 2 ) { // GO_NORTH, GO_SOUTH
+						if ( !dir_to_from || dir_to_from == 2 ) { // GO_NORTH, GO_SOUTH
 							vec.y = minarea.c1.y
 							vec.z = minarea.c1.z
 						}
@@ -446,8 +456,12 @@ PZI_Bots.PZI_BotBehavior <- class {
 		}
 
 		if ( navdebug ) {
+
 			for ( local i = 0; i < path_count; i++ ) {
-				DebugDrawLine( path_points[i].pos, path_points[i].pos + Vector( 0, 0, 32 ), 0, 0, 255, false, 0.075 )
+				if ( i in path_points)
+					DebugDrawLine( path_points[i].pos, (i+1 < path_points.len()) ? path_points[i+1].pos : path_points[i].pos, 0, 0, 255, false, 0.075 )
+				// else 
+					// __DumpScope( 0, path_points )
 			}
 			local area = path_areas["area0"]
 			local area_count = path_areas.len()
@@ -460,8 +474,8 @@ PZI_Bots.PZI_BotBehavior <- class {
 			}
 		}
 
-		if (!(path_index in path_points))
-			return
+		// if (!(path_index in path_points))
+		// 	return
 
 		if ( path_index == null || !(path_index in path_points) )
 			path_index = 0
@@ -474,6 +488,8 @@ PZI_Bots.PZI_BotBehavior <- class {
 			}
 		}
 
+		if ( !(path_index in path_points) )
+			__DumpScope( 0, path_points )
 
 		local point = path_points[path_index].pos
 		locomotion.Approach( point, 1.0 )
@@ -567,8 +583,13 @@ function PZI_Bots::GenericZombie( bot, threat_type = "closest" ) {
 
     function GenericZombieThink() {
 
-        if ( bot.GetActionPoint() && bot.GetActionPoint().IsValid() )
+        if ( !bot.IsAlive() || ( bot.GetActionPoint() && bot.GetActionPoint().IsValid() ) )
             return
+		
+		// for some reason bots don't like to move until they're nudged around a bit
+		// if we're stuck just throw us around a bit and hope for the best
+		if ( GetRoundState() == GR_STATE_RND_RUNNING && !PZI_BotBehavior.locomotion.IsStuck() && !bot.GetAbsVelocity().Length() )
+			bot.ApplyAbsVelocityImpulse( Vector( RandomInt( 30, 60 ), RandomInt( 30, 60 ), RandomInt( 10, 20 ) ) )
 
         local threat = PZI_BotBehavior.threat
 
@@ -588,9 +609,12 @@ function PZI_Bots::GenericZombie( bot, threat_type = "closest" ) {
         }
         else {
 
-            local distance = PZI_BotBehavior.GetThreatDistanceSqr( threat )
-            if ( distance > PZI_Bots.MAX_THREAT_DISTANCE )
-                PZI_BotBehavior.UpdatePathAndMove( threat.GetOrigin(), true, 1500, 1500 )
+            local distance = PZI_BotBehavior.GetThreatDistance( threat )
+
+			if ( distance > PZI_Bots.MAX_THREAT_DISTANCE )
+				PZI_BotBehavior.UpdatePathAndMove( threat.GetOrigin(), false, 1500, 1500 )
+
+			bot.SetAttentionFocus( threat )
             // else
             //     PZI_BotBehavior.LookAt( threat.EyePosition() - Vector( 0, 0, 20 ), 1500, 1500 )
         }
@@ -611,7 +635,7 @@ function PZI_Bots::GenericSpecial( bot ) {
 			return
 		else if ( !threat.IsAlive() || threat.GetTeam() == bot.GetTeam() )
 			return
-		else if ( PZI_BotBehavior.GetThreatDistanceSqr( threat ) <= PZI_Bots.MAX_THREAT_DISTANCE && PZI_BotBehavior.IsThreatVisible( threat ) )
+		else if ( PZI_BotBehavior.GetThreatDistance( threat ) <= PZI_Bots.MAX_THREAT_DISTANCE && PZI_BotBehavior.IsThreatVisible( threat ) )
 			bot.PressAltFireButton( 1.0 )
 	}
 
@@ -674,17 +698,50 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
     local bot = GetPlayerFromUserID( params.userid )
 
-    if ( !IsPlayerABot( bot ) || bot.GetPlayerClass() == TF_CLASS_MEDIC )
+    if ( !IsPlayerABot( bot ) )
 		return
+	
+	else if ( bot.GetPlayerClass() == TF_CLASS_MEDIC )
+		return bot.SetMission( NO_MISSION, true )
 
-	if ( bot.GetTeam() != TEAM_ZOMBIE )
-		bot.SetMission( MISSION_SNIPER, true )
+	else if ( bot.GetTeam() == TEAM_HUMAN )
+		bot.SetMission( RandomInt( MISSION_SNIPER, MISSION_SPY ), true )
+
+	else if ( bot.GetTeam() == TEAM_ZOMBIE )
+		bot.SetMission( MISSION_SPY, true )
 	
     local scope = PZI_Util.GetEntScope( bot )
 
     scope.PZI_BotBehavior <- PZI_Bots.PZI_BotBehavior( bot )
 
-	function BotThink() { scope.PZI_BotBehavior.OnUpdate() }
+	function BotThink() {
+
+		if ( !bot.IsAlive() )
+			return
+
+		PZI_BotBehavior.OnUpdate() 
+		
+		// lazy unstuck behavior, just teleport the bot somewhere safe
+		if ( PZI_BotBehavior.locomotion.GetStuckDuration() > 10.0 ) {
+			local area = bot.GetLastKnownArea()
+			if ( area )
+
+				for (local navdir = 0; navdir < NUM_DIRECTIONS; navdir++)
+					if ( area.GetAdjacentArea( navdir, 1 ) )
+						bot.SetAbsOrigin( area.GetAdjacentArea( navdir, 1 ).GetCenter() )
+
+			else {
+
+				local areas = {}
+
+				GetNavAreasInRadius( bot.GetOrigin(), 128.0, areas )
+				if ( areas.len() )
+					bot.SetAbsOrigin( areas.values()[RandomInt( 0, areas.values().len() - 1 )].GetCenter() )
+
+				area.MarkAsBlocked( TEAM_ZOMBIE )
+			}
+		}
+	}
 
 	PZI_Util.AddThink( bot, BotThink )
 
@@ -692,8 +749,6 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
 	// if ( func_name == "GenericZombie" )
 		PZI_Bots.GenericZombie( bot, "closest" )
-	// else
-		// PZI_Bots[ PZI_Bots.ZombieTypes[bot.GetPlayerClass()] ]( bot )
 
 })
 
