@@ -664,10 +664,7 @@ function PZI_Bots::EngineerZombie( bot ) {
     }
 }
 
-PZI_EVENT( "teamplay_round_start", "PZI_Bots_TeamplayRoundStart", function( params ) {
-	
-	EntFire( "__pzi_bots", "CallScriptFunction", "PrepareNavmesh" )
-})
+PZI_EVENT( "teamplay_round_start", "PZI_Bots_TeamplayRoundStart", function( params ) { EntFire( "__pzi_bots", "CallScriptFunction", "PrepareNavmesh" ) })
 
 PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
@@ -690,7 +687,7 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 	// local func_name = PZI_Bots.ZombieTypes[bot.GetPlayerClass()]
 
 	// if ( func_name == "GenericZombie" )
-		PZI_Bots.GenericZombie( bot, "random" )
+		PZI_Bots.GenericZombie( bot, "closest" )
 	// else
 		// PZI_Bots[ PZI_Bots.ZombieTypes[bot.GetPlayerClass()] ]( bot )
 
