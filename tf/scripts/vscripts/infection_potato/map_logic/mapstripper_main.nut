@@ -168,11 +168,15 @@ local function SetupRoundTimer() {
                     if (!player || !player.IsValid()) 
                         continue
 
-                    if (player.GetTeam() == TEAM_SPECTATOR || player.IsFakeClient())
+                    if (player.GetTeam() == TEAM_SPECTATOR)
                         spectators++
                     else
                         players[player.GetTeam() == TEAM_HUMAN ? 0 : 1]++
                 }
+
+                foreach (player, userid in PZI_Util.BotTable)
+                    spectators++
+
                 SERVER_DATA.players_red = players[0]
                 SERVER_DATA.players_blu = players[1]
                 SERVER_DATA.players_connecting = spectators
