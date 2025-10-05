@@ -460,7 +460,10 @@ PZI_Bots.PZI_BotBehavior <- class {
 			}
 		}
 
-		if ( path_index == null )
+		if (!(path_index in path_points))
+			return
+
+		if ( path_index == null || !(path_index in path_points) )
 			path_index = 0
 
 		if ( ( path_points[path_index].pos - bot.GetOrigin() ).Length() < 64.0 ) {
@@ -470,9 +473,6 @@ PZI_Bots.PZI_BotBehavior <- class {
 				return
 			}
 		}
-
-		if (!(path_index in path_points))
-			return
 
 
 		local point = path_points[path_index].pos
