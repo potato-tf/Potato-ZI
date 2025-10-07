@@ -31,19 +31,19 @@ LocalTime(LOCALTIME)
 	domain 					  = "potato.tf"
 	campaign_name 			  = "Other Gamemodes"
 	status 					  = "Eating your brains..."
-	in_protected_match		  = false
-	is_fake_ip				  = false
-	steam_ids				  = []
+	// in_protected_match		  = false
+	// is_fake_ip				  = false
+	// steam_ids				  = []
 
-	update_time 			  = {
+	// update_time 			  = {
 
-		year	= LOCALTIME.year
-		month	= LOCALTIME.month
-		day		= LOCALTIME.day
-		hour	= LOCALTIME.hour
-		minute	= LOCALTIME.minute
-		second	= LOCALTIME.second
-	}
+	// 	year	= LOCALTIME.year
+	// 	month	= LOCALTIME.month
+	// 	day		= LOCALTIME.day
+	// 	hour	= LOCALTIME.hour
+	// 	minute	= LOCALTIME.minute
+	// 	second	= LOCALTIME.second
+	// }
 }
 
 PZI_Util.ScriptEntFireSafe("__pzi_util", @"
@@ -157,8 +157,8 @@ local function SetupRoundTimer() {
                 if ( players <= 1 )
                     timer.AcceptInput("SetTime", "30", null, null)
 
-                LocalTime(LOCALTIME)
-                SERVER_DATA.update_time = LOCALTIME
+                // LocalTime(LOCALTIME)
+                // SERVER_DATA.update_time = LOCALTIME
                 SERVER_DATA.max_wave = time_left
                 SERVER_DATA.wave = time_left
                 SERVER_DATA.server_name = GetStr("hostname")
