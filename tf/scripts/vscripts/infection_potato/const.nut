@@ -449,7 +449,7 @@ const FX_SPIT_IMPACT_SPURTS         = "superrare_flies"
 
 const FX_EMITTER_FX                 = "spell_batball_impact_blue"
 
-const FX_DEMOGUTS                   = "zombie_demoguts_parent"
+const FX_DEMOGUTS                   = "env_sawblood_mist"
 
 const FX_MEDIC_HEAL                 = "spell_overheal_blue"
 // const FX_MEDIC_HEAL                 = "zombie_heal_parent"
