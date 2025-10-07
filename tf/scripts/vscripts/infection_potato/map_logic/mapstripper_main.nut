@@ -161,22 +161,25 @@ local function SetupRoundTimer() {
                 SERVER_DATA.update_time = LOCALTIME
                 SERVER_DATA.max_wave = time_left
                 SERVER_DATA.wave = time_left
+                SERVER_DATA.server_name = GetStr("hostname")
+                SERVER_DATA.server_tags = GetStr("sv_tags")
+
                 local players = array(2, 0)
                 local spectators = 0
                 foreach (player, userid in PZI_Util.PlayerTable)
                 {
-                    if (!player || !player.IsValid()) 
+                    if (!player || !player.IsValid())
                         continue
 
-                    if (player.GetTeam() == TEAM_SPECTATOR || player.IsFakeClient())
+                    if ( player.GetTeam() == TEAM_SPECTATOR || IsPlayerABot(player) )
                         spectators++
                     else
                         players[player.GetTeam() == TEAM_HUMAN ? 0 : 1]++
                 }
+
                 SERVER_DATA.players_red = players[0]
                 SERVER_DATA.players_blu = players[1]
                 SERVER_DATA.players_connecting = spectators
-                SERVER_DATA.server_name = GetStr("hostname")
 
                 VPI.AsyncCall({
                     func   = "VPI_UpdateServerData"
