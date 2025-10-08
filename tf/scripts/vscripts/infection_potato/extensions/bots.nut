@@ -4,17 +4,255 @@ PZI_Bots.NAV_SNIPER_SPOT_FACTOR <- 3 // higher value = lower chance.  1/3 chance
 PZI_Bots.NAV_SENTRY_SPOT_FACTOR <- 8 // higher value = lower chance.  1/8 chance to be a sentry spot
 PZI_Bots.MAX_THREAT_DISTANCE <- 64.0
 
-PZI_Bots.ZombieTypes <- {
+PZI_Bots.RandomLoadouts <- {
 
-    [TF_CLASS_SCOUT] = "GenericZombie",
-    [TF_CLASS_SNIPER] = "GenericSpecial",
-    [TF_CLASS_SOLDIER] = "GenericZombie",
-    [TF_CLASS_DEMOMAN] = "GenericSpecial",
-    [TF_CLASS_MEDIC] = "MedicZombie",
-    [TF_CLASS_HEAVYWEAPONS] = "GenericZombie",
-    [TF_CLASS_PYRO]   = "GenericSpecial",
-    [TF_CLASS_SPY] = "GenericSpecial",
-    [TF_CLASS_ENGINEER] = "EngineerZombie"
+    [TF_CLASS_SCOUT] = {
+
+		[SLOT_PRIMARY] = [
+
+			"The Soda Popper",
+			"The Shortstop",
+			"The Force-a_Nature"
+		],
+
+		[SLOT_SECONDARY] = [
+
+			"The Winger",
+			"Pretty Boy's Pocket Pistol",
+			"Mad Milk",
+			"Crit-a-Cola",
+			"The Flying Guillotine"
+		],
+
+		[ SLOT_MELEE ] = [
+
+			"The Candy Cane",
+			"The Fan O'War",
+			"The Atomizer",
+			"Unarmed Combat",
+			"The Holy Mackerel"
+		]
+	},
+
+    [TF_CLASS_SOLDIER] = {
+
+		[SLOT_PRIMARY] = [
+
+			"The Original",
+			"The Liberty Launcher",
+			"The Black Box",
+			"The Direct Hit"
+		],
+
+		[SLOT_SECONDARY] = [
+
+			"Panic Attack Shotgun",
+			"The Reserve Shooter",
+			"The Buff Banner",
+			"The Concheror",
+			"The Battalion's Backup"
+		],
+
+		[ SLOT_MELEE ] = [
+
+			"The Disciplinary Action",
+			"The Equalizer",
+			"The Escape Plan",
+			"The Pain Train",
+			"The Half-Zatoichi"
+		]
+	},
+
+	[TF_CLASS_PYRO] = {
+
+		[TF_SLOT_PRIMARY] = [
+
+			"The Backburner",
+			"The Degreaser",
+			"The Nostromo Napalmer",
+			"The Dragon's Fury"
+		]
+
+		[TF_SLOT_SECONDARY] = [
+			
+			"The Flare Gun",
+			"The Scorch Shot",
+			"The Detonator",
+			"The Manmelter",
+			"The Reserve Shooter",
+			"Panic Attack Shotgun",
+			"The Thermal Thruster"
+		]
+
+		[TF_SLOT_MELEE] = [
+			
+			"The Third Degree",
+			"The Hot Hand",
+			"The Back Scratcher",
+			"The Homewrecker",
+			"The Maul",
+			"The Powerjack",
+			"The Axtinguisher"
+		]
+	}
+
+    [TF_CLASS_DEMO] = {
+
+		[SLOT_PRIMARY] = [
+
+			"The Iron Bomber",
+			"The Loch-n-Load",
+			"Ali Baba's Wee Booties",
+			"The Bootlegger"
+		],
+
+		[SLOT_SECONDARY] = [
+
+			"The Scottish Resistance",
+			"The Quickiebomb Launcher",
+			"The Chargin' Targe",
+			"The Tide Turner",
+			"The Splendid Screen"
+		],
+
+		[ SLOT_MELEE ] = [
+
+			"The Scottish Handshake",
+			"The Eyelander",
+			"The Scotsman's Skullcutter",
+			"The Half-Zatoichi",
+			"The Claidheamohmor",
+			"The Persian Persuader",
+			"The Ullapool Caber"
+		]
+	},
+
+    [TF_CLASS_HEAVYWEAPONS] = {
+
+		[SLOT_PRIMARY] = [
+
+			"Natascha",
+			"Tomislav",
+			"The Brass Beast",
+			"The Huo Long Heatmaker"
+		],
+
+		[SLOT_SECONDARY] = [
+
+			"The Family Business",
+			"Panic Attack Shotgun",
+			"The Sandvich",
+			"Fishcake",
+			"The Dalokohs Bar",
+			"The Second Banana"
+		],
+
+		[ SLOT_MELEE ] = [
+
+			"The Killing Gloves of Boxing",
+			"Gloves of Running Urgently",
+			"Gloves of Running Urgently MvM",
+			"The Eviction Notice",
+			"Fists of Steel",
+			"The Holiday Punch",
+			"The Apoco-Fists"
+		]
+	},
+
+	[TF_CLASS_ENGINEER] = {
+
+		[TF_SLOT_PRIMARY] = [
+			"The Rescue Ranger",
+			"The Frontier Justice",
+			"The Pomson 6000",
+			"The Widowmaker",
+			"Panic Attack Shotgun"
+		],
+
+		[TF_SLOT_SECONDARY] = [
+			"The Short Circuit"
+		],
+
+		[TF_SLOT_MELEE] = [
+
+			"The Eureka Effect",
+			"The Jag",
+			"The Gunslinger",
+			"The Southern Hospitality"
+		]
+	}
+
+	[TF_CLASS_MEDIC] = {
+
+		[TF_SLOT_PRIMARY] = [
+
+			"The Crusader's Crossbow",
+			"The Blutsauger",
+			"The Overdose"
+		]
+
+		[TF_SLOT_SECONDARY] = [
+			
+			"The Kritzkrieg",
+			"The Vaccinator",
+			"The Quick-Fix",
+		]
+
+		[TF_SLOT_MELEE] = [
+			"The Amputator",
+			"The Ubersaw",
+			"The Vita-Saw"
+		]
+	},
+
+	[TF_CLASS_SNIPER] = {
+
+		[TF_SLOT_PRIMARY] = [
+
+			"The Huntsman",
+			"The Fortified Compound",
+			"The Sydney Sleeper",
+			"The Machina",
+			"The Hitmans Heatmaker"
+		],
+
+		[TF_SLOT_SECONDARY] = [
+			
+			"The Cleaner's Carbine",
+			"Jarate",
+			"The Darwin's Danger Shield",
+			"The Cozy Camper"
+		],
+
+		[TF_SLOT_MELEE] = [
+
+			"The Bushwacka",
+			"The Tribalman's Shiv",
+			"The Shahanshah"
+		]
+	},
+	
+
+	[TF_CLASS_SPY] = {
+
+		[TF_SLOT_PRIMARY] = [
+
+			"The Ambassador",
+			"The L'etranger",
+			"The Enforcer",
+			"The Diamondback",
+		],
+
+		[TF_SLOT_MELEE] = [
+
+			"You Eternal Reward",
+			"The Wanga Prick",
+			"The Big Earner",
+			"The Conniver's Kunai",
+			"The Black Rose"
+		]
+	},
+
 }
 
 PZI_Bots.red_buildings <- {}
@@ -69,6 +307,25 @@ PZI_Bots.PZI_BotBehavior <- class {
 		this.navdebug = false
 	}
 
+	function GiveRandomLoadout() {
+		
+		local botcls = bot.GetPlayerClass()
+
+		foreach ( wepinfo in RandomLoadouts[ botcls ] ) {
+			
+			local wep = RandomInt(0, wepinfo.len() - 1 )
+			if ( wep.item_class[6] == 'r' )
+				bot.GenerateAndWearItem( wepinfo )
+
+			else {
+
+				local cls = wepinfo.item_class
+				if ( typeof cls == "array" )
+					cls = wepinfo.item_class[ wepinfo.anim_set.find(PZI_Util.Classes[ bot.GetPlayerClass() ] ) ]
+				PZI_Util.GiveWeapon( bot, cls, wepinfo.id )
+			}
+		}
+	}
 	function IsLookingTowards( target, cos_tolerance ) {
 
 		local to_target = target - bot.EyePosition()
@@ -712,14 +969,20 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
     if ( !IsPlayerABot( bot ) )
 		return
 
-	else if ( bot.GetPlayerClass() == TF_CLASS_MEDIC )
+	local cls = bot.GetPlayerClass()
+
+	if ( cls == TF_CLASS_MEDIC )
 		bot.SetMission( NO_MISSION, true )
 
-	else if ( bot.GetTeam() == TEAM_ZOMBIE || bot.GetPlayerClass() == TF_CLASS_PYRO )
+	else if ( bot.GetTeam() == TEAM_ZOMBIE || cls== TF_CLASS_PYRO || cls == TF_CLASS_SPY )
 		bot.SetMission( MISSION_SPY, true )
 
-	else if ( bot.GetTeam() == TEAM_HUMAN )
+	else if ( bot.GetTeam() == TEAM_HUMAN ) {
+
 		bot.SetMission( RandomInt( MISSION_SNIPER, MISSION_SPY ), true )
+		
+
+	}
 
 	// give bots infinite ammo
 	PZI_Util.ScriptEntFireSafe( bot, "self.AddCustomAttribute( `ammo regen`, 9999.0, -1 )" , 0.1 )
