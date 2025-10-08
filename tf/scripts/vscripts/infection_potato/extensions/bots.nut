@@ -749,6 +749,7 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
 	// if ( func_name == "GenericZombie" )
 		PZI_Bots.GenericZombie( bot, "closest" )
+
 	local cls = bot.GetPlayerClass()
 
 	if ( cls == TF_CLASS_MEDIC )
