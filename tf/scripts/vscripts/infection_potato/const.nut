@@ -447,7 +447,7 @@ const FX_SPIT_IMPACT_SMOKE          = "spell_skeleton_goop_green"
 const FX_SPIT_IMPACT_SPLAT          = "spell_skeleton_goop_green"
 const FX_SPIT_IMPACT_SPURTS         = "superrare_flies"
 
-const FX_EMITTER_FX                 = "spell_batball_impact_blue"
+const FX_EMITTER_FX                 = "powerup_supernova_explode_blue_spikes"
 
 const FX_DEMOGUTS                   = "env_sawblood_mist"
 
