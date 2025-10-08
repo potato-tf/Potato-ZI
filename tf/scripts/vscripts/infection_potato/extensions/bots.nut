@@ -640,6 +640,11 @@ function PZI_Bots::GenericSpecial( bot ) {
 	PZI_Util.AddThink( bot, GenericSpecialThink )
 }
 
+function PZI_Bots::ScoutZombie( bot ) {
+
+	bot.SetAutoJump( 0.05, 2 )
+}
+
 function PZI_Bots::SoldierZombie( bot ) {
 
 	function SoldierZombieThink( bot ) {
@@ -759,6 +764,8 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
 	local cls = bot.GetPlayerClass()
 
+	if ( cls == TF_CLASS_SCOUT )
+		PZI_Bots.ScoutZombie( bot )
 	if ( cls == TF_CLASS_SOLDIER )
 		PZI_Bots.SoldierZombie( bot )
 	else if ( cls == TF_CLASS_MEDIC )
