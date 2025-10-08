@@ -5,7 +5,7 @@ PZI_Bots.NAV_SENTRY_SPOT_FACTOR <- 8 // higher value = lower chance.  1/8 chance
 PZI_Bots.MAX_THREAT_DISTANCE <- 64.0
 
 PZI_Bots.ZombieTypes <- {
-	
+
     [TF_CLASS_SCOUT] = "GenericZombie",
     [TF_CLASS_SNIPER] = "GenericSpecial",
     [TF_CLASS_SOLDIER] = "GenericZombie",
@@ -119,7 +119,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 	function GetThreatDistanceSqr( target ) {
 		return ( target.GetOrigin() - bot.GetOrigin() ).LengthSqr()
 	}
-    
+
     function GetThreatDistance2D( target ) {
         return ( target.GetOrigin() - bot.GetOrigin() ).Length2D()
     }
@@ -148,13 +148,13 @@ PZI_Bots.PZI_BotBehavior <- class {
 		local threatarray = []
 		foreach ( player in PZI_Util.PlayerArray ) {
 
-			if ( 
-				player == bot 
-				|| player.GetTeam() == bot.GetTeam() 
-				|| ( !invisible && player.IsFullyInvisible() ) 
-				|| ( !disguised && player.IsStealthed() ) 
-				|| ( alive && player.IsAlive() ) 
-				|| GetThreatDistance( player ) > maxdist 
+			if (
+				player == bot
+				|| player.GetTeam() == bot.GetTeam()
+				|| ( !invisible && player.IsFullyInvisible() )
+				|| ( !disguised && player.IsStealthed() )
+				|| ( alive && player.IsAlive() )
+				|| GetThreatDistance( player ) > maxdist
 			)
 				continue
 
@@ -460,7 +460,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 			for ( local i = 0; i < path_count; i++ ) {
 				if ( i in path_points)
 					DebugDrawLine( path_points[i].pos, (i+1 < path_points.len()) ? path_points[i+1].pos : path_points[i].pos, 0, 0, 255, false, 0.075 )
-				// else 
+				// else
 					// __DumpScope( 0, path_points )
 			}
 			local area = path_areas["area0"]
@@ -585,7 +585,7 @@ function PZI_Bots::GenericZombie( bot, threat_type = "closest" ) {
 
         if ( !bot.IsAlive() || ( bot.GetActionPoint() && bot.GetActionPoint().IsValid() ) )
             return
-		
+
 		// for some reason bots don't like to move until they're nudged around a bit
 		// if we're stuck just throw us around a bit and hope for the best
 		if ( GetRoundState() == GR_STATE_RND_RUNNING && !PZI_BotBehavior.locomotion.IsStuck() && !bot.GetAbsVelocity().Length() )
@@ -594,7 +594,7 @@ function PZI_Bots::GenericZombie( bot, threat_type = "closest" ) {
         local threat = PZI_BotBehavior.threat
 
         if ( !threat || !threat.IsValid() || !threat.IsAlive() || threat.GetTeam() == bot.GetTeam() ) {
-    
+
             if ( threat_type == "closest" && Time() > cooldown ) {
 
                     PZI_BotBehavior.threat = PZI_BotBehavior.FindClosestThreat( INT_MAX, false )
@@ -625,8 +625,6 @@ function PZI_Bots::GenericZombie( bot, threat_type = "closest" ) {
 
 function PZI_Bots::GenericSpecial( bot ) {
 
-    local scope = PZI_Util.GetEntScope( bot )
-
 	function GenericSpecialThink() {
 
 		local threat = PZI_BotBehavior.threat
@@ -635,7 +633,7 @@ function PZI_Bots::GenericSpecial( bot ) {
 			return
 		else if ( !threat.IsAlive() || threat.GetTeam() == bot.GetTeam() )
 			return
-		else if ( PZI_BotBehavior.GetThreatDistance( threat ) <= PZI_Bots.MAX_THREAT_DISTANCE && PZI_BotBehavior.IsThreatVisible( threat ) )
+		else if ( PZI_BotBehavior.GetThreatDistance( threat ) <= PZI_Bots.MAX_THREAT_DISTANCE * 2 && PZI_BotBehavior.IsThreatVisible( threat ) )
 			bot.PressAltFireButton( 1.0 )
 	}
 
@@ -643,8 +641,6 @@ function PZI_Bots::GenericSpecial( bot ) {
 }
 
 function PZI_Bots::MedicZombie( bot ) {
-
-    local scope = PZI_Util.GetEntScope( bot )
 
 	// heal nearby teammates
     function MedicZombieThink() {
@@ -674,7 +670,7 @@ function PZI_Bots::EngineerZombie( bot ) {
 	}
 
     function EngineerZombieThink() {
-		
+
 		if ( self.HasMission( MISSION_DESTROY_SENTRIES ) ) {
 
 			if ( self.GetMissionTarget() && self.GetMissionTarget().IsValid() )
@@ -700,7 +696,7 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
     if ( !IsPlayerABot( bot ) )
 		return
-	
+
 	else if ( bot.GetPlayerClass() == TF_CLASS_MEDIC )
 		return bot.SetMission( NO_MISSION, true )
 
@@ -713,7 +709,7 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 	// give bots infinite ammo
 	PZI_Util.ScriptEntFireSafe( bot, "self.AddCustomAttribute( `ammo regen`, 9999.0, -1 )" , 0.1 )
 	PZI_Util.ScriptEntFireSafe( bot, "self.AddCustomAttribute( `metal regen`, 9999.0, -1 )", 0.1 )
-	
+
     local scope = PZI_Util.GetEntScope( bot )
 
     scope.PZI_BotBehavior <- PZI_Bots.PZI_BotBehavior( bot )
@@ -723,8 +719,8 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 		if ( !bot.IsAlive() )
 			return
 
-		PZI_BotBehavior.OnUpdate() 
-		
+		PZI_BotBehavior.OnUpdate()
+
 		// lazy unstuck behavior, just teleport the bot somewhere safe
 		if ( PZI_BotBehavior.locomotion.GetStuckDuration() > 10.0 ) {
 			local area = bot.GetLastKnownArea()
@@ -753,6 +749,12 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
 	// if ( func_name == "GenericZombie" )
 		PZI_Bots.GenericZombie( bot, "closest" )
+	local cls = bot.GetPlayerClass()
+
+	if ( cls == TF_CLASS_MEDIC )
+		PZI_Bots.MedicZombie( bot )
+	if ( cls != TF_CLASS_SCOUT && cls != TF_CLASS_SOLDIER && cls != TF_CLASS_HEAVYWEAPONS )
+		PZI_Bots.GenericSpecial( bot )
 
 })
 
