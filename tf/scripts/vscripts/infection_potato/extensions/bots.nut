@@ -640,6 +640,21 @@ function PZI_Bots::GenericSpecial( bot ) {
 	PZI_Util.AddThink( bot, GenericSpecialThink )
 }
 
+function PZI_Bots::SoldierZombie( bot ) {
+
+	function SoldierZombieThink( bot ) {
+
+		if ( !GetPropEntity( bot, "m_hGroundEntity" ) && GetPropInt( bot, "m_nButtons" ) & IN_BACK ) {
+
+			SetPropInt( bot, "m_afButtonDisabled", IN_BACK )
+			SetPropInt( bot, "m_nButtons", ~IN_BACK )
+			return
+		}
+
+		SetPropInt( bot "m_afButtonDisabled", 0 )
+	}
+}
+
 function PZI_Bots::MedicZombie( bot ) {
 
 	// heal nearby teammates
@@ -744,7 +759,9 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
 	local cls = bot.GetPlayerClass()
 
-	if ( cls == TF_CLASS_MEDIC )
+	if ( cls == TF_CLASS_SOLDIER )
+		PZI_Bots.SoldierZombie( bot )
+	else if ( cls == TF_CLASS_MEDIC )
 		PZI_Bots.MedicZombie( bot )
 	else if ( cls == TF_CLASS_ENGINEER )
 		PZI_Bots.EngineerZombie( bot )
