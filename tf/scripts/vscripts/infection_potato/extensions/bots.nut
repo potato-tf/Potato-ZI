@@ -633,7 +633,7 @@ function PZI_Bots::GenericSpecial( bot ) {
 			return
 		else if ( !threat.IsAlive() || threat.GetTeam() == bot.GetTeam() )
 			return
-		else if ( PZI_BotBehavior.GetThreatDistance( threat ) <= PZI_Bots.MAX_THREAT_DISTANCE * 2 && PZI_BotBehavior.IsThreatVisible( threat ) )
+		else if ( PZI_BotBehavior.GetThreatDistance( threat ) <= PZI_Bots.MAX_THREAT_DISTANCE * 8 && PZI_BotBehavior.IsThreatVisible( threat ) )
 			bot.PressAltFireButton( 1.0 )
 	}
 
