@@ -3,3 +3,4 @@
 // permanently open all doors on tc_hydro
 EntFire( "func_door", "Open" )
 EntFire( "func_door", "AddOutput", "OnFullyOpen !self:Kill::0:-1" )
+EntFire( "func_brush", "Kill" )
