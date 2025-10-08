@@ -583,7 +583,7 @@ function PZI_Bots::GenericZombie( bot, threat_type = "closest" ) {
 
     function GenericZombieThink() {
 
-        if ( !bot.IsAlive() || ( bot.GetActionPoint() && bot.GetActionPoint().IsValid() ) )
+        if ( !bot.IsAlive() || bot.GetFlags() & FL_FROZEN || ( bot.GetActionPoint() && bot.GetActionPoint().IsValid() ) )
             return
 
 		// for some reason bots don't like to move until they're nudged around a bit
