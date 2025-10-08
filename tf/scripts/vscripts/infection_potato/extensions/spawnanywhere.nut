@@ -141,7 +141,7 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
     player.RemoveFlag( FL_NOTARGET|FL_DONTTOUCH )
     player.SetSolid( SOLID_BBOX )
     player.SetSolidFlags( FSOLID_NOT_STANDABLE )
-    player.SetCollisionGroup( COLLISION_GROUP_PLAYER )
+    player.SetCollisionGroup( TFCOLLISION_GROUP_COMBATOBJECT )
 
     PZI_Util.ScriptEntFireSafe( player, "self.AddCond( TF_COND_HALLOWEEN_QUICK_HEAL )", SUMMON_HEAL_DELAY )
 
@@ -394,13 +394,13 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
         TraceLineEx( nav_trace )
 
         // no world geometry found
-        if ( !nav_trace.hit ) 
+        if ( !nav_trace.hit )
             return
 
         tracepos = nav_trace.pos
 
         // trace too far away
-        if ( ( player.GetOrigin() - tracepos ).Length2D() > MAX_SPAWN_DISTANCE ) 
+        if ( ( player.GetOrigin() - tracepos ).Length2D() > MAX_SPAWN_DISTANCE )
             return
 
         // not a valid area
@@ -411,11 +411,11 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
             if ( !nav_area || !nav_area.IsFlat() )
                 return
 
-            spawnpos = nav_area.GetCenter()    
+            spawnpos = nav_area.GetCenter()
         }
-        else 
+        else
             // no nav, fallback to just the normal trace pos
-            // All maps should use the nav and not rely on this 
+            // All maps should use the nav and not rely on this
             // but this atleast stops the gamemode from softlocking
             spawnpos = tracepos
 
