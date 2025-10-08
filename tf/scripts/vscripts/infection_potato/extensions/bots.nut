@@ -656,36 +656,31 @@ function PZI_Bots::MedicZombie( bot ) {
 
 function PZI_Bots::EngineerZombie( bot ) {
 
-	local scope = PZI_Util.GetEntScope( bot )
+	local scope 		= PZI_Util.GetEntScope( bot )
 	scope.red_buildings <- PZI_Bots.red_buildings.keys()
-	scope.building <- null
+	scope.building 		<- null
 
 	if ( !buildings.len() )
-		building = buildings[RandomInt( 0, buildings.len() - 1 )]
+		scope.building = scope.red_buildings[RandomInt( 0, buildings.len() - 1 )]
 
-	if ( scope.building ) {
-
-		bot.SetMission( MISSION_DESTROY_SENTRIES, true )
-		bot.SetMissionTarget( scope.building )
-	}
+	if ( scope.building )
+		bot.SetBehaviorFlag( 511 )
+	else
+		bot.ClearBehaviorFlag( 511 )
 
     function EngineerZombieThink() {
 
-		if ( self.HasMission( MISSION_DESTROY_SENTRIES ) ) {
+		if ( bot.IsBehaviorFlagSet( 511 ) && building && building.IsValid() )
+			return
 
-			if ( self.GetMissionTarget() && self.GetMissionTarget().IsValid() )
-				return
+		local newbuilding = red_buildings[RandomInt( 0, red_buildings.len() - 1 )]
 
-			local newbuilding = red_buildings[RandomInt( 0, red_buildings.len() - 1 )]
-
-			if ( newbuilding )
-				bot.SetMissionTarget( newbuilding )
-			else {
-
-				bot.SetMission( MISSION_SPY, true )
-			}
-		}
-    }
+		if ( newbuilding )
+			bot.SetBehaviorFlag( 511 )
+		else
+			bot.ClearBehaviorFlag( 511 )
+	}
+	PZI_Util.AddThink( bot, EngineerZombieThink )
 }
 
 PZI_EVENT( "teamplay_round_start", "PZI_Bots_TeamplayRoundStart", function( params ) { EntFire( "__pzi_bots", "CallScriptFunction", "PrepareNavmesh" ) })
@@ -745,16 +740,15 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
 	PZI_Util.AddThink( bot, BotThink )
 
-	// local func_name = PZI_Bots.ZombieTypes[bot.GetPlayerClass()]
-
-	// if ( func_name == "GenericZombie" )
-		PZI_Bots.GenericZombie( bot, "closest" )
+	PZI_Bots.GenericZombie( bot, "closest" )
 
 	local cls = bot.GetPlayerClass()
 
 	if ( cls == TF_CLASS_MEDIC )
 		PZI_Bots.MedicZombie( bot )
-	if ( cls != TF_CLASS_SCOUT && cls != TF_CLASS_SOLDIER && cls != TF_CLASS_HEAVYWEAPONS )
+	else if ( cls == TF_CLASS_ENGINEER )
+		PZI_Bots.EngineerZombie( bot )
+	else if ( cls != TF_CLASS_SCOUT && cls != TF_CLASS_HEAVYWEAPONS )
 		PZI_Bots.GenericSpecial( bot )
 
 })
