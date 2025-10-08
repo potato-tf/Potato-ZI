@@ -661,7 +661,7 @@ function PZI_Bots::EngineerZombie( bot ) {
 	scope.building 		<- null
 
 	if ( !buildings.len() )
-		scope.building = scope.red_buildings[RandomInt( 0, buildings.len() - 1 )]
+		scope.building = scope.red_buildings[RandomInt( 0, scope.red_buildings.len() - 1 )]
 
 	if ( scope.building )
 		bot.SetBehaviorFlag( 511 )
