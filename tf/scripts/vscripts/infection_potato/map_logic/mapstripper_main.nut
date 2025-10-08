@@ -126,13 +126,13 @@ local function SetupRoundTimer() {
         targetname          = "__pzi_timer"
         vscripts            = " "
         auto_countdown      = 1
-        max_length          = 720
+        max_length          = 300
         reset_time          = 1
-        setup_length        = 30
+        setup_length        = 45
         show_in_hud         = 1
         show_time_remaining = 1
         start_paused        = 0
-        timer_length        = 480
+        timer_length        = 240
         StartDisabled       = 0
         "OnFinished#1"      : "__pzi_util,CallScriptFunction,RoundWin,0,-1"
         "OnFinished#2"      : "__pzi_util,RunScriptCode,SetValue(`mp_humans_must_join_team` `red`),1,-1"

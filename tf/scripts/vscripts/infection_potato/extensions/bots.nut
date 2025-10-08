@@ -660,7 +660,7 @@ function PZI_Bots::EngineerZombie( bot ) {
 	scope.red_buildings <- PZI_Bots.red_buildings.keys()
 	scope.building 		<- null
 
-	if ( !buildings.len() )
+	if ( !scope.red_buildings.len() )
 		scope.building = scope.red_buildings[RandomInt( 0, scope.red_buildings.len() - 1 )]
 
 	if ( scope.building )
