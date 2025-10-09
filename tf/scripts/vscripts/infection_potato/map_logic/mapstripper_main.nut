@@ -28,7 +28,7 @@ LocalTime(LOCALTIME)
 	region					  = ""
 	password 				  = ""
 	classes					  = ""
-	domain 					  = GetStr("sv_downloadurl").slice( 0, GetStr( "sv_downloadurl" ).find( "/gameassets" ) )
+	domain 					  = GetStr("sv_downloadurl").slice( 7, GetStr( "sv_downloadurl" ).find( "/gameassets" ) )
 	campaign_name 			  = "Other Gamemodes"
 	status 					  = "Eating your brains..."
 	// in_protected_match		  = false
@@ -36,7 +36,6 @@ LocalTime(LOCALTIME)
 	// steam_ids				  = []
 
 	// update_time 			  = {
-
 	// 	year	= LOCALTIME.year
 	// 	month	= LOCALTIME.month
 	// 	day		= LOCALTIME.day
