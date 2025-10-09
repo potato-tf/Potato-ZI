@@ -12,7 +12,7 @@ PZI_Bots.RandomLoadouts <- {
 
 			"The Soda Popper",
 			"The Shortstop",
-			"The Force-a_Nature"
+			"The Force-a-Nature"
 		],
 
 		[SLOT_SECONDARY] = [
@@ -24,7 +24,7 @@ PZI_Bots.RandomLoadouts <- {
 			"The Flying Guillotine"
 		],
 
-		[ SLOT_MELEE ] = [
+		[SLOT_MELEE] = [
 
 			"The Candy Cane",
 			"The Fan O'War",
@@ -71,10 +71,10 @@ PZI_Bots.RandomLoadouts <- {
 			"The Degreaser",
 			"The Nostromo Napalmer",
 			"The Dragon's Fury"
-		]
+		],
 
 		[TF_SLOT_SECONDARY] = [
-			
+
 			"The Flare Gun",
 			"The Scorch Shot",
 			"The Detonator",
@@ -82,10 +82,10 @@ PZI_Bots.RandomLoadouts <- {
 			"The Reserve Shooter",
 			"Panic Attack Shotgun",
 			"The Thermal Thruster"
-		]
+		],
 
 		[TF_SLOT_MELEE] = [
-			
+
 			"The Third Degree",
 			"The Hot Hand",
 			"The Back Scratcher",
@@ -94,7 +94,7 @@ PZI_Bots.RandomLoadouts <- {
 			"The Powerjack",
 			"The Axtinguisher"
 		]
-	}
+	},
 
     [TF_CLASS_DEMO] = {
 
@@ -180,7 +180,7 @@ PZI_Bots.RandomLoadouts <- {
 			"The Gunslinger",
 			"The Southern Hospitality"
 		]
-	}
+	},
 
 	[TF_CLASS_MEDIC] = {
 
@@ -189,14 +189,14 @@ PZI_Bots.RandomLoadouts <- {
 			"The Crusader's Crossbow",
 			"The Blutsauger",
 			"The Overdose"
-		]
+		],
 
 		[TF_SLOT_SECONDARY] = [
-			
+
 			"The Kritzkrieg",
 			"The Vaccinator",
 			"The Quick-Fix",
-		]
+		],
 
 		[TF_SLOT_MELEE] = [
 			"The Amputator",
@@ -217,7 +217,7 @@ PZI_Bots.RandomLoadouts <- {
 		],
 
 		[TF_SLOT_SECONDARY] = [
-			
+
 			"The Cleaner's Carbine",
 			"Jarate",
 			"The Darwin's Danger Shield",
@@ -231,7 +231,7 @@ PZI_Bots.RandomLoadouts <- {
 			"The Shahanshah"
 		]
 	},
-	
+
 
 	[TF_CLASS_SPY] = {
 
@@ -308,11 +308,11 @@ PZI_Bots.PZI_BotBehavior <- class {
 	}
 
 	function GiveRandomLoadout() {
-		
+
 		local botcls = bot.GetPlayerClass()
 
 		foreach ( wepinfo in RandomLoadouts[ botcls ] ) {
-			
+
 			local wep = RandomInt(0, wepinfo.len() - 1 )
 			if ( wep.item_class[6] == 'r' )
 				bot.GenerateAndWearItem( wepinfo )
@@ -980,7 +980,7 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 	else if ( bot.GetTeam() == TEAM_HUMAN ) {
 
 		bot.SetMission( RandomInt( MISSION_SNIPER, MISSION_SPY ), true )
-		
+
 
 	}
 
