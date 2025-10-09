@@ -65,7 +65,7 @@ PZI_Bots.RandomLoadouts <- {
 
 	[TF_CLASS_PYRO] = {
 
-		[TF_SLOT_PRIMARY] = [
+		[SLOT_PRIMARY] = [
 
 			"The Backburner",
 			"The Degreaser",
@@ -73,7 +73,7 @@ PZI_Bots.RandomLoadouts <- {
 			"The Dragon's Fury"
 		],
 
-		[TF_SLOT_SECONDARY] = [
+		[SLOT_SECONDARY] = [
 
 			"The Flare Gun",
 			"The Scorch Shot",
@@ -84,7 +84,7 @@ PZI_Bots.RandomLoadouts <- {
 			"The Thermal Thruster"
 		],
 
-		[TF_SLOT_MELEE] = [
+		[SLOT_MELEE] = [
 
 			"The Third Degree",
 			"The Hot Hand",
@@ -161,7 +161,7 @@ PZI_Bots.RandomLoadouts <- {
 
 	[TF_CLASS_ENGINEER] = {
 
-		[TF_SLOT_PRIMARY] = [
+		[SLOT_PRIMARY] = [
 			"The Rescue Ranger",
 			"The Frontier Justice",
 			"The Pomson 6000",
@@ -169,11 +169,11 @@ PZI_Bots.RandomLoadouts <- {
 			"Panic Attack Shotgun"
 		],
 
-		[TF_SLOT_SECONDARY] = [
+		[SLOT_SECONDARY] = [
 			"The Short Circuit"
 		],
 
-		[TF_SLOT_MELEE] = [
+		[SLOT_MELEE] = [
 
 			"The Eureka Effect",
 			"The Jag",
@@ -184,21 +184,21 @@ PZI_Bots.RandomLoadouts <- {
 
 	[TF_CLASS_MEDIC] = {
 
-		[TF_SLOT_PRIMARY] = [
+		[SLOT_PRIMARY] = [
 
 			"The Crusader's Crossbow",
 			"The Blutsauger",
 			"The Overdose"
 		],
 
-		[TF_SLOT_SECONDARY] = [
+		[SLOT_SECONDARY] = [
 
 			"The Kritzkrieg",
 			"The Vaccinator",
 			"The Quick-Fix",
 		],
 
-		[TF_SLOT_MELEE] = [
+		[SLOT_MELEE] = [
 			"The Amputator",
 			"The Ubersaw",
 			"The Vita-Saw"
@@ -207,7 +207,7 @@ PZI_Bots.RandomLoadouts <- {
 
 	[TF_CLASS_SNIPER] = {
 
-		[TF_SLOT_PRIMARY] = [
+		[SLOT_PRIMARY] = [
 
 			"The Huntsman",
 			"The Fortified Compound",
@@ -216,7 +216,7 @@ PZI_Bots.RandomLoadouts <- {
 			"The Hitmans Heatmaker"
 		],
 
-		[TF_SLOT_SECONDARY] = [
+		[SLOT_SECONDARY] = [
 
 			"The Cleaner's Carbine",
 			"Jarate",
@@ -224,7 +224,7 @@ PZI_Bots.RandomLoadouts <- {
 			"The Cozy Camper"
 		],
 
-		[TF_SLOT_MELEE] = [
+		[SLOT_MELEE] = [
 
 			"The Bushwacka",
 			"The Tribalman's Shiv",
@@ -235,7 +235,7 @@ PZI_Bots.RandomLoadouts <- {
 
 	[TF_CLASS_SPY] = {
 
-		[TF_SLOT_PRIMARY] = [
+		[SLOT_PRIMARY] = [
 
 			"The Ambassador",
 			"The L'etranger",
@@ -243,7 +243,7 @@ PZI_Bots.RandomLoadouts <- {
 			"The Diamondback",
 		],
 
-		[TF_SLOT_MELEE] = [
+		[SLOT_MELEE] = [
 
 			"You Eternal Reward",
 			"The Wanga Prick",
