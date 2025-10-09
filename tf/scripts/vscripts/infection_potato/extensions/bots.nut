@@ -96,7 +96,7 @@ PZI_Bots.RandomLoadouts <- {
 		]
 	},
 
-    [TF_CLASS_DEMO] = {
+    [TF_CLASS_DEMOMAN] = {
 
 		[SLOT_PRIMARY] = [
 
