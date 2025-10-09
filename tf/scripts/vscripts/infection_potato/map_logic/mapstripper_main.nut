@@ -134,7 +134,7 @@ local function SetupRoundTimer() {
         timer_length        = 240
         StartDisabled       = 0
         "OnFinished#1"      : "__pzi_util,CallScriptFunction,RoundWin,0,-1"
-        "OnSetupFinished#1" : "self,RunScriptCode,base_timestamp = GetPropFloat(self `m_flTimeRemaining`) + Time(),1,-1"
+        "OnSetupFinished#1" : "self,RunScriptCode,base_timestamp = Time() + 240,1,-1"
     })
 
     if ( PlayerCount(TEAM_HUMAN) + PlayerCount(TEAM_ZOMBIE) )
@@ -202,13 +202,17 @@ local function SetupRoundTimer() {
             return -1
         }
 
-        function InputSetTime() {
+        function UpdateTimestamp() {
 
-            base_timestamp = GetPropFloat(timer, "m_flTimeRemaining") + Time()
+            base_timestamp = GetPropFloat( timer, "m_flTimeRemaining" ) + Time()
             return true
         }
-        scope.InputSetTime <- InputSetTime
-        scope.Inputsettime <- InputSetTime
+
+        scope.InputSetTime <- UpdateTimestamp
+        scope.Inputsettime <- UpdateTimestamp
+        scope.InputAddTime <- UpdateTimestamp
+        scope.Inputaddtime <- UpdateTimestamp
+
         scope.TimerThink <- TimerThink
         AddThinkToEnt(timer, "TimerThink")
     }
