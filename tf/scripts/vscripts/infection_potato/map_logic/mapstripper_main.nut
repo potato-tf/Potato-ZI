@@ -47,6 +47,7 @@ LocalTime(LOCALTIME)
 }
 
 function PZI_Util::GetServerKey( hostname = SERVER_DATA.server_name ) { return strip( hostname.slice( hostname.find("#") + 1, hostname.find(" [") ) ) }
+function PZI_Util::GetServerRegion( hostname = SERVER_DATA.server_name ) { return strip( hostname.slice( hostname.find("[") + 1, hostname.find("]") ) ) }
 
 PZI_Util.ScriptEntFireSafe("__pzi_util", @"
 
@@ -57,7 +58,7 @@ PZI_Util.ScriptEntFireSafe("__pzi_util", @"
 	SERVER_DATA.server_name = server_name
     SERVER_DATA.server_tags = GetStr(`sv_tags`)
 	SERVER_DATA.server_key	= GetServerKey( server_name )
-	SERVER_DATA.region		= split_region.len() == 1 ? `` : split_region[1].slice(0, split_region[1].find(`]`))
+	SERVER_DATA.region		= GetServerRegion( server_name )
 	SERVER_DATA.domain		= SERVER_DATA.region == `USA` ? `us.potato.tf` : format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
 
 	if ( SERVER_DATA.domain == `ustx.potato.tf` )
@@ -168,6 +169,9 @@ local function SetupRoundTimer() {
 
                 if ( SERVER_DATA.server_key == "" )
                     SERVER_DATA.server_key = PZI_Util.GetServerKey( SERVER_DATA.server_name )
+
+                if ( SERVER_DATA.server_region == "" )
+                    SERVER_DATA.server_region = PZI_Util.GetServerRegion( SERVER_DATA.server_name )
 
                 local players = array(2, 0)
                 local spectators = 0
