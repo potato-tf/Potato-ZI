@@ -14,7 +14,7 @@ LocalTime(LOCALTIME)
 	endpoint_url			  = "https://archive.potato.tf/api/serverstatus"
 	server_name				  = ""
 	server_key				  = ""
-    server_tags               = GetStr("sv_tags")
+    server_tags               = GetStr( "sv_tags" )
 	address					  = 0
 	wave 					  = 0
 	max_wave				  = -1
@@ -28,7 +28,7 @@ LocalTime(LOCALTIME)
 	region					  = ""
 	password 				  = ""
 	classes					  = ""
-	domain 					  = "potato.tf"
+	domain 					  = GetStr( "sv_downloadurl" )
 	campaign_name 			  = "Other Gamemodes"
 	status 					  = "Eating your brains..."
 	// in_protected_match		  = false
@@ -57,7 +57,7 @@ PZI_Util.ScriptEntFireSafe("__pzi_util", @"
     SERVER_DATA.server_tags = GetStr(`sv_tags`)
 	SERVER_DATA.server_key	= GetServerKey( server_name )
 	SERVER_DATA.region		= GetServerRegion( server_name )
-	SERVER_DATA.domain		= SERVER_DATA.region == `USA` ? `us.potato.tf` : format(`%s.%s`, SERVER_DATA.region.tolower(), SERVER_DATA.domain)
+	SERVER_DATA.domain		= GetStr(`sv_downloadurl`)
 
 	if ( SERVER_DATA.domain == `ustx.potato.tf` )
 		SERVER_DATA.domain += `:22443`
