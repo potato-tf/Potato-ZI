@@ -311,25 +311,22 @@ PZI_Bots.PZI_BotBehavior <- class {
 
 		local botcls = bot.GetPlayerClass()
 
-		foreach ( wepinfo in PZI_Bots.RandomLoadouts[ botcls ] ) {
+		foreach ( slot, wepinfo in PZI_Bots.RandomLoadouts[ botcls ] ) {
 
-			foreach ( slot in wepinfo ) {
+			local wepname = wepinfo [ RandomInt( 0, slot.len() - 1 ) ]
+			local wep = PZI_ItemMap[ wepname ]
 
-				local wepname = slot [ RandomInt( 0, slot.len() - 1 ) ]
-				local wep = PZI_ItemMap[ wepname ]
+			if ( wep.item_class[6] == 'r' ) // tf_wearable-based weapon, use this instead.
+				bot.GenerateAndWearItem( wepname )
 
-				if ( wep.item_class[6] == 'r' ) // tf_wearable-based weapon, use this instead.
-					bot.GenerateAndWearItem( wepname )
+			else {
 
-				else {
+				local cls = wep.item_class
 
-					local cls = wep.item_class
+				if ( typeof cls == "array" )
+					cls = wep.item_class[ wep.animset.find( PZI_Util.Classes[ botcls ] ) ]
 
-					if ( typeof cls == "array" )
-						cls = wep.item_class[ wep.animset.find( PZI_Util.Classes[ botcls ] ) ]
-
-					PZI_Util.GiveWeapon( bot, cls, wep.id )
-				}
+				PZI_Util.GiveWeapon( bot, cls, wep.id )
 			}
 		}
 	}
