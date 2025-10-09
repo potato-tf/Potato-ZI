@@ -941,29 +941,31 @@ function PZI_Bots::MedicZombie( bot ) {
 function PZI_Bots::EngineerZombie( bot ) {
 
 	local scope 		= PZI_Util.GetEntScope( bot )
-	scope.red_buildings <- PZI_Bots.red_buildings.keys()
+	local red_buildings	= PZI_Bots.red_buildings
 	scope.building 		<- null
 
-	if ( scope.red_buildings.len() )
+	if ( red_buildings.len() )
 		scope.building = scope.red_buildings[RandomInt( 0, scope.red_buildings.len() - 1 )]
 
-	if ( scope.building )
-		bot.SetBehaviorFlag( 511 )
-	else
-		bot.ClearBehaviorFlag( 511 )
+	scope.building ? bot.SetBehaviorFlag( 511 ) : bot.ClearBehaviorFlag( 511 )
 
     function EngineerZombieThink() {
 
 		if ( bot.IsBehaviorFlagSet( 511 ) && building && building.IsValid() )
 			return
 
-		local newbuilding = red_buildings[RandomInt( 0, red_buildings.len() - 1 )]
+		if ( !red_buildings.len() ) {
 
-		if ( newbuilding )
-			bot.SetBehaviorFlag( 511 )
-		else
 			bot.ClearBehaviorFlag( 511 )
+			return
+		}
+
+		building = red_buildings[RandomInt( 0, red_buildings.len() - 1 )]
+
+		if ( !building || !building.IsValid() )
+			red_buildings = red_buildings.filter( @( k, v ) k && k.IsValid() )
 	}
+
 	PZI_Util.AddThink( bot, EngineerZombieThink )
 }
 
