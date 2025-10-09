@@ -311,7 +311,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 
 		local botcls = bot.GetPlayerClass()
 
-		foreach ( wepinfo in RandomLoadouts[ botcls ] ) {
+		foreach ( wepinfo in PZI_Bots.RandomLoadouts[ botcls ] ) {
 
 			foreach ( slot in wepinfo ) {
 
