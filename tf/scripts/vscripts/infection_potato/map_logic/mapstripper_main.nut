@@ -52,8 +52,6 @@ function PZI_Util::GetServerRegion( hostname = SERVER_DATA.server_name ) { retur
 PZI_Util.ScriptEntFireSafe("__pzi_util", @"
 
 	local server_name  = GetStr(`hostname`)
-	local split_server = split(server_name, `#`)
-	local split_region = split_server.len() == 1 ? [``, `]`] : split(split_server[1], `[`)
 
 	SERVER_DATA.server_name = server_name
     SERVER_DATA.server_tags = GetStr(`sv_tags`)
