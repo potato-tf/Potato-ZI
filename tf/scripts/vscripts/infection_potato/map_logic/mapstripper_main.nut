@@ -170,8 +170,8 @@ local function SetupRoundTimer() {
                 if ( SERVER_DATA.server_key == "" )
                     SERVER_DATA.server_key = PZI_Util.GetServerKey( SERVER_DATA.server_name )
 
-                if ( SERVER_DATA.server_region == "" )
-                    SERVER_DATA.server_region = PZI_Util.GetServerRegion( SERVER_DATA.server_name )
+                if ( SERVER_DATA.region == "" )
+                    SERVER_DATA.region = PZI_Util.GetServerRegion( SERVER_DATA.server_name )
 
                 local players = array(2, 0)
                 local spectators = 0

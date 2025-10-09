@@ -41,7 +41,7 @@ PZI_Util.EntTable <- {
 	function _newslot( key, value ) {
 
 		if ( typeof key != "instance" || !( key instanceof CBaseEntity ) )
-			Assert( false, format( "Invalid entity key: %s", key.tostring() ) )
+			Assert( false, format( "Invalid entity key: \"%s\"", key.tostring() ) )
 
 		if ( !value ) {
 
@@ -2361,7 +2361,7 @@ function PZI_Util::RunGenerator( func, interval = -1 ) {
 
 	local dummy = CreateByClassname( "logic_autosave" )
 	dummy.ValidateScriptScope()
-	
+
 	local gen = func()
 	function PZI_GeneratorThink() {
 

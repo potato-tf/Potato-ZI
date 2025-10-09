@@ -1,9 +1,7 @@
 // add extensions to this table.
 // extensions will be loaded in the order they are defined.
 ::PZI_ACTIVE_EXTENSIONS <- [
-    {"infection_potato/extensions/spawnanywhere"    : null } // single file
-    {"infection_potato/extensions/bots"             : null }
-    {"infection_potato/extensions/damageradiusmult" : null }
+    {"infection_potato/extensions/"    : [ "damageradiusmult", "spawnanywhere", "bots" ] }
     // { "infection_potato/extensions/example/"         : [ "misc", "navmesh", "potatozi" ] } // multiple files in the example dir
 ]
 
@@ -27,14 +25,17 @@ try { delete ::PZI_CREATE_SCOPE } catch( e ) {}
 
 local function Include( script ) { try { IncludeScript( format( "%s", script ), ROOT ) } catch( e ) { printl( e ); ClientPrint( null, 3, e ) } }
 
-// load core files
+// core files
+// extensions listed above are always included AFTER these.
 local include = [
 
-    {"infection_potato/util/" : [ "constants", "itemdef_constants", "item_map", "create_scope", "event_wrapper", "gamestrings", "util" ] } 
-    {"infection_potato/"      : [ "strings", "const", "infection" ] } // bug with util ents being deleted too early
+    // our new utils
+    {"infection_potato/util/" : [ "constants", "itemdef_constants", "item_map", "create_scope", "event_wrapper", "gamestrings", "util" ] }
+    // core zi files
+    {"infection_potato/" : [ "strings", "const", "infection" ] }
+    // misc map logic scripts for map conversions
     {"infection_potato/map_logic/" : [ "mapstripper_main" ] }
-
-].extend( PZI_ACTIVE_EXTENSIONS ) // load extensions after
+]
 
 local function IncludeGen( include ) {
 
@@ -55,7 +56,14 @@ local function IncludeGen( include ) {
             }
 }
 
+// load core files
 local gen = IncludeGen( include )
+while ( gen.getstatus() != "dead" )
+    resume gen
+
+// now load extensions
+// this is done in a separate operation so extensions can access constants immediately
+gen = IncludeGen( PZI_ACTIVE_EXTENSIONS )
 while ( gen.getstatus() != "dead" )
     resume gen
 

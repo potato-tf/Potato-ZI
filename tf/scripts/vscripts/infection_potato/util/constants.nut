@@ -1,6 +1,6 @@
 
 // check if we've already included this file
-if ( "MASK_SOLID_BRUSHONLY" in ROOT )
+if ( "PZI_LOG_DEBUG" in ROOT )
     return
 
 ::ROOT  <- getroottable()
@@ -630,7 +630,7 @@ const INT_MAX   = 2147483647
 // this is done in a separate loop so our custom constants are also available in the root table
 // check a random constant to see if we've already re-scoped them to root
 // if we modify this file and want to fold a new constant just run `script delete STEP_HEIGHT` first
-if ( !( "STEP_HEIGHT" in ROOT ) )
+if ( !( "PZI_LOG_DEBUG" in ROOT ) )
 	foreach( k, v in CONST )
 		ROOT[k] <- v
 
