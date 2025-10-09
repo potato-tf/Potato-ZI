@@ -2208,17 +2208,15 @@ function PZI_Util::AddThink( ent, func ) {
 
 	if ( !( thinktable_func in scope ) ) {
 
-		scope[ thinktable_func ] <- function() {
+		// scope[ thinktable_func ] <- function() {
 
-			foreach ( name, _func in scope[ thinktable_name ] || {} )
-				_func.call( scope )
+		// 	foreach ( name, _func in scope[ thinktable_name ] || {} )
+		// 		_func.call( scope )
 
-			return -1
-		}
+		// 	return -1
+		// }
 
-        // fix anonymous function declaration
-        compilestring( format( @"local _%s = %s; function %s() { _%s() }", thinktable_func, thinktable_func, thinktable_func, thinktable_func ) ).call(scope)
-
+		compilestring( format( "function %s() { foreach( _func in %s || {} ) _func(); return -1 }", thinktable_func, thinktable_name ) ).call( scope )
 		try { _AddThinkToEnt( ent, thinktable_func ) } catch ( e ) { AddThinkToEnt( ent, thinktable_func ) }
 	}
 	// only initialize blank think setup for empty string

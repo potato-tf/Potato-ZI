@@ -53,7 +53,7 @@ PZI_Bots.RandomLoadouts <- {
 			"The Battalion's Backup"
 		],
 
-		[ SLOT_MELEE ] = [
+		[SLOT_MELEE] = [
 
 			"The Disciplinary Action",
 			"The Equalizer",
@@ -115,7 +115,7 @@ PZI_Bots.RandomLoadouts <- {
 			"The Splendid Screen"
 		],
 
-		[ SLOT_MELEE ] = [
+		[SLOT_MELEE] = [
 
 			"The Scottish Handshake",
 			"The Eyelander",
@@ -147,7 +147,7 @@ PZI_Bots.RandomLoadouts <- {
 			"The Second Banana"
 		],
 
-		[ SLOT_MELEE ] = [
+		[SLOT_MELEE] = [
 
 			"The Killing Gloves of Boxing",
 			"Gloves of Running Urgently",
@@ -313,16 +313,23 @@ PZI_Bots.PZI_BotBehavior <- class {
 
 		foreach ( wepinfo in RandomLoadouts[ botcls ] ) {
 
-			local wep = RandomInt(0, wepinfo.len() - 1 )
-			if ( wep.item_class[6] == 'r' )
-				bot.GenerateAndWearItem( wepinfo )
+			foreach ( slot in wepinfo ) {
 
-			else {
+				local wepname = slot [ RandomInt( 0, slot.len() - 1 ) ]
 
-				local cls = wepinfo.item_class
-				if ( typeof cls == "array" )
-					cls = wepinfo.item_class[ wepinfo.anim_set.find(PZI_Util.Classes[ bot.GetPlayerClass() ] ) ]
-				PZI_Util.GiveWeapon( bot, cls, wepinfo.id )
+				if ( wep.item_class[6] == 'r' ) // tf_wearable-based weapon, use this instead.
+					bot.GenerateAndWearItem( wepname )
+
+				else {
+
+					local wep = PZI_ItemMap[ wepname ]
+					local cls = wep.item_class
+
+					if ( typeof cls == "array" )
+						cls = wep.item_class[ wep.animset.find( PZI_Util.Classes[ botcls ] ) ]
+
+					PZI_Util.GiveWeapon( bot, cls, wep.id )
+				}
 			}
 		}
 	}
@@ -970,6 +977,7 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 		return
 
 	local cls = bot.GetPlayerClass()
+    local scope = PZI_Util.GetEntScope( bot )
 
 	if ( cls == TF_CLASS_MEDIC )
 		bot.SetMission( NO_MISSION, true )
@@ -981,14 +989,12 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
 		bot.SetMission( RandomInt( MISSION_SNIPER, MISSION_SPY ), true )
 
-
+		scope.PZI_BotBehavior.GiveRandomLoadout()
 	}
 
 	// give bots infinite ammo
 	PZI_Util.ScriptEntFireSafe( bot, "self.AddCustomAttribute( `ammo regen`, 9999.0, -1 )" , 0.1 )
 	PZI_Util.ScriptEntFireSafe( bot, "self.AddCustomAttribute( `metal regen`, 9999.0, -1 )", 0.1 )
-
-    local scope = PZI_Util.GetEntScope( bot )
 
     scope.PZI_BotBehavior <- PZI_Bots.PZI_BotBehavior( bot )
 
