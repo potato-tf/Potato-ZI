@@ -1976,7 +1976,7 @@ function PZI_Util::KillAllBots() {
 // - Purging game strings to avoid CUtlRBTree Overflow crashes
 // - Logging for invalid targets when debug mode is enabled
 // - Handling dead players without putting isalive checks everywhere
-function PZI_Util::ScriptEntFireSafe( target, code, delay = -1, activator = null, caller = null, allow_dead = false ) {
+function PZI_Util::ScriptEntFireSafe( target, code, delay = -1, activator = null, caller = null, allow_dead = true ) {
 
 	local entfirefunc = typeof target == "string" ? DoEntFire : EntFireByHandle
 
@@ -2694,7 +2694,7 @@ function PZI_Util::GetSafeNavAreas() {
 	if ( !AllNavAreas.len() )
 		return
 
-	ScriptEntFireSafe( self, "print( `\\n\\n Collecting nav areas, performance warnings will go away shortly...\\n\\n`)", 0.1)
+	ScriptEntFireSafe( self, "print( `\\n\\n Collecting nav areas, performance warnings will go away shortly...\\n\\n`)", 0.1 )
 
 	local i = 0
 	local color_valid  = [   0, 180,  20, 50  ]
