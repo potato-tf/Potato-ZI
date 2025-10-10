@@ -2771,8 +2771,8 @@ function PZI_Util::ThinkTable::PopulateSafeNav() {
 		delete PZI_Util.ThinkTable.PopulateSafeNav
 		return 1
 	}
-	local result = resume gen || PZI_Util.SaveNavAreas.len()
-	printf("Safe Areas: %s / %s\n", result.tostring(), PZI_Util.AllNavAreas.len().tostring() )
+	local result = resume gen || SafeNavAreas.len()
+	printf("Safe Areas: %s / %s\n", result.tostring(), AllNavAreas.len().tostring() )
 }
 
 PZI_Util.ForEachEnt( null, null, null, null, true )
