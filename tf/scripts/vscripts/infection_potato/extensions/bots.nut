@@ -461,7 +461,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 					}
 				break
 				}
-				bot.PressAltFireButton()
+				bot.PressAltFireButton( 0.5 )
 			}
 		}
 	}
@@ -538,7 +538,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 			return
 
 		bot.AddBotAttribute( SUPPRESS_FIRE )
-		bot.PressAltFireButton()
+		bot.PressAltFireButton( 0.5 )
 		bot.RemoveBotAttribute( SUPPRESS_FIRE )
 		aim_time = FLT_MAX
 	}
@@ -902,10 +902,7 @@ function PZI_Bots::GenericSpecial( bot ) {
 	PZI_Util.AddThink( bot, GenericSpecialThink )
 }
 
-function PZI_Bots::ScoutZombie( bot ) {
-
-	bot.SetAutoJump( 0.05, 2 )
-}
+function PZI_Bots::ScoutZombie( bot ) { bot.SetAutoJump( 0.05, 2 ) }
 
 function PZI_Bots::SoldierZombie( bot ) {
 
@@ -928,9 +925,8 @@ function PZI_Bots::MedicZombie( bot ) {
     function MedicZombieThink() {
 
 		for (local player; player = FindByClassnameWithin( player, "player", bot.GetOrigin(), MEDIC_HEAL_RANGE );)
-			if ( player.GetTeam() == TEAM_ZOMBIE && player.GetHealth() < player.GetMaxHealth() * 0.75 )
-				bot.PressAltFireButton( 1.0 )
-
+			if ( player.GetTeam() == TEAM_ZOMBIE && player.GetHealth() < player.GetMaxHealth() * 0.85 )
+				return bot.PressAltFireButton( 1.0 )
     }
 
 	PZI_Util.AddThink( bot, MedicZombieThink )
@@ -943,7 +939,7 @@ function PZI_Bots::EngineerZombie( bot ) {
 	local red_buildings	= PZI_Bots.red_buildings
 
 	if ( red_buildings.len() )
-		b.SetThreat( red_buildings[RandomInt( 0, red_buildings.len() - 1 )], false )
+		b.SetThreat( red_buildings[ RandomInt( 0, red_buildings.len() - 1 ) ], false )
 
 	b.threat ? bot.SetBehaviorFlag( 511 ) : bot.ClearBehaviorFlag( 511 )
 
@@ -958,14 +954,14 @@ function PZI_Bots::EngineerZombie( bot ) {
 			return
 		}
 
-		b.SetThreat(red_buildings[RandomInt( 0, red_buildings.len() - 1 )], false )
+		b.SetThreat( red_buildings[ RandomInt( 0, red_buildings.len() - 1 ) ], false )
 
-		if ( !building || !building.IsValid() )
+		if ( !b.threat || !b.threat.IsValid() )
 			red_buildings = red_buildings.filter( @( k, v ) k && k.IsValid() )
-		else if ( (building.GetOrigin() - b.cur_pos).LengthSqr() <  MAX_THREAT_DISTANCE * 4 )
 	}
 
 	PZI_Util.AddThink( bot, EngineerZombieThink )
+	PZI_Bots.GenericSpecial( bot )
 }
 
 PZI_EVENT( "teamplay_round_start", "PZI_Bots_TeamplayRoundStart", function( params ) { EntFire( "__pzi_bots", "CallScriptFunction", "PrepareNavmesh" ) })
