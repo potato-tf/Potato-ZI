@@ -878,6 +878,10 @@ function PZI_Bots::GenericZombie( bot, threat_type = "closest" ) {
 				b.UpdatePathAndMove( threat.GetOrigin(), false, 1500, 1500 )
 
 			bot.SetAttentionFocus( threat )
+
+		// we haven't taken/dealt any damage in a while, just respawn us if we're too far away from a player
+			if ( m_fTimeLastHit + 15.0 < b.time && !b.IsThreatVisible( threat ) && b.GetThreatDistanceSqr( threat ) > 262144.0 )
+				PZI_Util.KillPlayer( bot )
             // else
             //     b.LookAt( threat.EyePosition() - Vector( 0, 0, 20 ), 1500, 1500 )
         }
@@ -1039,10 +1043,6 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 
 			area.MarkAsBlocked( TEAM_ZOMBIE )
 		}
-		// we haven't taken/dealt any damage in a while, just respawn us if we're too far away from a player
-		if ( m_fTimeLastHit + 15.0 < b.time && !b.IsThreatVisible( b.threat ) && b.GetThreatDistanceSqr( b.threat ) > 262144.0 )
-			PZI_Util.KillPlayer( bot )
-
 	}
 
 	PZI_Util.AddThink( bot, BotThink )
