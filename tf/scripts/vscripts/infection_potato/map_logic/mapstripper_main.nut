@@ -234,7 +234,7 @@ local gamemode_funcs = {
 
             EntFire( GetPropString( watcher, "m_iszTrain" ), "Kill" )
 
-            local last   = FindByName( null, GetPropString( watcher, "m_iszGoalNode" ) )
+            local last   = FindByName( null, GetPropString( watcher, "m_iszGoalNode" ) ) || 0
             local prev   = GetPropEntity( last, "m_pprevious" )
             local tracks = { [last] = prev }
 
