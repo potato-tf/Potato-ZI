@@ -189,7 +189,7 @@ PZI_EVENT( "player_spawn", "Infection_PlayerSpawn", function( params ) {
     if ( !_hPlayer )
         return
 
-    if ( params.team == 0 ) {
+    if ( !params.team ) {
 
         _hPlayer.ValidateScriptScope()
         return
@@ -497,7 +497,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
     local _iDamageType  =  params.damagebits
     local _iWeaponIDX   =  params.weapon_def_index
 
-    if ( _hPlayer == null )
+    if ( !_hPlayer )
         return
 
     local _sc                  =  _hPlayer.GetScriptScope()
@@ -539,7 +539,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
 
         if ( _hPlayer.GetPlayerClass() == TF_CLASS_PYRO ) {
 
-            local _hNextPlayer = null
+            local _hNextPlayer
             local _hKillicon = KilliconInflictor( KILLICON_PYRO_BREATH )
 
             // CreateMediumHealthKit( _hPlayer.GetOrigin() )
@@ -548,7 +548,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
 
                 while ( _hNextPlayer = FindByClassnameWithin( _hNextPlayer, "player", _hPlayer.GetOrigin(), 125 ) ) {
 
-                    if ( _hNextPlayer != null && _hNextPlayer.GetTeam() == TEAM_HUMAN && _hNextPlayer != _hPlayer ) {
+                    if ( _hNextPlayer && _hNextPlayer.GetTeam() == TEAM_HUMAN && _hNextPlayer != _hPlayer ) {
 
                         KnockbackPlayer           ( _hPlayer, _hNextPlayer, 210, 0.85, true )
                         _hNextPlayer.TakeDamageEx ( _hKillicon, _hPlayer, _hPlayer.GetActiveWeapon(), Vector( 0, 0, 0 ), _hPlayer.GetOrigin(), 10, ( DMG_CLUB | DMG_PREVENT_PHYSICS_FORCE ) )
@@ -645,10 +645,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
     if ( ::bGameStarted ) { // if the game is started, a dying survivor becomes a zombie
 
         // player was survivor, killed by a zombie and wasn't suicide
-        if ( _hKiller && _hKiller.IsPlayer() && _hKiller.GetTeam() == TEAM_ZOMBIE && _hPlayerTeam == TEAM_HUMAN ) {
-
-            if ( _hKiller == null || _hPlayer == _hKiller )
-                return
+        if ( _hKiller && _hPlayer && _hKiller.IsPlayer() && _hKiller.GetTeam() == TEAM_ZOMBIE && _hPlayerTeam == TEAM_HUMAN ) {
 
             // show a notifcation to all players in chat.
             local _szDeathMsg = format( STRING_UI_CHAT_INFECT_MSG,
@@ -690,7 +687,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
         local _hRoundTimer = FindByClassname( null, "team_round_timer" )
 
         // no round timer on the level, let's make one
-        if ( _hRoundTimer == null ) {
+        if ( !_hRoundTimer ) {
 
             // create an infection specific timer
             _hRoundTimer = SpawnEntityFromTable( "team_round_timer", {
@@ -721,7 +718,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
 local special_weapons = { [ID_GOLDEN_WRENCH] = null, [ID_SAXXY] = null, [ID_SPY_CICLE] = null, [ID_GOLD_FRYING_PAN] = null }
 PZI_EVENT( "OnTakeDamage", "Infection_OnTakeDamage", function( params ) {
 
-    if ( params.const_entity == null || params.inflictor == null || params.attacker == null )
+    if ( !params.inflictor || !params.attacker )
         return
 
     local _hVictim        =   params.const_entity
@@ -1064,26 +1061,23 @@ PZI_EVENT( "player_hurt", "Infection_PlayerHurt", function( params ) {
             _hPlayer.SetHealth  ( -20 ); // force overkill threshhold
 
             _hPlayer.SetCustomModelWithClassAnimations( arrTFClassPlayerModels[ _hPlayer.GetPlayerClass() ] )
+            return
         }
-        else if ( params.health >=  0 ) {
 
-            if ( _hAttacker == null )
-                return
+        else if ( _hAttacker && _hAttacker.IsPlayer() ) {
 
-            if ( _hAttacker.IsPlayer() ) {
+            local _hAttackerWeapon = _hAttacker.GetActiveWeapon()
 
-                local _hAttackerWeapon = _hAttacker.GetActiveWeapon()
-                if ( _hAttackerWeapon && _hAttackerWeapon.GetClassname() == "tf_weapon_drg_pomson" ) {
+            if ( _hAttackerWeapon && _hAttackerWeapon.GetClassname() == "tf_weapon_drg_pomson" ) {
 
-                    local _flCooldownMod = DRG_RAYGUN_ZOMBIE_COOLDOWN_MOD
+                local _flCooldownMod = DRG_RAYGUN_ZOMBIE_COOLDOWN_MOD
 
-                    if ( _flCooldownMod == -1 ) {
+                if ( _flCooldownMod == -1 ) {
 
-                        _flCooldownMod = _sc.m_hZombieAbility.m_fAbilityCooldown
-                    }
-
-                    _hPlayer.SetNextActTime( ZOMBIE_ABILITY_CAST, _flCooldownMod )
+                    _flCooldownMod = _sc.m_hZombieAbility.m_fAbilityCooldown
                 }
+
+                _hPlayer.SetNextActTime( ZOMBIE_ABILITY_CAST, _flCooldownMod )
             }
         }
     }

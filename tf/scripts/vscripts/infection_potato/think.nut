@@ -302,7 +302,7 @@ function PZI_PlayerThink() {
                     m_iFlags = ( m_iFlags | ZBIT_SCOUT_HAS_TRIPLE_JUMPED )
                 }
 
-                if ( ( m_iFlags & ZBIT_SCOUT_HAS_TRIPLE_JUMPED ) && GetPropEntity( self, "m_hGroundEntity" ) != null ) {
+                if ( ( m_iFlags & ZBIT_SCOUT_HAS_TRIPLE_JUMPED ) && GetPropEntity( self, "m_hGroundEntity" ) ) {
 
                     m_iFlags = ( m_iFlags & ~ZBIT_SCOUT_HAS_TRIPLE_JUMPED )
                 }
@@ -453,10 +453,10 @@ function PZI_PlayerThink() {
             if  ( self.InCond( TF_COND_TAUNTING ) && !( m_iFlags & ZBIT_PARTICLE_HACK ) ) {
 
                 // destroy current particle/cosmetic to avoid duplicates on other player's view
-                if ( m_hZombieFXWearable != null && m_hZombieFXWearable.IsValid() )
+                if ( m_hZombieFXWearable && m_hZombieFXWearable.IsValid() )
                     m_hZombieFXWearable.Destroy()
 
-                if ( m_hZombieWearable != null && m_hZombieWearable.IsValid() )
+                if ( m_hZombieWearable && m_hZombieWearable.IsValid() )
                     m_hZombieWearable.Destroy()
 
             //     // create new ones now that the player can see themselves
@@ -740,17 +740,17 @@ function SniperSpitThink() {
 
                     // if the player is standing on the ground
                     // update: now does this whenever a player is hit ( hence the 0==0 )
-                    if ( 0 == 0 ) {
+                    // if ( 0 == 0 ) {
 
                         // use the player's z position as splatter
                         m_vecHitPosition <- _tblTrace.enthit.GetOrigin()
-                    }
-                    else {
+                    // }
+                    // else {
 
                         // player is in the air, splatter rejected.
-                        m_iState <- SPIT_STATE_REJECTED
-                        return SNIPER_SPIT_RETHINK_TIME
-                    }
+                        // m_iState <- SPIT_STATE_REJECTED
+                        // return SNIPER_SPIT_RETHINK_TIME
+                    // }
 
                     m_iState        <-  SPIT_STATE_FINDING_GROUND
                     m_bHasHitSolid  <-  true
@@ -946,7 +946,7 @@ function SniperSpitThink() {
                     continue
                 }
 
-                if ( _hNextTargetEntity != null ) {
+                if ( _hNextTargetEntity ) {
 
                     EntFireByHandle( _hNextTargetEntity, _szInput, "", -1, null, null )
                 }
@@ -956,7 +956,7 @@ function SniperSpitThink() {
         // get all the players in the zone area
         while ( _hNextPlayer = FindByClassnameWithin( _hNextPlayer, "player", m_vecSpitZone, SPIT_ZONE_RADIUS ) ) {
 
-            if ( _hNextPlayer != null && _hNextPlayer.GetTeam() != TEAM_ZOMBIE ) {
+            if ( _hNextPlayer && _hNextPlayer.GetTeam() != TEAM_ZOMBIE ) {
 
                 _arrPlayers.append( _hNextPlayer )
                 _iPlayerCount++
@@ -967,7 +967,7 @@ function SniperSpitThink() {
 
             foreach ( _hNextPlayer in _arrPlayers ) {
 
-                if ( _hNextPlayer == null || _hNextPlayer.GetTeam() == TEAM_ZOMBIE )
+                if ( !_hNextPlayer || _hNextPlayer.GetTeam() == TEAM_ZOMBIE )
                     continue; // redundant
 
                 // prevent spit pool stacking
@@ -1090,7 +1090,7 @@ function EngieEMPThink() {
 
         while ( _buildable = FindByClassnameWithin( _buildable, "obj_*", self.GetOrigin(), ENGIE_EMP_FIRST_HIT_RANGE ) ) {
 
-            if ( _buildable != null ) {
+            if ( _buildable ) {
 
                 _buildableArr.append( _buildable )
                 _buildableCount++
@@ -1148,14 +1148,14 @@ function EngieEMPThink() {
 
         while ( _buildable = FindByClassnameWithin( _buildable, "obj_*", self.GetOrigin(), ENGIE_EMP_BUILDING_DISABLE_RANGE ) ) {
 
-            if ( _buildable != null ) {
+            if ( _buildable ) {
 
                 _buildableArr.append( _buildable )
                 _buildableCount++
             }
         }
 
-        if ( _buildableCount == 0 ) {
+        if ( !_buildableCount ) {
 
             self.Destroy()
             return

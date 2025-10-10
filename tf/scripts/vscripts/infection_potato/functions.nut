@@ -373,7 +373,7 @@ function CreateMediumHealthKit ( _vecLocation ) {
 
 function PrintToChat ( _szMessage ) {
 
-    if ( typeof _szMessage != "string" || _szMessage == "" || _szMessage == null )
+    if ( !_szMessage || _szMessage == "" || typeof _szMessage != "string" )
         return
 
     ClientPrint( null, HUD_PRINTTALK, _szMessage )
@@ -382,7 +382,7 @@ function PrintToChat ( _szMessage ) {
 
 function SlayPlayerWithSpoofedIDX ( _hAttacker, _hVictim, _hAttackerWep, _vecDmgForce, _vecDmgPosition, _iIDX = ZOMBIE_SPOOF_WEAPON_IDX, _szKillicon = "" ) {
 
-    if ( _hAttacker == null || _hVictim == null || _hAttackerWep == null )
+    if ( !_hAttacker || !_hVictim || !_hAttackerWep )
         return
 
     local _hKillicon    = KilliconInflictor( _szKillicon )
@@ -447,7 +447,7 @@ function CTFPlayer_HasThisWeapon ( _WeaponIndentity, _bDeleteItemOnFind = false 
 
         local _hNextWeapon = GetPropEntityArray( this, STRING_NETPROP_MYWEAPONS, i )
 
-        if ( _hNextWeapon == null )
+        if ( !_hNextWeapon )
             continue
 
         if ( typeof _WeaponIndentity == "string" ) {
@@ -843,7 +843,7 @@ function CTFPlayer_BuildZombieHUDString() {
 
 	// if ( !_sc ) return
 
-    if ( _sc.m_hZombieAbility == null ) {
+    if ( !_sc.m_hZombieAbility ) {
 
         _sc.m_szCurrentHUDString = ""
         return
@@ -1064,7 +1064,7 @@ function CTFPlayer_ProcessEventQueue (  ) {
 
     foreach ( _event, _fireTime in _sc.m_tblEventQueue ) {
 
-        if ( _nearestEvent == null || ( _fireTime < _nearestFireTime ) ) {
+        if ( !_nearestEvent || ( _fireTime < _nearestFireTime ) ) {
 
             _nearestEvent     =  _event
             _nearestFireTime  =  _fireTime
@@ -1498,7 +1498,7 @@ function CTFPlayer_SetLinkedSpitPoolEnt ( _hSpitPool ) {
 
 	// if ( !_sc ) return
 
-    if ( _hSpitPool == null || !_hSpitPool.IsValid() )
+    if ( !_hSpitPool || !_hSpitPool.IsValid() )
         return
 
    // printl( "Setting linked spit pool entity for player..." )
@@ -1527,7 +1527,7 @@ function CTFPlayer_GetWeaponHandle ( _szWeaponClassname ) {
 
         local _hNextWeapon = GetPropEntityArray( this, STRING_NETPROP_MYWEAPONS, i )
 
-        if ( _hNextWeapon == null )
+        if ( !_hNextWeapon )
             continue
 
         if ( _hNextWeapon.GetClassname() == _szWeaponClassname )
@@ -1555,7 +1555,7 @@ foreach ( key, value in this ) {
 
 function KnockbackPlayer ( _hInflictor, _hVictim, _flForceMultiplier = 500.0, _flUpwardForce =  0.25, _vecDirOverride = Vector( 0, 0, 0 ), _bRemoveOnGround = false ) {
 
-    if ( _hInflictor == null || _hVictim == null || !_hInflictor.IsValid() || !_hVictim.IsValid() )
+    if ( !_hInflictor || !_hVictim || !_hInflictor.IsValid() || !_hVictim.IsValid() )
          return
 
     if ( _bRemoveOnGround ) {
@@ -1569,14 +1569,14 @@ function KnockbackPlayer ( _hInflictor, _hVictim, _flForceMultiplier = 500.0, _f
     local _vecVictimPos     = _hVictim.GetOrigin()
     local _vecDirection     = _vecVictimPos - _vecInflictorPos
 
-    if ( _vecDirection.Length() == 0 && _vecDirOverride.Length() > 0 )
+    if ( !_vecDirection.Length() && _vecDirOverride.Length() )
         _vecDirection = _vecDirOverride
 
     local _vecLength = sqrt( ( _vecDirection.x * _vecDirection.x ) +
                             ( _vecDirection.y * _vecDirection.y ) +
                             ( _vecDirection.z * _vecDirection.z ) )
 
-    if ( _vecLength > 0 ) {
+    if ( _vecLength ) {
 
         _vecDirection.x /= _vecLength
         _vecDirection.y /= _vecLength

@@ -128,7 +128,7 @@ class CSpyReveal extends CZombieAbility {
 
     function AbilityCast() {
 
-        if ( this.m_hAbilityOwner == null )
+        if ( !this.m_hAbilityOwner )
             return
 
         local _d = this.m_hAbilityOwner.GetScriptScope()
@@ -143,10 +143,10 @@ class CSpyReveal extends CZombieAbility {
 
         this.m_hAbilityOwner.SetForcedTauntCam  ( 1 )
 
-        if ( _d.m_hZombieFXWearable != null && _d.m_hZombieFXWearable.IsValid() )
+        if ( _d.m_hZombieFXWearable && _d.m_hZombieFXWearable.IsValid() )
             _d.m_hZombieFXWearable.Destroy()
 
-        if ( _d.m_hZombieWearable != null && _d.m_hZombieWearable.IsValid() )
+        if ( _d.m_hZombieWearable && _d.m_hZombieWearable.IsValid() )
             _d.m_hZombieWearable.Destroy()
 
         // this.m_hAbilityOwner.GiveZombieFXWearable()
@@ -170,7 +170,7 @@ class CSpyReveal extends CZombieAbility {
         while ( _hPlayer = FindByClassnameWithin( _hPlayer, "player", this.m_hAbilityOwner.GetOrigin(), ( SPY_REVEAL_RANGE ) ) ) {
 
             // red ( survivor ) team only
-            if ( _hPlayer != null && _hPlayer.GetTeam() != TEAM_ZOMBIE ) {
+            if ( _hPlayer && _hPlayer.GetTeam() != TEAM_ZOMBIE ) {
 
                 _arrPlayersInRange.append( _hPlayer )
             }
@@ -185,7 +185,7 @@ class CSpyReveal extends CZombieAbility {
 
             local _hNextPlayer = _arrPlayersInRange[ i ]
 
-            if ( _hNextPlayer == null || _hNextPlayer == this.m_hAbilityOwner )
+            if ( !_hNextPlayer || _hNextPlayer == this.m_hAbilityOwner )
                 break
 
             _hNextPlayer.RemoveCond(  TF_COND_DISGUISED   )
@@ -220,7 +220,7 @@ class CSoldierJump extends CZombieAbility {
 
     function AbilityCast() {
 
-        if ( this.m_hAbilityOwner == null )
+        if ( !this.m_hAbilityOwner )
             return
 
         local _sc = this.m_hAbilityOwner.GetScriptScope()
@@ -264,7 +264,7 @@ class CMedicHeal extends CZombieAbility {
 
     function AbilityCast() {
 
-        if ( this.m_hAbilityOwner == null )
+        if ( !this.m_hAbilityOwner )
             return
 
         local _d = this.m_hAbilityOwner.GetScriptScope()
@@ -277,10 +277,10 @@ class CMedicHeal extends CZombieAbility {
             origin        =  this.m_hAbilityOwner.GetOrigin(),
         } )
 
-        if ( _d.m_hZombieFXWearable != null && _d.m_hZombieFXWearable.IsValid() )
+        if ( _d.m_hZombieFXWearable && _d.m_hZombieFXWearable.IsValid() )
             _d.m_hZombieFXWearable.Destroy()
 
-        if ( _d.m_hZombieWearable != null && _d.m_hZombieWearable.IsValid() )
+        if ( _d.m_hZombieWearable && _d.m_hZombieWearable.IsValid() )
             _d.m_hZombieWearable.Destroy()
 
         // this.m_hAbilityOwner.GiveZombieFXWearable()
@@ -305,7 +305,7 @@ class CMedicHeal extends CZombieAbility {
         while ( _hPlayer = FindByClassnameWithin( _hPlayer, "player", this.m_hAbilityOwner.GetOrigin(), MEDIC_HEAL_RANGE ) ) {
 
             // blue ( zombie ) team only
-            if ( _hPlayer != null && _hPlayer.GetTeam() == TEAM_ZOMBIE && _hPlayer != this.m_hAbilityOwner ) {
+            if ( _hPlayer && _hPlayer.GetTeam() == TEAM_ZOMBIE && _hPlayer != this.m_hAbilityOwner ) {
 
                 _arrPlayersInRange.append( _hPlayer )
             }
@@ -322,7 +322,7 @@ class CMedicHeal extends CZombieAbility {
             local _angPlayer     =  _hNextPlayer.GetLocalAngles()
             local _vecAngPlayer  =  Vector( _angPlayer.x, _angPlayer.y, _angPlayer.z )
 
-            if ( _hNextPlayer == null || _hNextPlayer == this.m_hAbilityOwner )
+            if ( !_hNextPlayer || _hNextPlayer == this.m_hAbilityOwner )
                 break
 
             local _scNext = _hNextPlayer.GetScriptScope()
@@ -352,7 +352,7 @@ class CSniperSpitball extends CZombieAbility {
 
     function AbilityCast() {
 
-        if ( this.m_hAbilityOwner == null )
+        if ( !this.m_hAbilityOwner )
             return
 
         local _d = this.m_hAbilityOwner.GetScriptScope()
@@ -377,7 +377,7 @@ class CSniperSpitball extends CZombieAbility {
 
     function CreateSpitball( _bPlayerDead = false ) {
 
-        if ( this.m_hAbilityOwner == null )
+        if ( !this.m_hAbilityOwner )
             return
 
         local _d = this.m_hAbilityOwner.GetScriptScope()
@@ -470,7 +470,7 @@ class CEngineerSapperNade extends CZombieAbility {
 
     function AbilityCast() {
 
-        if ( this.m_hAbilityOwner == null )
+        if ( !this.m_hAbilityOwner )
             return
 
         local _d = this.m_hAbilityOwner.GetScriptScope()
@@ -489,7 +489,7 @@ class CEngineerSapperNade extends CZombieAbility {
 
     function ThrowNadeProjectile() {
 
-        if ( this.m_hAbilityOwner == null )
+        if ( !this.m_hAbilityOwner )
             return
 
         local _d = this.m_hAbilityOwner.GetScriptScope()
@@ -598,7 +598,7 @@ class CDemoCharge extends CZombieAbility {
 
     function AbilityCast() {
 
-        if ( this.m_hAbilityOwner == null )
+        if ( !this.m_hAbilityOwner )
             return
 
         local _d = this.m_hAbilityOwner.GetScriptScope()
@@ -608,10 +608,10 @@ class CDemoCharge extends CZombieAbility {
         SetPropFloat ( _d.m_hZombieWep, "m_flNextPrimaryAttack",   FLT_MAX )
         SetPropFloat ( _d.m_hZombieWep, "m_flNextSecondaryAttack", FLT_MAX )
 
-        if ( _d.m_hZombieFXWearable != null && _d.m_hZombieFXWearable.IsValid() )
+        if ( _d.m_hZombieFXWearable && _d.m_hZombieFXWearable.IsValid() )
             _d.m_hZombieFXWearable.Destroy()
 
-        if ( _d.m_hZombieWearable != null && _d.m_hZombieWearable.IsValid() )
+        if ( _d.m_hZombieWearable && _d.m_hZombieWearable.IsValid() )
             _d.m_hZombieWearable.Destroy()
 
         // create new ones now that the player can see themselves
@@ -643,7 +643,7 @@ class CDemoCharge extends CZombieAbility {
 
     function StartDemoCharge() {
 
-        if ( this.m_hAbilityOwner == null )
+        if ( !this.m_hAbilityOwner )
             return
 
         local _sc = this.m_hAbilityOwner.GetScriptScope()
@@ -666,7 +666,7 @@ class CDemoCharge extends CZombieAbility {
 
     function ExitDemoCharge() {
 
-        if ( this.m_hAbilityOwner == null )
+        if ( !this.m_hAbilityOwner )
             return
 
         local _d = this.m_hAbilityOwner.GetScriptScope()
@@ -781,7 +781,7 @@ class CPyroBlast extends CZombieAbility {
 
     function AbilityCast() {
 
-        if ( this.m_hAbilityOwner == null )
+        if ( !this.m_hAbilityOwner )
             return
 
         local _sc = this.m_hAbilityOwner.GetScriptScope()

@@ -303,7 +303,7 @@ function PZI_Util::GetEntScope( ent ) {
 	return scope
 }
 
-function PZI_Util::TouchCrashFix() { return activator != null && activator.IsValid() }
+function PZI_Util::TouchCrashFix() { return activator && activator.IsValid() }
 
 function PZI_Util::SetTargetname( ent, name ) {
 
@@ -520,7 +520,7 @@ function PZI_Util::ShowChatMessage( target, fmt, ... ) {
 
 function PZI_Util::CopyTable( table, keyfunc = null, valuefunc = null ) {
 
-	if ( table == null || typeof table != "table" ) return
+	if ( !table || typeof table != "table" ) return
 
 	local newtable = {}
 
@@ -666,7 +666,7 @@ function PZI_Util::SetupTriggerBounds( trigger, mins = null, maxs = null ) {
 
 function PZI_Util::PrintTable( table ) {
 
-	if ( table == null || ( typeof table != "table" && typeof table != "array" ) ) {
+	if ( !table || ( typeof table != "table" && typeof table != "array" ) ) {
 		ClientPrint( null, 2, ""+table )
 		return
 	}
@@ -800,9 +800,9 @@ function PZI_Util::StripWeapon( player, slot = -1 ) {
 
 		local weapon = GetItemInSlot( player, i )
 
-		if ( weapon == null || weapon.GetSlot() != slot ) continue
+		if ( !weapon || weapon.GetSlot() != slot ) continue
 
-		weapon.Kill()
+		EntFireByHandle( weapon, "Kill", null, -1, null, null )
 		break
 	}
 }
@@ -1165,7 +1165,7 @@ function PZI_Util::ShowAnnotation( args = {} ) {
 
 		// visibilityBitfield == 0 causes the annotation to show to everyone, we override that
 		//  here otherwise "players = [<nullptr>]" would show to everyone.
-		if ( args.visbit == 0 ) return
+		if ( !args.visbit ) return
 	}
 
 	// "entindex" and "effect" arguments are only supported for legacy compatiability.
@@ -1279,7 +1279,7 @@ function PZI_Util::SwitchToFirstValidWeapon( player ) {
 
 	for ( local i = 0; i < SLOT_COUNT; i++ ) {
 		local wep = GetPropEntityArray( player, STRING_NETPROP_MYWEAPONS, i )
-		if ( wep == null ) continue
+		if ( !wep ) continue
 
 		player.Weapon_Switch( wep )
 		return wep
@@ -1372,7 +1372,7 @@ function PZI_Util::HasItemInLoadout( player, index ) {
 
 	local t = null
 
-	for ( local child = player.FirstMoveChild(); child != null; child = child.NextMovePeer() ) {
+	for ( local child = player.FirstMoveChild(); child; child = child.NextMovePeer() ) {
 		if (
 			child == index
 			|| child.GetClassname() == index
@@ -1792,11 +1792,11 @@ function PZI_Util::SplitOnce( s, sep = null ) {
 
 function PZI_Util::SilentDisguise( player, target = null, tfteam = TF_TEAM_PVE_INVADERS, tfclass = TF_CLASS_SCOUT ) {
 
-	if ( player == null || !player.IsPlayer() ) return
+	if ( !player || !player.IsPlayer() ) return
 
 	function FindTargetPlayer( passcond ) {
 
-		local target = null
+		local target
 		foreach( potentialtarget in HumanArray ) {
 
 			if ( potentialtarget == player || !passcond( potentialtarget ) ) continue
@@ -1807,16 +1807,16 @@ function PZI_Util::SilentDisguise( player, target = null, tfteam = TF_TEAM_PVE_I
 		return target
 	}
 
-	if ( target == null ) {
+	if ( !target ) {
 		// Find disguise target
 		target = FindTargetPlayer( @( p ) p.GetTeam() == tfteam && p.GetPlayerClass() == tfclass )
 		// Couldn't find any targets of tfclass, look for any class this time
-		if ( target == null )
+		if ( !target )
 			target = FindTargetPlayer( @( p ) p.GetTeam() == tfteam )
 	}
 
 	// Disguise as this player
-	if ( target != null ) {
+	if ( target ) {
 		SetPropInt( player, "m_Shared.m_nDisguiseTeam", target.GetTeam() )
 		SetPropInt( player, "m_Shared.m_nDisguiseClass", target.GetPlayerClass() )
 		SetPropInt( player, "m_Shared.m_iDisguiseHealth", target.GetHealth() )
@@ -1867,7 +1867,7 @@ function PZI_Util::RoundWin( team = 2 ) {
 
 function PZI_Util::GetWeaponMaxAmmo( player, wep ) {
 
-	if ( wep == null ) return
+	if ( !wep ) return
 
 	local slot      = wep.GetSlot()
 	local classname = wep.GetClassname()
@@ -1906,10 +1906,7 @@ function PZI_Util::GetWeaponMaxAmmo( player, wep ) {
 
 function PZI_Util::TeleportNearVictim( ent, victim, attempt, ignore_visibility = false ) {
 
-	if ( victim == null )
-		return false
-
-	if ( victim.GetLastKnownArea() == null )
+	if ( !victim || !victim.GetLastKnownArea() )
 		return
 
 	local max_surround_travel_range = 6000.0
@@ -1960,7 +1957,7 @@ function PZI_Util::ClearLastKnownArea( bot ) {
 	local trigger = SpawnEntityFromTable( "trigger_remove_tf_player_condition", {
 		spawnflags = SF_TRIGGER_ALLOW_CLIENTS,
 		condition = TF_COND_TMPDAMAGEBONUS,
-	} )
+	})
 	EntFireByHandle( trigger, "StartTouch", "!activator", -1, bot, bot )
 	EntFireByHandle( trigger, "Kill", "", -1, null, null )
 }
@@ -1989,7 +1986,7 @@ function PZI_Util::ScriptEntFireSafe( target, code, delay = -1, activator = null
 
 			SetPropBool( self, STRING_NETPROP_PURGESTRINGS, true )
 
-			if ( self.IsPlayer() && !self.IsAlive() && %d == 0 ) {
+			if ( self.IsPlayer() && !self.IsAlive() && !%d ) {
 
 				// PZI_Ext.Error.DebugLog( `Ignoring dead player in ScriptEntFireSafe: ` + self )
 				return
@@ -2047,7 +2044,7 @@ function PZI_Util::SetDestroyCallback( entity, callback ) {
 
 function PZI_Util::OnWeaponFire( wep, func ) {
 
-	if ( wep == null ) return
+	if ( !wep ) return
 
 	local scope = GetEntScope( wep )
 
@@ -2269,7 +2266,7 @@ function PZI_Util::RemoveThink( ent, func = null ) {
 	if ( !( func in scope[ thinktable_name ] ) )
 		return
 
-	func == null ? scope[ thinktable_name ].clear() : delete scope[ thinktable_name ][ func ]
+	!func ? scope[ thinktable_name ].clear() : delete scope[ thinktable_name ][ func ]
 }
 
 function PZI_Util::SetConvar( convar, value, duration = 0, hide_chat_message = true ) {
@@ -2452,7 +2449,7 @@ function PZI_Util::ApproachAngle( target, value, speed ) {
 function PZI_Util::VectorAngles( forward ) {
 
 	local yaw, pitch
-	if ( forward.y == 0.0 && forward.x == 0.0 ) {
+	if ( !forward.y && !forward.x ) {
 		yaw = 0.0
 		if ( forward.z > 0.0 )
 			pitch = 270.0
@@ -2700,30 +2697,66 @@ function PZI_Util::GetSafeNavAreas() {
 	ScriptEntFireSafe( self, "print( `\\n\\n Collecting nav areas, performance warnings will go away shortly...\\n\\n`)", 0.1)
 
 	local i = 0
-	local color = [0, 180, 20, 50]
+	local color_valid  = [   0, 180,  20, 50  ]
+	local color_small  = [   0,  20, 180, 50  ]
+	local color_edge   = [   0, 180, 180, 50  ]
+	local color_warn   = [ 180, 180,  20,  50 ]
+	local color_danger = [ 180,   0,  20,  50 ]
+
+	local color
+	local trace = {}
 
 	// filter out areas that are too small or inside a trigger_hurt
 	foreach( name, area in AllNavAreas ) {
 
 		if ( area.GetSizeX() < 50 )
-			color = [0, 0, 255, 150]
+			color = color_small
 
 		else if ( area.GetSizeY() < 50 )
-			color = [0, 0, 255, 150]
+			color = color_small
 
 		else if ( IsPointInTrigger( area.GetCenter(), "trigger_hurt" ) )
-			color = [180, 0, 20, 80]
+			color = color_danger
 
-		else
-			color = [0, 180, 20, 50], SafeNavAreas[name] <- area
+		else {
+
+			for ( local i = 0; i < NUM_DIRECTIONS; i++ )
+				if ( !area.GetAdjacentArea(i, 1) ) {
+
+					color = color_edge
+					break
+				}
+
+			if ( color == color_edge )
+				continue
+
+			trace.clear()
+			trace.start <- area.GetCenter()
+			trace.end 	<- area.GetCenter() + Vector( 0, 0, INT_MAX )
+			trace.mask  <- CONTENTS_SOLID
+			trace.hullmin <- area.GetCorner( NORTH_WEST )
+			trace.hullmax <- area.GetCorner( SOUTH_EAST )
+
+			TraceHull( trace )
+
+			if ( trace.hit && trace.enthit && trace.enthit.GetClassname() == "trigger_hurt" )
+				color = color_warn
+			else
+				color = color_valid
+		}
+
+		if ( color == color_valid )
+			SaveNavAreas[name] <- area
 
 		if ( NAV_DEBUG )
 			area.DebugDrawFilled( color[0], color[1], color[2], color[3], 5.0, true, 0.0 )
+
 		i++
 
 		if ( !(i % 500) ) // process this many nav areas per tick
 			yield SafeNavAreas.len()
 	}
+
 	print("\n\nSafe nav areas collected\n\n")
 	EntFire( "__pzi_util", "CallScriptFunction", "collectgarbage" )
 }
@@ -2736,9 +2769,10 @@ function PZI_Util::ThinkTable::PopulateSafeNav() {
 	if ( gen.getstatus() == "dead" ) {
 
 		delete PZI_Util.ThinkTable.PopulateSafeNav
-		return
+		return 1
 	}
-	resume gen
+
+	printf("Safe Areas: %d / %d\n", (resume gen), PZI_Util.AllNavAreas.len() )
 }
 
 PZI_Util.ForEachEnt( null, null, null, null, true )

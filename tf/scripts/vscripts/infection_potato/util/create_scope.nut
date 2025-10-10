@@ -105,7 +105,7 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
 
 		function _newslot( k, v ) {
 
-			if ( k == "_OnDestroy" && _OnDestroy == null )
+			if ( k == "_OnDestroy" && !_OnDestroy )
 				_OnDestroy = v.bindenv( ent_scope )
 
 			ent_scope.rawset( k, v )
@@ -116,7 +116,7 @@ function PZI_CREATE_SCOPE( name = "", namespace = null, entity_ref = null, think
                     _OnCreate.call( ent_scope )
 
                 // fix anonymous function declarations in perf counter
-                else if ( v.getinfos().name == null ) 
+                else if ( !v.getinfos().name ) 
                     compilestring( format( @" local _%s = %s; function %s() { _%s() }", k, k, k, k ) ).call( ent_scope )
             }
 

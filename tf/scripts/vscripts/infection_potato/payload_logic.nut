@@ -22,16 +22,9 @@ function initPayload() {
 
     printl( "** You are running Zombie Infection on a Payload map. Initializing EXPERIMENTAL ZI_PL Logic **" )
 
-    while ( _teamspawn = FindByClassname( _teamspawn, "info_player_teamspawn" ) ) {
-
-        if ( _teamspawn != null ) {
-
-            if ( _teamspawn.GetTeam() == TEAM_ZOMBIE ) {
-
-                ZombieSpawns.append( _teamspawn )
-            }
-        }
-    }
+    while ( _teamspawn = FindByClassname( _teamspawn, "info_player_teamspawn" ) )
+        if ( _teamspawn.GetTeam() == TEAM_ZOMBIE )
+            ZombieSpawns.append( _teamspawn )
 
     ::bIsPayload <- true
     AddThinkToEnt( _payload, "PayloadThink" )

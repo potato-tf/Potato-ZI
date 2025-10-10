@@ -65,7 +65,7 @@ class Queue {
 
 	function VectorAngles( forward ) {
 		local yaw, pitch
-		if ( forward.y == 0.0 && forward.x == 0.0 ) {
+		if ( !forward.y && !forward.x ) {
 			yaw = 0.0
 			if ( forward.z > 0.0 )
 				pitch = 270.0

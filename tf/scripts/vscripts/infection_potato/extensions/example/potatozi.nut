@@ -553,7 +553,7 @@ function PZI_PotatoZI::ThinkTable::PotatoZIThink() {
 	}
 	else {
 
-		if ( tickcount % 11 == 0 ) {
+		if ( !(tickcount % 11) ) {
 
 			local reds_dead  = true
 			local blue_empty = true
