@@ -2746,7 +2746,7 @@ function PZI_Util::GetSafeNavAreas() {
 		}
 
 		if ( color == color_valid )
-			SaveNavAreas[name] <- area
+			PZI_Util.SaveNavAreas[name] <- area
 
 		if ( NAV_DEBUG )
 			area.DebugDrawFilled( color[0], color[1], color[2], color[3], 5.0, true, 0.0 )
@@ -2754,7 +2754,7 @@ function PZI_Util::GetSafeNavAreas() {
 		i++
 
 		if ( !(i % 500) ) // process this many nav areas per tick
-			yield SafeNavAreas.len()
+			yield PZI_Util.SafeNavAreas.len()
 	}
 
 	print("\n\nSafe nav areas collected\n\n")
