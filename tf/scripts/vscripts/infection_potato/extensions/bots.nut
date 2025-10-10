@@ -424,6 +424,9 @@ PZI_Bots.PZI_BotBehavior <- class {
 
 	function SetThreat( target, visible ) {
 
+		if (!threat || !threat.IsValid())
+			return threat = null
+
 		threat 			   = target
 		threat_pos 		   = threat.GetOrigin()
 		threat_visible 	   = visible
