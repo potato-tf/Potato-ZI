@@ -543,6 +543,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
             local _hKillicon = KilliconInflictor( KILLICON_PYRO_BREATH )
 
             // CreateMediumHealthKit( _hPlayer.GetOrigin() )
+            CreateAmmoPack( _hPlayer.GetOrigin(), "item_ammopack_small" )
 
             if ( !::bNoPyroExplosionMod && !( _sc.m_iFlags & ZBIT_PYRO_DONT_EXPLODE ) ) {
 
@@ -551,7 +552,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
                     if ( _hNextPlayer && _hNextPlayer.GetTeam() == TEAM_HUMAN && _hNextPlayer != _hPlayer ) {
 
                         KnockbackPlayer           ( _hPlayer, _hNextPlayer, 210, 0.85, true )
-                        _hNextPlayer.TakeDamageEx ( _hKillicon, _hPlayer, _hPlayer.GetActiveWeapon(), Vector( 0, 0, 0 ), _hPlayer.GetOrigin(), 10, ( DMG_CLUB | DMG_PREVENT_PHYSICS_FORCE ) )
+                        _hNextPlayer.TakeDamageEx ( _hKillicon, _hPlayer, _hPlayer.GetActiveWeapon(), Vector(), _hPlayer.GetOrigin(), 10, ( DMG_CLUB | DMG_PREVENT_PHYSICS_FORCE ) )
                     }
                 }
 
@@ -562,17 +563,11 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
             }
 
         }
+
         else {
 
-            if ( _hPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS ) {
-
-                // CreateMediumHealthKit( _hPlayer.GetOrigin() )
-            }
-            else {
-
-                // CreateSmallHealthKit( _hPlayer.GetOrigin() )
-            }
-
+            local _szKitType = "item_ammopack_" + _hPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS ? "medium" : "small"
+            CreateAmmoPack( _hPlayer.GetOrigin(), _szKitTypeitem )
         }
 
         // ------------------------------------- //
@@ -580,18 +575,18 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
         // ------------------------------------- //
         // we use the script overlay material for zombie ability hud
         // so let's make sure it's cleared whenever a player has respawned
-        _hPlayer.SetScriptOverlayMaterial ( "" )
+        _hPlayer.SetScriptOverlayMaterial( "" )
 
         // same thing for the HUD text channels
         if ( _sc.m_hHUDText ) {
 
-            _sc.m_hHUDText.KeyValueFromString ( "message", "" )
+            _sc.m_hHUDText.KeyValueFromString( "message", "" )
             EntFireByHandle( _sc.m_hHUDText,  "Display", "", -1, _hPlayer, _hPlayer )
         }
 
         if ( _sc.m_hHUDTextAbilityName ) {
 
-            _sc.m_hHUDTextAbilityName.KeyValueFromString ( "message", "" )
+            _sc.m_hHUDTextAbilityName.KeyValueFromString( "message", "" )
             EntFireByHandle( _sc.m_hHUDTextAbilityName,  "Display", "", -1, _hPlayer, _hPlayer )
         }
 

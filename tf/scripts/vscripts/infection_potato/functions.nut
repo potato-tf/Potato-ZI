@@ -333,6 +333,17 @@ function ShouldZombiesWin ( _hPlayer ) {
     return
 }
 
+function CreateAmmoPack( _vecLocation, _szClassname ) {
+
+    local _hDroppedPack = CreateByClassname( _szClassname )
+    _hDroppedPack.KeyValueFromInt( "AutoMaterialize", 0 )
+    _hDroppedPack.SetAbsOrigin( _vecLocation )
+    _hDroppedPack.SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE )
+    ::DispatchSpawn( _hDroppedPack )
+    
+    EntFireByHandle( _hDroppedPack, "Kill", null, 20.0, null, null )
+}
+
 function CreateSmallHealthKit ( _vecLocation ) {
 
     local _hDroppedHealthkit = SpawnEntityFromTable( "item_healthkit_small", {
