@@ -989,8 +989,10 @@ PZI_EVENT( "player_spawn", "PZI_Bots_PlayerSpawn", function( params ) {
 	local cls = bot.GetPlayerClass()
     local scope = PZI_Util.GetEntScope( bot )
 
-	if ( cls == TF_CLASS_MEDIC )
-		bot.SetMission( NO_MISSION, true )
+	if ( cls == TF_CLASS_MEDIC ) {
+
+		bot.GetTeam() == TEAM_ZOMBIE && RandomInt(0, 2) ? PZI_Util.KillPlayer( bot ) : bot.SetMission( NO_MISSION, true )
+	}
 
 	else if ( bot.GetTeam() == TEAM_ZOMBIE || cls == TF_CLASS_PYRO || cls == TF_CLASS_SPY )
 		bot.SetMission( MISSION_SPY, true )
