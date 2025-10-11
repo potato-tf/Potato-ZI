@@ -156,7 +156,7 @@ PZI_Bots.RandomLoadouts <- {
 			"The Eviction Notice",
 			"Fists of Steel",
 			"The Holiday Punch",
-			"The Apoco-Fists"
+			"Apoco-Fists"
 		]
 	},
 
@@ -222,7 +222,7 @@ PZI_Bots.RandomLoadouts <- {
 
 			"The Cleaner's Carbine",
 			"Jarate",
-			"The Darwin's Danger Shield",
+			"Darwin's Danger Shield",
 			"The Cozy Camper"
 		],
 
