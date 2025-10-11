@@ -163,6 +163,7 @@ PZI_Bots.RandomLoadouts <- {
 	[TF_CLASS_ENGINEER] = {
 
 		[SLOT_PRIMARY] = [
+
 			"The Rescue Ranger",
 			"The Frontier Justice",
 			"The Pomson 6000",
