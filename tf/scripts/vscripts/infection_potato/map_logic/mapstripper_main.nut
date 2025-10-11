@@ -296,7 +296,8 @@ local gamemode_props = [
 foreach ( prop in gamemode_props )
     SetPropBool( PZI_Util.GameRules, prop, false )
 
-try { IncludeScript( format( "infection_potato/map_stripper/%s", MAPNAME ) ) } catch ( e ) {}
+try { IncludeScript( "infection_potato/map_logic/global" ) } catch ( e ) {}
+try { IncludeScript( format( "infection_potato/map_logic/%s", MAPNAME ) ) } catch ( e ) {}
 
 local ents_to_kill = [ "team_round_timer", "game_round_win" ]
 
