@@ -316,7 +316,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 
 		foreach ( slot, wepinfo in loadouts ) {
 
-			local wepname = wepinfo[ RandomInt( 0, loadouts.len() - 1 ) ]
+			local wepname = wepinfo[ RandomInt( 0, wepinfo.len() - 1 ) ]
 			local wep = PZI_ItemMap[ wepname ]
 
 			if ( wep.item_class[6] == 'r' ) // tf_wearable-based weapon, use this instead.

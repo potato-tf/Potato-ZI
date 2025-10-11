@@ -1606,7 +1606,7 @@ function PZI_Util::SetPropAny( ent, prop, value, i = 0 ) {
 
 function PZI_Util::RemovePlayerWearables( player ) {
 
-	for ( local wearable = player.FirstMoveChild();  wearable; wearable = wearable.NextMovePeer() ) {
+	for ( local wearable = player.FirstMoveChild(); wearable; wearable = wearable.NextMovePeer() ) {
 
 		if ( wearable instanceof CBaseCombatWeapon || !( wearable instanceof CEconEntity ) )
 			continue
