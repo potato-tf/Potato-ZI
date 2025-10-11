@@ -567,7 +567,7 @@ PZI_EVENT( "player_death", "Infection_PlayerDeath", function( params ) {
         else {
 
             local _szKitType = "item_ammopack_" + _hPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS ? "medium" : "small"
-            CreateAmmoPack( _hPlayer.GetOrigin(), _szKitTypeitem )
+            CreateAmmoPack( _hPlayer.GetOrigin(), _szKitType )
         }
 
         // ------------------------------------- //

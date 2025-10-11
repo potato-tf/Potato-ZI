@@ -845,14 +845,17 @@ function PZI_Bots::GenericZombie( bot, threat_type = "closest" ) {
 
     function GenericZombieThink() {
 
-        if ( !bot.IsAlive() || bot.GetFlags() & FL_FROZEN || ( bot.GetActionPoint() && bot.GetActionPoint().IsValid() ) )
+        if ( !bot.IsAlive() || bot.GetTeam() != TEAM_ZOMBIE ) 
             return
+
+		else if ( bot.GetFlags() & FL_FROZEN || ( bot.GetActionPoint() && bot.GetActionPoint().IsValid() ) )
+			return
 
 		local b = PZI_Util.GetEntScope( bot ).PZI_BotBehavior
 		// for some reason bots don't like to move until they're nudged around a bit
 		// if we're stuck just throw us around a bit and hope for the best
 		if ( GetRoundState() == GR_STATE_RND_RUNNING && !b.locomotion.IsStuck() && !bot.GetAbsVelocity().Length() )
-			bot.ApplyAbsVelocityImpulse( Vector( RandomInt( 30, 160 ), RandomInt( 30, 160 ), RandomInt( 10, 20 ) ) )
+			bot.ApplyAbsVelocityImpulse( Vector( RandomInt( 30, 60 ), RandomInt( 30, 60 ), RandomInt( 10, 20 ) ) )
 
         local threat = b.threat
 
