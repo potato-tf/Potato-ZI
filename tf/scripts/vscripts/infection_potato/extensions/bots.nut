@@ -919,10 +919,12 @@ function PZI_Bots::SoldierZombie( bot ) {
 
 	function SoldierZombieThink( bot ) {
 
-		if ( !GetPropEntity( bot, "m_hGroundEntity" ) && GetPropInt( bot, "m_nButtons" ) & IN_BACK ) {
+		local buttons = GetPropInt( bot, "m_nButtons" )
+
+		if ( !GetPropEntity( bot, "m_hGroundEntity" ) && buttons & IN_BACK ) {
 
 			SetPropInt( bot, "m_afButtonDisabled", IN_BACK )
-			SetPropInt( bot, "m_nButtons", ~IN_BACK )
+			SetPropInt( bot, "m_nButtons", buttons & ~IN_BACK )
 			return
 		}
 
