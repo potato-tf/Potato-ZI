@@ -332,6 +332,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 				PZI_Util.GiveWeapon( bot, cls, wep.id )
 			}
 		}
+    PZI_Util.SwitchToFirstValidWeapon( bot )
 	}
 	function IsLookingTowards( target, cos_tolerance ) {
 
