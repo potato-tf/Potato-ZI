@@ -319,7 +319,7 @@ PZI_Bots.PZI_BotBehavior <- class {
 			local wepname = wepinfo[ RandomInt( 0, wepinfo.len() - 1 ) ]
 			local wep = PZI_ItemMap[ wepname ]
 
-			if ( wep.item_class[6] == 'r' ) // tf_wearable-based weapon, use this instead.
+			if ( wep.item_class[0] == 't' && wep.item_class[6] == 'r' ) // tf_wearable-based weapon, use this instead.
 				bot.GenerateAndWearItem( wepname )
 
 			else {
