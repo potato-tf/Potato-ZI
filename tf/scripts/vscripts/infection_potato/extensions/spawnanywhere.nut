@@ -206,6 +206,10 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
     function SpawnPlayer() {
         
         // kill dummy if we're not mid-round, player is invalid or dead
+
+        Assert( bGameStarted, "SpawnPlayer: Attempted to spawn zombie before game started" )
+        Assert( player && player.IsValid(), "SpawnPlayer: Player is invalid" )
+
         if ( !bGameStarted || !player || !player.IsValid() || !player.IsAlive() ) {
 
             if ( fakewearable && fakewearable.IsValid() )
@@ -369,7 +373,7 @@ PZI_EVENT( "player_spawn", "SpawnAnywhere_PlayerSpawn", function( params ) {
     // teleport to a random nav square on spawn
     if ( USE_NAV_FOR_SPAWN ) {
 
-        local _random_pos = @() PZI_Nav.GetRandomSafeArea().GetCenter() + Vector( 0, 0, 20 )
+        local _random_pos = @() PZI_Nav.GetRandomSafeArea().GetCenter() + Vector( 0, 0, 10 )
         local random_pos = _random_pos()
 
         local mins = player.GetBoundingMaxs()
