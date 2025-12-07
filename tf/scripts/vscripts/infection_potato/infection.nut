@@ -293,7 +293,7 @@ PZI_EVENT( "teamplay_setup_finished", "Infection_SetupFinished", function( param
 
     bGameStarted = true
 
-    printl( "teamplay_setup_finished" )
+    printl( "bGameStarted: " + bGameStarted )
 
     local _iPlayerCountRed    = PlayerCount( TEAM_HUMAN )
     local _numStartingZombies = ( _iPlayerCountRed / ( STARTING_ZOMBIE_FAC - ( _iPlayerCountRed < 12 ? 1 : 0 ) ) ) || 1
