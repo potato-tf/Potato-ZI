@@ -3,14 +3,15 @@
 /*************************************************************************************************************************************************************
  * PROBLEM:                                                                                                                                                  *
  * All entity access functions will add the entities scriptID and targetname to the string table                                                             *
- * Additionally, "param" arguments passed to Entity I/O related functions ( AcceptInput, EntFire... ) will add the param to the string table                   *
+ * Additionally, "param" arguments passed to Entity I/O related functions ( AcceptInput, EntFire... ) will add the param to the string table                 *
  * these strings don't get cleared until map change, eventually causing a CUtlRBTree overflow                                                                *
- * large amounts of rapid entity spawning, modifying, and Entity I/O calls ( notably RunScriptCode ) will overflow the string table faster                     *
- * freaky fair ( and probably some other vscript-heavy maps ) have this problem on 100 player servers, after ~40 minutes the server will crash with this error *
+ * large amounts of rapid entity spawning, modifying, and Entity I/O calls ( notably RunScriptCode ) will overflow the string table faster                   *
+ * freaky fair ( and probably some other vscript-heavy maps ) have this problem on 100 player servers                                                        *
+ * after ~40 minutes the server will crash with this error                                                                                                   *
  *                                                                                                                                                           *
  * Scripters can largely workaround this issue by:                                                                                                           *
- * 1. setting NetProps.SetPropBool( ent, STRING_NETPROP_PURGESTRINGS, true ) on all entities after they are spawned or modified/accessed in any way        *
- * 2. manually hooking and  purging the values passed to the following functions:                                                                            *
+ * 1. setting NetProps.SetPropBool( ent, STRING_NETPROP_PURGESTRINGS, true ) on all entities after they are spawned or modified/accessed in any way          *
+ * 2. manually hooking and purging the values passed to the following functions:                                                                             *
  *   - AcceptInput/EntFire/DoEntFire/EntFireByHandle's parameter argument                                                                                    *
  *   - KeyValueFromString                                                                                                                                    *
  *   - SetPropString                                                                                                                                         *
@@ -67,37 +68,6 @@ function PZI_GameStrings::PurgeString( str ) {
     if ( "StringTable" in this && str in StringTable )
         delete StringTable[ str ]
 }
-
-// function PopGameStrings::PurgeStringBatch( strings = {} ) {
-
-//     function PurgeStringBatchPostSpawn() {
-
-// 		foreach ( i, ent in ents ) {
-//             printl( ent.GetName() )
-// 			SetPropBool( ent, STRING_NETPROP_PURGESTRINGS, true )
-// 			EntFireByHandle( ent, "Kill", "", i * 0.1, null, null )
-// 		}
-// 	}
-
-// 	local template = PopExtUtil.PointScriptTemplate( null, PurgeStringBatchPostSpawn )
-
-// 	foreach ( i, k in strings.keys() ) {
-
-// 		template.AddTemplate( "logic_autosave", { targetname = k.tostring() } )
-// 		template.AddTemplate( "logic_autosave", { targetname = strings[k].tostring() } )
-
-// 		if ( !( i % 8 ) && i ) {
-
-// 			template.AcceptInput( "ForceSpawn", "", null, null )
-//             EntFire( template.GetName(), "Kill", "", 0.1 )
-//             template = PopExtUtil.PointScriptTemplate( null, PurgeStringBatchPostSpawn )
-//             continue
-//         }
-// 	}
-
-// 	template.AcceptInput( "ForceSpawn", "", null, null )
-// 	template.Kill()
-// }
 
 function PZI_GameStrings::StringFixGenerator() {
 
