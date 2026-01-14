@@ -1938,8 +1938,8 @@ function PZI_Util::RoundWin( team = 2 ) {
 
 	ScriptEntFireSafe("player", @"
 
-		AddThinkToEnt( self, null )
-		SetPropString( self, `m_iszScriptThinkFunction`, `` )
+		// AddThinkToEnt( self, null )
+		// SetPropString( self, `m_iszScriptThinkFunction`, `` )
 		self.AcceptInput(`DispatchEffect`, `ParticleEffectStop`, null, null )
 		SetPropInt(self, `m_nRenderMode`, kRenderTransColor )
 		SetPropInt(self, `m_clrRender`, 0 )
