@@ -250,8 +250,10 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
             player.RemoveFlag( FL_ATCONTROLS|FL_DUCKING )
             SetPropBool( player, "m_Local.m_bDucked", false )
 
+            scope.m_iFlags = scope.m_iFlags|ZBIT_PENDING_ZOMBIE
             player.GiveZombieCosmetics()
             player.GiveZombieEyeParticles()
+            // player.GiveZombieAbility()
 
             EntFireByHandle( self, "Kill", "", -1, null, null )
             EntFireByHandle( fakewearable, "Kill", "", -1, null, null )
