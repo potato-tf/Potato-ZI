@@ -207,9 +207,9 @@ function PZI_SpawnAnywhere::BeginSummonSequence( player, origin ) {
         
         // kill dummy if we're not mid-round, player is invalid or dead
 
-        Assert( bGameStarted, "SpawnPlayer: Attempted to spawn zombie before game started" )
-        Assert( player && player.IsValid(), "SpawnPlayer: Player is invalid" )
-        Assert( player.IsAlive(), "SpawnPlayer: Player is dead" )
+        // Assert( bGameStarted, "SpawnPlayer: Attempted to spawn zombie before game started" )
+        // Assert( player && player.IsValid(), "SpawnPlayer: Player is invalid" )
+        // Assert( player.IsAlive(), "SpawnPlayer: Player is dead" )
 
         if ( !bGameStarted || !player || !player.IsValid() || !player.IsAlive() ) {
 
