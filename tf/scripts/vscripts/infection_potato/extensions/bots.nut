@@ -1647,7 +1647,7 @@ PZI_EVENT( "teamplay_round_start", "PZI_Bots_TeamplayRoundStart", function( para
 	SetValue( "tf_bot_max_setup_gate_defend_range", INT_MAX )
 	SetValue( "tf_bot_reevaluate_class_in_spawnroom", 0 )
 
-	SetValue( "nb_update_frequency", 1.0 )
+	SetValue( "nb_update_frequency", 0.3 )
 })
 
 PZI_EVENT( "player_spawn", "PZI_BotsSpawn", function( params ) {
